@@ -387,7 +387,6 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
             onRefreshCollections={loadProjectsAndCollections}
           />
 
-
           {/* Right Pane: Paper Grid */}
           <div className="flex-1 min-w-0 w-full space-y-4">
             {isLoading ? (
@@ -465,14 +464,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
         currentUserId={user?.id}
       />
 
- 
- 
- 
- //----fix---
- 
- 
- 
-      {/* <SharePaperModal
+      <SharePaperModal
         paper={sharingPaper}
         isOpen={!!sharingPaper}
         onClose={() => setSharingPaper(null)}
@@ -485,4 +477,4 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
     </WorkspaceLayout>
   );
 };
-export default LibraryPage; */}
+export default LibraryPage;
