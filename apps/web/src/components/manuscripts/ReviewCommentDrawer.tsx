@@ -8,7 +8,6 @@ import {
   Filter,
   Check,
   X,
-  Lock,
   User,
   Quote,
 } from 'lucide-react';
@@ -88,17 +87,17 @@ export const ReviewCommentDrawer: React.FC<ReviewCommentDrawerProps> = ({
             Major Scientific
           </span>
         );
-      case 'MinorTechnical':
+      case 'MinorScientific':
         return (
           <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
-            Minor Technical
+            Minor Scientific
           </span>
         );
-      case 'StyleSuggestion':
+      case 'GrammarOrTypo':
       default:
         return (
           <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-500/10 border border-slate-500/20 text-slate-400">
-            Style / Note
+            Grammar / Typo
           </span>
         );
     }
@@ -248,7 +247,7 @@ export const ReviewCommentDrawer: React.FC<ReviewCommentDrawerProps> = ({
             <AlertTriangle className="w-3 h-3" />
             Severity:
           </span>
-          {['ALL', 'CriticalFlaw', 'MajorScientific', 'MinorTechnical', 'StyleSuggestion'].map((sev) => (
+          {['ALL', 'CriticalFlaw', 'MajorScientific', 'MinorScientific', 'GrammarOrTypo'].map((sev) => (
             <button
               key={sev}
               onClick={() => setFilterSeverity(sev)}
@@ -459,8 +458,8 @@ export const ReviewCommentDrawer: React.FC<ReviewCommentDrawerProps> = ({
               >
                 <option value="CriticalFlaw">Critical Flaw (Blocks)</option>
                 <option value="MajorScientific">Major Scientific (Blocks)</option>
-                <option value="MinorTechnical">Minor Technical</option>
-                <option value="StyleSuggestion">Style / Suggestion</option>
+                <option value="MinorScientific">Minor Scientific</option>
+                <option value="GrammarOrTypo">Grammar / Typo</option>
               </select>
             </div>
           </div>

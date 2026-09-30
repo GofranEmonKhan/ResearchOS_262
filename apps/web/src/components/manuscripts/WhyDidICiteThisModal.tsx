@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  BookOpen,
   Calendar,
   ExternalLink,
   ShieldCheck,

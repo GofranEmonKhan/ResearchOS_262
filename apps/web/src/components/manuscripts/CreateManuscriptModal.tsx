@@ -2,11 +2,9 @@ import React, { useState } from 'react';
 import {
   FileText,
   Building,
-  Layers,
   X,
   Plus,
   Loader2,
-  CheckCircle2,
 } from 'lucide-react';
 import { api } from '../../lib/api.js';
 import { CreateManuscriptDto, Manuscript } from '@researchos/shared-types';

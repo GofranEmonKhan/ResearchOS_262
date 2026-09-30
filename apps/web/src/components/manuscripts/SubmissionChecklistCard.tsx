@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import {
   CheckSquare,
   Lock,
-  Unlock,
   AlertTriangle,
-  ArrowRight,
   ShieldCheck,
   Send,
   Award,

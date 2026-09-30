@@ -67,7 +67,7 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
     setRestoringId(version.id);
     setError(null);
     try {
-      await api.restoreVersion(manuscriptId, version.id);
+      await api.restoreManuscriptVersion(manuscriptId, version.id);
       await onVersionRestored();
       onClose();
     } catch (err: any) {
