@@ -217,7 +217,22 @@ export class CitationService {
       highlights,
       sidebarSummary,
       isMaskedNote,
-    };
+      // Backward-compatible aliases for various UI clients
+      citation: {
+        id: citation.id,
+        citationKey: citation.citation_key,
+        inTextLabel: citation.in_text_label,
+        contextNote: citation.context_note,
+      },
+      sidebarFields: sidebarSummary
+        ? {
+            ...sidebarSummary,
+            limitation: sidebarSummary.limitations,
+          }
+        : null,
+      annotations: highlights,
+      isMasked: isMaskedNote,
+    } as any;
   }
 
   /**
