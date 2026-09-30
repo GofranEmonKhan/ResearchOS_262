@@ -28,6 +28,7 @@ import {
   Calculator,
   AlertCircle,
   Loader2,
+  Pin,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { api } from '../../lib/api.js';
@@ -90,6 +91,74 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
 
   // Right Drawer Tab: 'citations' | 'reviews' | 'checklist'
   const [rightTab, setRightTab] = useState<'citations' | 'reviews' | 'checklist'>('citations');
+
+  // Section Sidebar Hover & Pin State (Like Main AppSidebar)
+  const [isSectionSidebarHovered, setIsSectionSidebarHovered] = useState(false);
+  const [isSectionSidebarPinned, setIsSectionSidebarPinned] = useState(false);
+  const isSectionSidebarExpanded = isSectionSidebarPinned || isSectionSidebarHovered;
+
+  // Resizable Editor & Preview Split (Overleaf Style)
+  const [editorWidthPercent, setEditorWidthPercent] = useState<number>(50);
+  const [isDraggingEditorSplit, setIsDraggingEditorSplit] = useState(false);
+  const splitAreaRef = useRef<HTMLDivElement>(null);
+
+  // Resizable Right Context Drawer
+  const [rightDrawerWidth, setRightDrawerWidth] = useState<number>(340);
+  const [isDraggingRightDrawer, setIsDraggingRightDrawer] = useState(false);
+
+  // Drag handler for Editor & Preview split (Overleaf Style)
+  const startDraggingEditorSplit = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingEditorSplit(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!splitAreaRef.current) return;
+      const rect = splitAreaRef.current.getBoundingClientRect();
+      const offset = moveEvent.clientX - rect.left;
+      const pct = (offset / rect.width) * 100;
+      const clamped = Math.max(20, Math.min(80, pct));
+      setEditorWidthPercent(clamped);
+    };
+
+    const onMouseUp = () => {
+      setIsDraggingEditorSplit(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }, []);
+
+  // Drag handler for Right Context Drawer
+  const startDraggingRightDrawer = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingRightDrawer(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const windowWidth = window.innerWidth;
+      const newWidth = windowWidth - moveEvent.clientX;
+      const clamped = Math.max(260, Math.min(600, newWidth));
+      setRightDrawerWidth(clamped);
+    };
+
+    const onMouseUp = () => {
+      setIsDraggingRightDrawer(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }, []);
 
   // Modals
   const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
@@ -549,88 +618,177 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
           3. Right: Context & Review Drawer
       ───────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
-        {/* ── COLUMN 1: IMRAD Section Navigator ── */}
-        <aside className="w-64 border-r border-slate-800 bg-[#080B12] flex flex-col shrink-0 select-none">
-          <div className="p-3.5 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                Sections ({sections.length})
-              </span>
-            </div>
-            {(userAccess.isAuthor || userAccess.isSupervisor) && (
-              <button
-                onClick={handleAddSection}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-                title="Add Section"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+        {/* ── COLUMN 1: IMRAD Section Navigator (Hover-expandable like Main AppSidebar) ── */}
+        <aside
+          onMouseEnter={() => setIsSectionSidebarHovered(true)}
+          onMouseLeave={() => setIsSectionSidebarHovered(false)}
+          className={`border-r border-slate-800 bg-[#080B12] flex flex-col shrink-0 select-none transition-all duration-300 ease-in-out ${
+            isSectionSidebarExpanded ? 'w-64' : 'w-[72px]'
+          }`}
+          aria-label="Manuscript Sections Navigator"
+        >
+          {/* Header */}
+          <div
+            className={`border-b border-slate-800 transition-all ${
+              isSectionSidebarExpanded
+                ? 'p-3.5 flex items-center justify-between'
+                : 'p-3 flex flex-col items-center justify-center gap-1 cursor-pointer'
+            }`}
+            onClick={!isSectionSidebarExpanded ? () => setIsSectionSidebarPinned(true) : undefined}
+            title={!isSectionSidebarExpanded ? 'Sections Navigator — Click to pin open' : undefined}
+          >
+            {isSectionSidebarExpanded ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300 truncate">
+                    Sections ({sections.length})
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {(userAccess.isAuthor || userAccess.isSupervisor) && (
+                    <button
+                      onClick={handleAddSection}
+                      className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                      title="Add Section"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsSectionSidebarPinned(!isSectionSidebarPinned)}
+                    className={`p-1 rounded-lg transition-colors ${
+                      isSectionSidebarPinned
+                        ? 'text-amber-400 bg-amber-500/15 border border-amber-500/30'
+                        : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+                    }`}
+                    title={isSectionSidebarPinned ? 'Unpin sidebar (auto-collapse on hover leave)' : 'Pin sidebar open'}
+                  >
+                    <Pin className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Layers className="w-5 h-5 text-amber-400" />
+                <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  {sections.length}
+                </span>
+              </>
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {/* Section Items */}
+          <div className={`flex-1 overflow-y-auto space-y-1.5 ${
+            isSectionSidebarExpanded ? 'p-2' : 'p-2 flex flex-col items-center'
+          }`}>
             {sections.map((sec, index) => {
               const isActive = sec.id === activeSectionId;
               return (
                 <div
                   key={sec.id}
-                  className={`group relative flex items-center justify-between p-2.5 rounded-xl border transition-all ${
-                    isActive
-                      ? 'bg-amber-500/10 border-amber-500/30 text-white font-medium shadow-sm'
-                      : 'bg-transparent border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                  className={`group relative rounded-xl transition-all ${
+                    isSectionSidebarExpanded
+                      ? `p-2.5 flex items-center justify-between border ${
+                          isActive
+                            ? 'bg-amber-500/10 border-amber-500/30 text-white font-medium shadow-sm'
+                            : 'bg-transparent border-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                        }`
+                      : 'w-full flex justify-center py-0.5'
                   }`}
                 >
-                  <button
-                    onClick={() => handleSelectSection(sec)}
-                    className="flex items-center gap-2 text-left flex-1 min-w-0"
-                  >
-                    <span className="text-[10px] font-mono text-slate-500 shrink-0 w-4">
-                      {index + 1}.
-                    </span>
-                    <span className="text-xs truncate">{sec.title}</span>
-                  </button>
+                  {/* Active Indicator Bar */}
+                  {isActive && (
+                    <div className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-amber-500 to-amber-600 rounded-r shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                  )}
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {sec.wordCount || 0}w
-                    </span>
+                  {isSectionSidebarExpanded ? (
+                    <>
+                      <button
+                        onClick={() => handleSelectSection(sec)}
+                        className="flex items-center gap-2 text-left flex-1 min-w-0"
+                      >
+                        <span className="text-[10px] font-mono text-slate-500 shrink-0 w-4">
+                          {index + 1}.
+                        </span>
+                        <span className="text-xs truncate font-medium">{sec.title}</span>
+                      </button>
 
-                    {/* Reorder / Delete tools on hover */}
-                    {(userAccess.isAuthor || userAccess.isSupervisor) && (
-                      <div className="opacity-0 group-hover:opacity-100 flex items-center ml-1 transition-opacity">
-                        {index > 0 && (
-                          <button
-                            onClick={() => handleMoveSection(index, 'up')}
-                            className="p-0.5 text-slate-500 hover:text-white"
-                            title="Move Up"
-                          >
-                            <ArrowUp className="w-3 h-3" />
-                          </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {sec.wordCount || 0}w
+                        </span>
+
+                        {/* Reorder / Delete tools on hover */}
+                        {(userAccess.isAuthor || userAccess.isSupervisor) && (
+                          <div className="opacity-0 group-hover:opacity-100 flex items-center ml-1 transition-opacity">
+                            {index > 0 && (
+                              <button
+                                onClick={() => handleMoveSection(index, 'up')}
+                                className="p-0.5 text-slate-500 hover:text-white"
+                                title="Move Up"
+                              >
+                                <ArrowUp className="w-3 h-3" />
+                              </button>
+                            )}
+                            {index < sections.length - 1 && (
+                              <button
+                                onClick={() => handleMoveSection(index, 'down')}
+                                className="p-0.5 text-slate-500 hover:text-white"
+                                title="Move Down"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteSection(sec.id, sec.title)}
+                              className="p-0.5 text-slate-500 hover:text-rose-400 ml-0.5"
+                              title="Delete Section"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                         )}
-                        {index < sections.length - 1 && (
-                          <button
-                            onClick={() => handleMoveSection(index, 'down')}
-                            className="p-0.5 text-slate-500 hover:text-white"
-                            title="Move Down"
-                          >
-                            <ArrowDown className="w-3 h-3" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteSection(sec.id, sec.title)}
-                          className="p-0.5 text-slate-500 hover:text-rose-400 ml-0.5"
-                          title="Delete Section"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
                       </div>
-                    )}
-                  </div>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleSelectSection(sec)}
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-mono text-xs transition-all relative ${
+                        isActive
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm shadow-amber-500/15 font-bold'
+                          : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800/80 hover:border-slate-700'
+                      }`}
+                      title={`${index + 1}. ${sec.title} (${sec.wordCount || 0}w)`}
+                    >
+                      {index + 1}
+                    </button>
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* Bottom Word Count Footer */}
+          {isSectionSidebarExpanded ? (
+            <div className="p-3 border-t border-slate-800/80 bg-slate-900/30 flex items-center justify-between text-[11px] text-slate-400">
+              <span className="font-medium">Total Manuscript</span>
+              <span className="font-mono font-bold text-amber-400">
+                {sections.reduce((acc, s) => acc + (s.wordCount || 0), 0)} words
+              </span>
+            </div>
+          ) : (
+            <div
+              className="p-2 border-t border-slate-800/80 flex flex-col items-center justify-center text-[10px] font-mono cursor-pointer"
+              title={`Total manuscript words: ${sections.reduce((acc, s) => acc + (s.wordCount || 0), 0)}`}
+              onClick={() => setIsSectionSidebarPinned(true)}
+            >
+              <span className="text-amber-400 font-bold">
+                {sections.reduce((acc, s) => acc + (s.wordCount || 0), 0)}
+              </span>
+              <span className="text-[8px] uppercase tracking-tighter text-slate-500">words</span>
+            </div>
+          )}
         </aside>
 
         {/* ── COLUMN 2: Center Scholarly Markdown/LaTeX Editor ── */}
@@ -734,11 +892,16 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                 </div>
               </div>
 
-              {/* Editor / Preview Area */}
-              <div className="flex-1 flex overflow-hidden">
+              {/* Editor / Preview Area with Overleaf-style Draggable Split Resizer */}
+              <div ref={splitAreaRef} className="flex-1 flex overflow-hidden relative">
                 {/* Editor Textarea */}
                 {(viewMode === 'edit' || viewMode === 'split') && (
-                  <div className={`flex-1 flex flex-col p-6 overflow-hidden ${viewMode === 'split' ? 'border-r border-slate-800' : ''}`}>
+                  <div
+                    style={viewMode === 'split' ? { width: `${editorWidthPercent}%` } : undefined}
+                    className={`flex flex-col p-6 overflow-hidden ${
+                      viewMode === 'edit' ? 'flex-1' : 'min-w-[240px]'
+                    }`}
+                  >
                     <textarea
                       id="manuscript-editor-textarea"
                       value={activeContent}
@@ -767,9 +930,30 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                   </div>
                 )}
 
+                {/* Overleaf-style Draggable Resizer Handle between Editor & Preview */}
+                {viewMode === 'split' && (
+                  <div
+                    onMouseDown={startDraggingEditorSplit}
+                    onDoubleClick={() => setEditorWidthPercent(50)}
+                    className={`w-2 hover:w-2.5 bg-slate-800/90 hover:bg-amber-500/70 active:bg-amber-500 cursor-col-resize transition-all shrink-0 flex items-center justify-center group z-20 select-none ${
+                      isDraggingEditorSplit ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)]' : ''
+                    }`}
+                    title="Drag to resize Editor and Preview (Double click to reset to 50%)"
+                  >
+                    <div className={`w-0.5 h-8 rounded-full transition-colors ${
+                      isDraggingEditorSplit ? 'bg-black' : 'bg-slate-600 group-hover:bg-black'
+                    }`} />
+                  </div>
+                )}
+
                 {/* Scholarly LaTeX Paper Preview */}
                 {(viewMode === 'preview' || viewMode === 'split') && (
-                  <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                  <div
+                    style={viewMode === 'split' ? { width: `${100 - editorWidthPercent}%` } : undefined}
+                    className={`flex flex-col min-w-0 overflow-hidden ${
+                      viewMode === 'preview' ? 'flex-1' : 'min-w-[280px]'
+                    }`}
+                  >
                     <LatexPaperPreview
                       manuscript={manuscript}
                       sections={sections}
@@ -790,8 +974,25 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
           )}
         </main>
 
-        {/* ── COLUMN 3: Right Context & Governance Drawer ── */}
-        <aside className="w-80 border-l border-slate-800 bg-[#090D16] flex flex-col shrink-0 select-none overflow-hidden">
+        {/* Draggable Resizer Handle between Center Workspace & Right Context Drawer */}
+        <div
+          onMouseDown={startDraggingRightDrawer}
+          onDoubleClick={() => setRightDrawerWidth(340)}
+          className={`w-2 hover:w-2.5 bg-slate-800/90 hover:bg-amber-500/70 active:bg-amber-500 cursor-col-resize transition-all shrink-0 flex items-center justify-center group z-20 select-none ${
+            isDraggingRightDrawer ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)]' : ''
+          }`}
+          title="Drag to resize Context Drawer (Double click to reset to 340px)"
+        >
+          <div className={`w-0.5 h-8 rounded-full transition-colors ${
+            isDraggingRightDrawer ? 'bg-black' : 'bg-slate-600 group-hover:bg-black'
+          }`} />
+        </div>
+
+        {/* ── COLUMN 3: Right Context & Governance Drawer (Resizable) ── */}
+        <aside
+          style={{ width: `${rightDrawerWidth}px` }}
+          className="border-l border-slate-800 bg-[#090D16] flex flex-col shrink-0 select-none overflow-hidden"
+        >
           {/* Tabs */}
           <div className="flex border-b border-slate-800 bg-[#080B12] text-xs">
             <button

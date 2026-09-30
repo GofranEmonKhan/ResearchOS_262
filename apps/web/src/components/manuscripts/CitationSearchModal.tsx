@@ -133,7 +133,7 @@ export const CitationSearchModal: React.FC<CitationSearchModalProps> = ({
                 Insert Literature Citation
               </h2>
               <p className="text-xs text-slate-400">
-                Link verified literature from your project repository directly into manuscript text
+                Select verified literature from this research project to insert citations
               </p>
             </div>
           </div>
@@ -168,14 +168,18 @@ export const CitationSearchModal: React.FC<CitationSearchModalProps> = ({
               {loading && papers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-slate-500">
                   <Loader2 className="w-6 h-6 animate-spin mb-2 text-amber-500/60" />
-                  <span className="text-xs">Searching literature index...</span>
+                  <span className="text-xs">Searching project literature index...</span>
                 </div>
               ) : papers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-center px-4 text-slate-500">
-                  <FileText className="w-8 h-8 mb-2 opacity-40" />
-                  <p className="text-xs font-medium text-slate-400">No project papers match query</p>
-                  <p className="text-[11px] text-slate-600 mt-1">
-                    Upload papers in Literature Manager (M03) or refine your search
+                  <FileText className="w-8 h-8 mb-2 opacity-40 text-amber-400" />
+                  <p className="text-xs font-medium text-slate-300">
+                    {query ? `No papers match "${query}"` : 'No literature in this project yet'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-xs">
+                    {query
+                      ? 'Try different keywords or check spelling.'
+                      : 'Upload or link papers to this project in Literature Review (M03) to cite them.'}
                   </p>
                 </div>
               ) : (
