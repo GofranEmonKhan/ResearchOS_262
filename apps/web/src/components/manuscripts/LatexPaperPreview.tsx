@@ -23,12 +23,18 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
   citations,
   onCitationClick,
 }) => {
-  // Preview options
-  const [previewScope, setPreviewScope] = useState<'section' | 'full'>('full');
-  const [paperTheme, setPaperTheme] = useState<'light' | 'dark'>('light');
+  // Preview options: Default to 'dark' for perfect harmony with ResearchOS dark canvas
+  const [previewScope, setPreviewScope] = useState<'full' | 'section'>('full');
+  const [paperTheme, setPaperTheme] = useState<'dark' | 'light'>('dark');
   const [zoomLevel, setZoomLevel] = useState<number>(100);
 
   const activeSection = sections.find((s) => s.id === activeSectionId);
+  const isAbstractActive = activeSection?.sectionType === 'Abstract';
+
+  // Dynamic abstract content: if editing Abstract section, reflect live editor buffer
+  const displayAbstract = isAbstractActive
+    ? activeSectionContent
+    : manuscript.abstract || sections.find((s) => s.sectionType === 'Abstract')?.contentMarkdown || '';
 
   // Helper to resolve citation in-text label
   const getCitationLabel = (rawKey: string, fallbackIndex: number) => {
@@ -47,10 +53,8 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
 
   // Math equation renderer with equation numbering
   const renderMathBlock = (content: string, eqIndex: number) => {
-    // Clean up $$ delimiters
     const mathExp = content.replace(/^\$\$\s*/, '').replace(/\s*\$\$$/, '');
 
-    // Format simple symbols into clean unicode / math typesetting
     const formatted = mathExp
       .replace(/\\mathcal\{L\}/g, 'ℒ')
       .replace(/\\mathcal\{G\}/g, '𝒢')
@@ -74,17 +78,17 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
     return (
       <div
         key={`eq-${eqIndex}`}
-        className={`my-4 py-3 px-4 rounded border transition-colors flex items-center justify-between font-serif text-sm md:text-base ${
-          paperTheme === 'light'
-            ? 'bg-slate-50/80 border-slate-200 text-slate-900 shadow-inner'
-            : 'bg-slate-900/60 border-slate-800 text-slate-100'
+        className={`my-4 py-3 px-5 rounded-lg border transition-colors flex items-center justify-between font-serif text-sm md:text-base ${
+          paperTheme === 'dark'
+            ? 'bg-slate-900/90 border-amber-500/20 text-amber-200 shadow-lg'
+            : 'bg-slate-50 border-slate-300 text-slate-900 shadow-sm'
         }`}
       >
         <div className="flex-1 text-center font-mono tracking-wide italic overflow-x-auto py-1">
           {formatted}
         </div>
-        <div className={`ml-4 text-xs font-mono font-semibold shrink-0 select-none ${
-          paperTheme === 'light' ? 'text-slate-500' : 'text-slate-400'
+        <div className={`ml-4 text-xs font-mono font-bold shrink-0 select-none ${
+          paperTheme === 'dark' ? 'text-amber-400/70' : 'text-slate-600'
         }`}>
           ({eqIndex})
         </div>
@@ -95,7 +99,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
   // Markdown table renderer into LaTeX booktabs
   const renderTableBlock = (lines: string[], tIndex: number) => {
     const headerLine = lines[0];
-    const dataLines = lines.slice(2); // Skip separator row
+    const dataLines = lines.slice(2);
 
     const parseRow = (rowStr: string) =>
       rowStr
@@ -107,21 +111,20 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
 
     return (
       <div key={`table-${tIndex}`} className="my-5 overflow-x-auto">
-        <div className={`text-center text-xs font-serif font-bold italic mb-1.5 ${
-          paperTheme === 'light' ? 'text-slate-700' : 'text-slate-300'
+        <div className={`text-center text-xs font-serif font-bold italic mb-2 ${
+          paperTheme === 'dark' ? 'text-amber-300' : 'text-slate-800'
         }`}>
           Table {tIndex}: Comparative Benchmark Evaluation
         </div>
         <table className={`w-full text-xs font-serif border-collapse ${
-          paperTheme === 'light' ? 'text-slate-900' : 'text-slate-200'
+          paperTheme === 'dark' ? 'text-slate-200' : 'text-slate-900'
         }`}>
-          {/* Top rule */}
           <thead>
             <tr className={`border-t-2 border-b ${
-              paperTheme === 'light' ? 'border-slate-900 bg-slate-100/50' : 'border-slate-300 bg-slate-800/40'
+              paperTheme === 'dark' ? 'border-slate-700 bg-slate-900/60' : 'border-slate-900 bg-slate-100'
             }`}>
               {headers.map((h, i) => (
-                <th key={i} className="py-2 px-3 text-left font-bold tracking-tight">
+                <th key={i} className="py-2.5 px-3 text-left font-bold tracking-tight">
                   {h.replace(/\*\*/g, '')}
                 </th>
               ))}
@@ -134,9 +137,9 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                 <tr
                   key={rIdx}
                   className={`border-b transition-colors ${
-                    paperTheme === 'light'
-                      ? 'border-slate-200 hover:bg-amber-50/40'
-                      : 'border-slate-800 hover:bg-slate-800/30'
+                    paperTheme === 'dark'
+                      ? 'border-slate-800 hover:bg-slate-800/40'
+                      : 'border-slate-200 hover:bg-amber-50/50'
                   }`}
                 >
                   {cells.map((cell, cIdx) => {
@@ -156,7 +159,9 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                                     key={pI}
                                     type="button"
                                     onClick={() => onCitationClick(k)}
-                                    className="ml-1 inline-flex items-center text-amber-600 hover:text-amber-700 underline font-mono text-[10px]"
+                                    className={`ml-1 inline-flex items-center underline font-mono text-[10px] ${
+                                      paperTheme === 'dark' ? 'text-amber-400 hover:text-amber-300' : 'text-amber-700 hover:text-amber-800'
+                                    }`}
                                     title="View citation synthesis"
                                   >
                                     [{getCitationLabel(part, pI)}]
@@ -177,19 +182,18 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
             })}
           </tbody>
         </table>
-        {/* Bottom rule */}
         <div className={`w-full border-b-2 mt-0.5 ${
-          paperTheme === 'light' ? 'border-slate-900' : 'border-slate-300'
+          paperTheme === 'dark' ? 'border-slate-700' : 'border-slate-900'
         }`} />
       </div>
     );
   };
 
-  // Content block parser that handles headings, paragraphs, display equations, inline math, and tables
+  // Section content parser
   const renderSectionBody = (content: string) => {
-    if (!content.trim()) {
+    if (!content || !content.trim()) {
       return (
-        <p className={`italic text-xs py-4 ${paperTheme === 'light' ? 'text-slate-400' : 'text-slate-500'}`}>
+        <p className={`italic text-xs py-3 ${paperTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
           [This section is currently empty]
         </p>
       );
@@ -207,8 +211,8 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
         return (
           <h2
             key={bIdx}
-            className={`text-base font-bold font-serif uppercase tracking-wider mt-6 mb-2 pb-1 border-b ${
-              paperTheme === 'light' ? 'text-slate-900 border-slate-300' : 'text-white border-slate-800'
+            className={`text-sm sm:text-base font-bold font-serif uppercase tracking-wider mt-5 mb-2 pb-1 border-b ${
+              paperTheme === 'dark' ? 'text-amber-300 border-slate-800' : 'text-slate-900 border-slate-300'
             }`}
           >
             {trimmed.replace('# ', '')}
@@ -221,8 +225,8 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
         return (
           <h3
             key={bIdx}
-            className={`text-sm font-bold font-serif mt-5 mb-2 ${
-              paperTheme === 'light' ? 'text-slate-900' : 'text-slate-100'
+            className={`text-xs sm:text-sm font-bold font-serif mt-4 mb-2 ${
+              paperTheme === 'dark' ? 'text-slate-100' : 'text-slate-900'
             }`}
           >
             {trimmed.replace('## ', '')}
@@ -235,8 +239,8 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
         return (
           <h4
             key={bIdx}
-            className={`text-xs font-bold font-serif italic mt-4 mb-1.5 ${
-              paperTheme === 'light' ? 'text-slate-800' : 'text-slate-300'
+            className={`text-xs font-bold font-serif italic mt-3 mb-1.5 ${
+              paperTheme === 'dark' ? 'text-slate-300' : 'text-slate-800'
             }`}
           >
             {trimmed.replace('### ', '')}
@@ -266,10 +270,10 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
         return (
           <blockquote
             key={bIdx}
-            className={`my-3 pl-4 border-l-2 italic text-xs font-serif ${
-              paperTheme === 'light'
-                ? 'border-amber-600 text-slate-700 bg-amber-50/30 py-2 pr-3'
-                : 'border-amber-500 text-slate-300 bg-amber-500/5 py-2 pr-3'
+            className={`my-3 pl-4 border-l-2 italic text-xs font-serif py-1.5 pr-3 ${
+              paperTheme === 'dark'
+                ? 'border-amber-500 text-slate-300 bg-amber-500/5'
+                : 'border-amber-600 text-slate-700 bg-amber-50/50'
             }`}
           >
             {trimmed.replace(/^>\s*/, '')}
@@ -284,7 +288,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
         <p
           key={bIdx}
           className={`text-xs font-serif leading-relaxed mb-3 text-justify hyphens-auto ${
-            paperTheme === 'light' ? 'text-slate-800' : 'text-slate-200'
+            paperTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'
           }`}
         >
           {parts.map((part, pIdx) => {
@@ -297,10 +301,10 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                   key={pIdx}
                   type="button"
                   onClick={() => onCitationClick(citeKey)}
-                  className={`inline-flex items-center mx-0.5 px-1 py-0.2 rounded font-serif text-[11px] font-semibold cursor-pointer transition-all ${
-                    paperTheme === 'light'
-                      ? 'text-amber-800 bg-amber-100 hover:bg-amber-200 hover:text-amber-900 border border-amber-300'
-                      : 'text-amber-300 bg-amber-500/10 hover:bg-amber-500/25 border border-amber-500/30'
+                  className={`inline-flex items-center mx-0.5 px-1.5 py-0.5 rounded font-serif text-[11px] font-semibold cursor-pointer transition-all ${
+                    paperTheme === 'dark'
+                      ? 'text-amber-300 bg-amber-500/15 hover:bg-amber-500/30 border border-amber-500/30 shadow-sm'
+                      : 'text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300'
                   }`}
                   title={`Click to view 'Why Did I Cite This?' for @${citeKey}`}
                 >
@@ -327,9 +331,9 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                 <span
                   key={pIdx}
                   className={`font-mono italic text-[11px] px-1 py-0.5 rounded mx-0.5 ${
-                    paperTheme === 'light'
-                      ? 'bg-slate-100 text-slate-900 border border-slate-200'
-                      : 'bg-slate-900 text-amber-200 border border-slate-800'
+                    paperTheme === 'dark'
+                      ? 'bg-slate-900 text-amber-300 border border-amber-500/20'
+                      : 'bg-slate-100 text-slate-900 border border-slate-300'
                   }`}
                 >
                   {innerMath}
@@ -337,7 +341,6 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
               );
             }
 
-            // Bold/Italic markdown
             return part;
           })}
         </p>
@@ -383,21 +386,25 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
             </button>
           </div>
 
-          {/* Theme Toggle (Classic Paper vs Dark) */}
+          {/* Theme Toggle (Dark Scholarly vs Classic White Paper) */}
           <button
-            onClick={() => setPaperTheme(paperTheme === 'light' ? 'dark' : 'light')}
-            className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors flex items-center gap-1 text-[11px] px-2"
-            title="Toggle Classic Paper / Dark Theme"
+            onClick={() => setPaperTheme(paperTheme === 'dark' ? 'light' : 'dark')}
+            className={`p-1 rounded-lg transition-colors flex items-center gap-1.5 text-[11px] px-2.5 font-medium border ${
+              paperTheme === 'dark'
+                ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-amber-500/30'
+                : 'bg-white hover:bg-slate-100 text-slate-900 border-slate-300'
+            }`}
+            title="Toggle Dark Scholarly / Classic White Paper Theme"
           >
-            {paperTheme === 'light' ? (
+            {paperTheme === 'dark' ? (
               <>
-                <Moon className="w-3 h-3 text-blue-400" />
-                <span className="hidden sm:inline">Dark</span>
+                <Moon className="w-3.5 h-3.5 text-blue-400" />
+                <span>Dark Theme</span>
               </>
             ) : (
               <>
-                <Sun className="w-3 h-3 text-amber-400" />
-                <span className="hidden sm:inline">Paper</span>
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span>Paper (White)</span>
               </>
             )}
           </button>
@@ -424,92 +431,126 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
       </div>
 
       {/* ── Scrollable Document Surface ── */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center bg-[#070A12]/80">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center bg-[#070A12]">
         <div
-          style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
-          className={`w-full max-w-3xl rounded-sm transition-all duration-150 p-8 sm:p-12 md:p-14 shadow-2xl relative ${
-            paperTheme === 'light'
-              ? 'bg-[#FCFCFA] text-slate-900 border border-slate-300 ring-1 ring-black/5 shadow-slate-950/40'
-              : 'bg-[#0E131F] text-slate-100 border border-slate-800 shadow-black/80'
+          style={{
+            transform: `scale(${zoomLevel / 100})`,
+            transformOrigin: 'top center',
+            backgroundColor: paperTheme === 'dark' ? '#0D111D' : '#FFFFFF',
+            color: paperTheme === 'dark' ? '#F1F5F9' : '#0F172A',
+          }}
+          className={`w-full max-w-3xl rounded-lg transition-all duration-150 p-8 sm:p-12 md:p-14 shadow-2xl relative border ${
+            paperTheme === 'dark'
+              ? 'border-slate-800/80 shadow-black/80'
+              : 'border-slate-300 shadow-slate-900/20'
           }`}
         >
-          {/* ── Classical LaTeX Title Block ── */}
-          <div className="text-center mb-8">
-            {/* Journal / Venue Banner */}
-            {manuscript.targetVenue && (
-              <div className="text-[10px] uppercase font-mono tracking-widest text-amber-600 dark:text-amber-400 font-bold mb-2">
-                Accepted for Publication in {manuscript.targetVenue}
-              </div>
-            )}
-
-            {/* Title */}
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-serif leading-tight mb-4 tracking-tight">
-              {manuscript.title}
-            </h1>
-
-            {/* Authors & Affiliation */}
-            <div className="text-xs font-serif mb-2 text-slate-700 dark:text-slate-300 space-x-1">
-              <span className="font-semibold">Alex Chen</span>
-              <sup className="text-[9px] text-amber-600 font-bold">1*</sup>,
-              <span className="font-semibold"> Sarah Vance</span>
-              <sup className="text-[9px] text-amber-600 font-bold">2</sup>
-            </div>
-
-            <div className="text-[10px] font-serif italic text-slate-500 dark:text-slate-400 space-y-0.5">
-              <div>
-                <sup>1</sup> Computational Biology & AI Laboratory, MIT, Cambridge, MA
-              </div>
-              <div>
-                <sup>2</sup> Department of Computer Science & AI, Stanford University, Stanford, CA
-              </div>
-              <div>
-                <sup>*</sup> Corresponding author. Correspondence: <span className="font-mono">alex.chen@mit.edu</span>
-              </div>
-            </div>
-
-            {/* LaTeX \rule{\textwidth}{0.5pt} */}
-            <div className={`w-full border-t my-5 ${paperTheme === 'light' ? 'border-slate-800' : 'border-slate-700'}`} />
-
-            {/* Abstract Block */}
-            {manuscript.abstract && (
-              <div className="max-w-2xl mx-auto text-left mb-5">
-                <div className="text-center font-serif font-bold text-xs uppercase tracking-wider mb-2">
-                  Abstract
-                </div>
-                <div className={`text-xs font-serif leading-relaxed italic text-justify hyphens-auto ${
-                  paperTheme === 'light' ? 'text-slate-800' : 'text-slate-200'
+          {/* ── Classical LaTeX Title Block (always shown in Full view or Abstract view) ── */}
+          {(previewScope === 'full' || isAbstractActive) && (
+            <div className="text-center mb-8">
+              {/* Journal / Venue Banner */}
+              {manuscript.targetVenue && (
+                <div className={`text-[10px] uppercase font-mono tracking-widest font-bold mb-2 ${
+                  paperTheme === 'dark' ? 'text-amber-400' : 'text-amber-700'
                 }`}>
-                  {manuscript.abstract.split(/(\[@[\w-]+\])/g).map((part, idx) => {
-                    if (part.startsWith('[@') && part.endsWith(']')) {
-                      const cleanK = part.slice(2, -1);
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => onCitationClick(cleanK)}
-                          className={`inline-flex items-center mx-0.5 px-1 py-0.2 rounded font-serif text-[11px] font-semibold cursor-pointer ${
-                            paperTheme === 'light'
-                              ? 'text-amber-800 bg-amber-100 hover:bg-amber-200'
-                              : 'text-amber-300 bg-amber-500/20 hover:bg-amber-500/30'
-                          }`}
-                        >
-                          [{getCitationLabel(part, idx)}]
-                        </button>
-                      );
-                    }
-                    return part;
-                  })}
+                  Accepted for Publication in {manuscript.targetVenue}
                 </div>
-                <div className="mt-2 text-[10px] font-serif text-slate-500 dark:text-slate-400">
-                  <span className="font-bold not-italic">Keywords: </span>
-                  Neural Architecture Search, Continuous Relaxation, High-Throughput Genomics, CAGI6, Saturation Mutagenesis.
+              )}
+
+              {/* Title */}
+              <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold font-serif leading-tight mb-4 tracking-tight ${
+                paperTheme === 'dark' ? 'text-white' : 'text-slate-900'
+              }`}>
+                {manuscript.title}
+              </h1>
+
+              {/* Authors & Affiliation */}
+              <div className={`text-xs font-serif mb-2 space-x-1 ${
+                paperTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'
+              }`}>
+                <span className="font-semibold">Alex Chen</span>
+                <sup className={`text-[9px] font-bold ${paperTheme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>1*</sup>,
+                <span className="font-semibold"> Sarah Vance</span>
+                <sup className={`text-[9px] font-bold ${paperTheme === 'dark' ? 'text-amber-400' : 'text-amber-700'}`}>2</sup>
+              </div>
+
+              <div className={`text-[10px] font-serif italic space-y-0.5 ${
+                paperTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+              }`}>
+                <div>
+                  <sup>1</sup> Computational Biology & AI Laboratory, MIT, Cambridge, MA
+                </div>
+                <div>
+                  <sup>2</sup> Department of Computer Science & AI, Stanford University, Stanford, CA
+                </div>
+                <div>
+                  <sup>*</sup> Corresponding author. Correspondence: <span className="font-mono">alex.chen@mit.edu</span>
                 </div>
               </div>
-            )}
 
-            {/* Bottom Abstract Rule */}
-            <div className={`w-full border-t my-5 ${paperTheme === 'light' ? 'border-slate-800' : 'border-slate-700'}`} />
-          </div>
+              {/* LaTeX \rule{\textwidth}{0.5pt} */}
+              <div className={`w-full border-t my-5 ${
+                paperTheme === 'dark' ? 'border-slate-700' : 'border-slate-800'
+              }`} />
+
+              {/* Abstract Block */}
+              {displayAbstract && (
+                <div className={`max-w-2xl mx-auto text-left mb-5 rounded-md p-3 transition-colors ${
+                  isAbstractActive && previewScope === 'full'
+                    ? paperTheme === 'dark'
+                      ? 'bg-amber-500/10 border border-amber-500/30'
+                      : 'bg-amber-50/60 border border-amber-300'
+                    : ''
+                }`}>
+                  <div className={`text-center font-serif font-bold text-xs uppercase tracking-wider mb-2 ${
+                    paperTheme === 'dark' ? 'text-amber-400' : 'text-slate-900'
+                  }`}>
+                    Abstract
+                    {isAbstractActive && (
+                      <span className="ml-2 text-[9px] font-mono font-normal uppercase px-1.5 py-0.5 rounded bg-amber-500 text-black font-bold">
+                        Live Editing
+                      </span>
+                    )}
+                  </div>
+                  <div className={`text-xs font-serif leading-relaxed italic text-justify hyphens-auto ${
+                    paperTheme === 'dark' ? 'text-slate-200' : 'text-slate-800'
+                  }`}>
+                    {displayAbstract.split(/(\[@[\w-]+\])/g).map((part, idx) => {
+                      if (part.startsWith('[@') && part.endsWith(']')) {
+                        const cleanK = part.slice(2, -1);
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => onCitationClick(cleanK)}
+                            className={`inline-flex items-center mx-0.5 px-1.5 py-0.5 rounded font-serif text-[11px] font-semibold cursor-pointer ${
+                              paperTheme === 'dark'
+                                ? 'text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30'
+                                : 'text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300'
+                            }`}
+                          >
+                            [{getCitationLabel(part, idx)}]
+                          </button>
+                        );
+                      }
+                      return part;
+                    })}
+                  </div>
+                  <div className={`mt-2 text-[10px] font-serif ${
+                    paperTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                  }`}>
+                    <span className="font-bold not-italic">Keywords: </span>
+                    Neural Architecture Search, Continuous Relaxation, High-Throughput Genomics, CAGI6, Saturation Mutagenesis.
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Abstract Rule */}
+              <div className={`w-full border-t my-5 ${
+                paperTheme === 'dark' ? 'border-slate-700' : 'border-slate-800'
+              }`} />
+            </div>
+          )}
 
           {/* ── Article Sections ── */}
           {previewScope === 'full' ? (
@@ -518,17 +559,17 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                 const isCurrentActive = section.id === activeSectionId;
                 const content = isCurrentActive ? activeSectionContent : section.contentMarkdown;
 
-                // Don't duplicate abstract if already rendered above
+                // Abstract is rendered in the Title block above
                 if (section.sectionType === 'Abstract') return null;
 
                 return (
                   <div
                     key={section.id}
-                    className={`relative ${
+                    className={`relative rounded-md transition-colors ${
                       isCurrentActive
-                        ? paperTheme === 'light'
-                          ? 'ring-1 ring-amber-400/40 rounded p-2 bg-amber-50/10'
-                          : 'ring-1 ring-amber-500/30 rounded p-2 bg-amber-500/5'
+                        ? paperTheme === 'dark'
+                          ? 'ring-1 ring-amber-500/40 p-3 bg-amber-500/5'
+                          : 'ring-1 ring-amber-400/60 p-3 bg-amber-50/40'
                         : ''
                     }`}
                   >
@@ -539,7 +580,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                     )}
                     <h2
                       className={`text-sm sm:text-base font-bold font-serif uppercase tracking-wider mb-2.5 ${
-                        paperTheme === 'light' ? 'text-slate-900' : 'text-white'
+                        paperTheme === 'dark' ? 'text-white' : 'text-slate-900'
                       }`}
                     >
                       {section.title}
@@ -555,7 +596,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                 <div>
                   <h2
                     className={`text-base font-bold font-serif uppercase tracking-wider mb-3 ${
-                      paperTheme === 'light' ? 'text-slate-900' : 'text-white'
+                      paperTheme === 'dark' ? 'text-white' : 'text-slate-900'
                     }`}
                   >
                     {activeSection.title}
@@ -571,22 +612,26 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
           )}
 
           {/* ── Scholarly References Section ── */}
-          {citations.length > 0 && (
-            <div className="mt-10 pt-6 border-t border-slate-300 dark:border-slate-800">
+          {citations.length > 0 && previewScope === 'full' && (
+            <div className={`mt-10 pt-6 border-t ${
+              paperTheme === 'dark' ? 'border-slate-800' : 'border-slate-300'
+            }`}>
               <h3 className={`text-xs font-bold font-serif uppercase tracking-wider mb-3 ${
-                paperTheme === 'light' ? 'text-slate-900' : 'text-white'
+                paperTheme === 'dark' ? 'text-white' : 'text-slate-900'
               }`}>
                 References
               </h3>
-              <ol className="list-none space-y-2 text-[11px] font-serif leading-relaxed">
+              <ol className="list-none space-y-2.5 text-[11px] font-serif leading-relaxed">
                 {citations.map((cite, cIdx) => (
                   <li
                     key={cite.id || cIdx}
                     className={`flex items-start gap-2 ${
-                      paperTheme === 'light' ? 'text-slate-800' : 'text-slate-300'
+                      paperTheme === 'dark' ? 'text-slate-300' : 'text-slate-800'
                     }`}
                   >
-                    <span className="font-bold text-amber-600 dark:text-amber-400 font-mono shrink-0">
+                    <span className={`font-bold font-mono shrink-0 ${
+                      paperTheme === 'dark' ? 'text-amber-400' : 'text-amber-700'
+                    }`}>
                       [{cIdx + 1}]
                     </span>
                     <div className="flex-1">
@@ -595,18 +640,22 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                       </span>{' '}
                       ({cite.paper?.year || 'n.d.'}).{' '}
                       <span className="italic">{cite.paper?.title}</span>.{' '}
-                      <span className="font-medium text-slate-600 dark:text-slate-400">
+                      <span className="font-medium">
                         {cite.paper?.venue}
                       </span>
                       {cite.paper?.doi && (
-                        <span className="ml-1 font-mono text-[10px] text-slate-500">
+                        <span className={`ml-1 font-mono text-[10px] ${
+                          paperTheme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+                        }`}>
                           DOI: {cite.paper.doi}
                         </span>
                       )}
                       <button
                         type="button"
                         onClick={() => onCitationClick(cite.citationKey)}
-                        className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold font-sans text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                        className={`ml-2 inline-flex items-center gap-1 text-[10px] font-semibold font-sans hover:underline cursor-pointer ${
+                          paperTheme === 'dark' ? 'text-amber-400 hover:text-amber-300' : 'text-amber-700 hover:text-amber-800'
+                        }`}
                         title="Open 'Why Did I Cite This?' analysis"
                       >
                         <Sparkles className="w-3 h-3 inline" />
