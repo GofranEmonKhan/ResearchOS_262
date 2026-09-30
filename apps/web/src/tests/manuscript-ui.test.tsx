@@ -10,6 +10,8 @@ import { SubmissionChecklistCard } from '../components/manuscripts/SubmissionChe
 import { AssignReviewerModal } from '../components/manuscripts/AssignReviewerModal.js';
 import { VersionHistoryModal } from '../components/manuscripts/VersionHistoryModal.js';
 import { LatexPaperPreview } from '../components/manuscripts/LatexPaperPreview.js';
+import { InsertFigureModal } from '../components/manuscripts/InsertFigureModal.js';
+import { ManuscriptGuidelinesModal } from '../components/manuscripts/ManuscriptGuidelinesModal.js';
 import {
   Manuscript,
   ManuscriptSection,
@@ -400,5 +402,83 @@ describe('Spec 05 — Manuscript Writing & Peer Review UI Component Tests', () =
       !html.includes('[[Vaswani et al., 2017]]'),
       'Must NOT double bracket author-year citation'
     );
+  });
+
+  it('11. InsertFigureModal renders image sources, preset gallery, and LaTeX syntax preview', () => {
+    const html = renderToString(
+      <InsertFigureModal
+        isOpen={true}
+        onClose={() => {}}
+        onInsertFigure={() => {}}
+      />
+    );
+
+    assert.ok(html.includes('Insert Scholarly Figure'), 'Should render modal title');
+    assert.ok(html.includes('Upload File'), 'Should render Upload tab');
+    assert.ok(html.includes('Image URL'), 'Should render URL tab');
+    assert.ok(html.includes('Scientific Presets'), 'Should render Presets tab');
+    assert.ok(html.includes('Syntax Format:'), 'Should render syntax format selector');
+    assert.ok(html.includes('\\begin{figure}'), 'Should display preview snippet');
+    assert.ok(html.includes('Insert Figure in Section'), 'Should render insert button');
+  });
+
+  it('12. ManuscriptGuidelinesModal renders academic author guide categories and copy actions', () => {
+    const html = renderToString(
+      <ManuscriptGuidelinesModal
+        isOpen={true}
+        onClose={() => {}}
+        onInsertSnippet={() => {}}
+      />
+    );
+
+    assert.ok(html.includes('Manuscript Authoring Guide &amp; Cheatsheet'), 'Should render guidelines title');
+    assert.ok(html.includes('1. Quickstart Guide'), 'Should render quickstart category');
+    assert.ok(html.includes('2. IMRAD Structure'), 'Should render IMRAD category');
+    assert.ok(html.includes('3. Citations &amp; BibTeX'), 'Should render Citations category');
+    assert.ok(html.includes('4. LaTeX Figures &amp; Media'), 'Should render Figures category');
+    assert.ok(html.includes('5. LaTeX Math &amp; Equations'), 'Should render Math category');
+    assert.ok(html.includes('6. Reviews &amp; Governance'), 'Should render Reviews category');
+    assert.ok(html.includes('7. Shortcuts &amp; Cheatsheet'), 'Should render Shortcuts category');
+  });
+
+  it('13. LatexPaperPreview renders author/affiliation block and parses LaTeX figure environments into Figure Cards', () => {
+    const testSections: ManuscriptSection[] = [
+      {
+        id: 'sec-results',
+        manuscriptId: 'manu-101',
+        title: 'Experimental Results',
+        sectionType: 'Results',
+        orderIndex: 2,
+        contentMarkdown: `We demonstrate the model behavior below.\n\n\\begin{figure}[htbp]\n  \\centering\n  \\includegraphics[width=0.9\\linewidth]{https://example.com/nas-dag.png}\n  \\caption{Architecture search DAG on genomic motifs.}\n  \\label{fig:nas-dag}\n\\end{figure}\n\nAs observed in the figure above, convergence is steady.`,
+        contentLatex: '',
+        wordCount: 30,
+        createdAt: '2026-09-30T10:00:00.000Z',
+        updatedAt: '2026-09-30T10:00:00.000Z',
+      },
+    ];
+
+    const html = renderToString(
+      <LatexPaperPreview
+        manuscript={mockManuscript}
+        sections={testSections}
+        activeSectionId="sec-results"
+        activeSectionContent={testSections[0].contentMarkdown}
+        citations={[]}
+        onCitationClick={() => {}}
+      />
+    );
+
+    // Verify Title & Author Affiliation hierarchy
+    assert.ok(html.includes('Alex Chen'), 'Should render first author');
+    assert.ok(html.includes('Sarah Vance'), 'Should render co-author');
+    assert.ok(html.includes('Computational Biology &amp; AI Laboratory'), 'Should render MIT lab');
+    assert.ok(html.includes('Stanford University'), 'Should render Stanford affiliation');
+    assert.ok(html.includes('alex.chen@mit.edu'), 'Should render corresponding email badge');
+
+    // Verify Figure Card Rendering
+    assert.ok(html.includes('Figure 1:'), 'Should render figure index');
+    assert.ok(html.includes('Architecture search DAG on genomic motifs.'), 'Should render parsed caption');
+    assert.ok(html.includes('\\fig:nas-dag'), 'Should render label badge');
+    assert.ok(html.includes('Click to expand figure'), 'Should render interactive zoom hint');
   });
 });

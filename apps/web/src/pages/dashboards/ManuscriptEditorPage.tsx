@@ -31,6 +31,8 @@ import {
   Pin,
   Copy,
   Check,
+  Image as ImageIcon,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { api } from '../../lib/api.js';
@@ -52,6 +54,8 @@ import { VersionHistoryModal } from '../../components/manuscripts/VersionHistory
 import { NoticeModal } from '../../components/common/NoticeModal.js';
 import { ConfirmDeleteDialog } from '../../components/common/ConfirmDeleteDialog.js';
 import { LatexPaperPreview } from '../../components/manuscripts/LatexPaperPreview.js';
+import { InsertFigureModal } from '../../components/manuscripts/InsertFigureModal.js';
+import { ManuscriptGuidelinesModal } from '../../components/manuscripts/ManuscriptGuidelinesModal.js';
 
 interface ManuscriptEditorPageProps {
   manuscriptId: string;
@@ -166,6 +170,8 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
   const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
   const [whyCiteKey, setWhyCiteKey] = useState<string | null>(null);
   const [copiedCitationKey, setCopiedCitationKey] = useState<string | null>(null);
+  const [isFigureModalOpen, setIsFigureModalOpen] = useState(false);
+  const [isGuidelinesModalOpen, setIsGuidelinesModalOpen] = useState(false);
   const [isAssignReviewerOpen, setIsAssignReviewerOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<{ id: string; title: string } | null>(null);
@@ -226,6 +232,23 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
   useEffect(() => {
     fetchManuscriptData();
   }, [fetchManuscriptData]);
+
+  // Global Keyboard Shortcuts (Ctrl+Shift+F for Figures, Ctrl+/ for Guidelines)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'F' || e.key === 'f')) {
+        e.preventDefault();
+        setIsFigureModalOpen(true);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setIsGuidelinesModalOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Sync editor buffer when active section changes
   const handleSelectSection = (section: ManuscriptSection) => {
@@ -294,6 +317,33 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + prefix.length, start + prefix.length + (selected ? selected.length : 4));
+    }, 50);
+  };
+
+  // Snippet insertion helper for Figures, Guidelines, Equations, etc.
+  const insertSnippetAtCursor = (snippet: string) => {
+    const textarea = document.getElementById('manuscript-editor-textarea') as HTMLTextAreaElement | null;
+    if (!textarea) {
+      handleEditorChange(activeContent ? `${activeContent}\n\n${snippet}` : snippet);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const current = textarea.value;
+
+    const before = current.substring(0, start);
+    const after = current.substring(end);
+    const prefix = before.length > 0 && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
+    const suffix = after.length > 0 && !after.startsWith('\n\n') ? (after.startsWith('\n') ? '\n' : '\n\n') : '';
+
+    const updated = before + prefix + snippet + suffix + after;
+    handleEditorChange(updated);
+
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = start + prefix.length + snippet.length;
+      textarea.setSelectionRange(newPos, newPos);
     }, 50);
   };
 
@@ -569,6 +619,16 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
             <History className="w-3.5 h-3.5 text-blue-400" />
             <span className="hidden sm:inline">Versions</span>
             <span className="text-[10px] px-1 rounded bg-slate-900 text-slate-400">{versions.length}</span>
+          </button>
+
+          {/* Manuscript Writing Guidelines */}
+          <button
+            onClick={() => setIsGuidelinesModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 text-xs font-semibold border border-amber-500/30 transition-colors"
+            title="Manuscript Writing Guidelines & Cheatsheet [Ctrl+/]"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Guidelines</span>
           </button>
 
           {/* Supervisor Assign Reviewer */}
@@ -905,13 +965,35 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                   {(userAccess.isAuthor || userAccess.isSupervisor) && (
                     <button
                       onClick={() => setIsCitationModalOpen(true)}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-medium border border-amber-500/20 transition-colors"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-medium border border-amber-500/25 transition-colors"
                       title="Insert in-text citation [@key]"
                     >
                       <Plus className="w-3 h-3" />
-                      <span>Cite Literature</span>
+                      <span>Cite</span>
                     </button>
                   )}
+
+                  {/* Insert Figure Button */}
+                  {(userAccess.isAuthor || userAccess.isSupervisor) && (
+                    <button
+                      onClick={() => setIsFigureModalOpen(true)}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-medium border border-slate-700 transition-colors"
+                      title="Insert Scientific Figure / Media (\begin{figure}...) [Ctrl+Shift+F]"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="hidden sm:inline">Figure</span>
+                    </button>
+                  )}
+
+                  {/* Editor Guidelines & Cheatsheet */}
+                  <button
+                    onClick={() => setIsGuidelinesModalOpen(true)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition-colors"
+                    title="Editor Guidelines & Cheatsheet [Ctrl+/]"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Guide</span>
+                  </button>
 
                   {/* View Mode Switcher */}
                   <div className="flex items-center rounded-lg bg-slate-900 border border-slate-800 p-0.5 ml-2">
@@ -955,11 +1037,20 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                       value={activeContent}
                       onChange={(e) => handleEditorChange(e.target.value)}
                       onMouseUp={handleEditorMouseUp}
-                      placeholder="Draft your scholarly section text in Markdown & LaTeX. Use [@CitationKey] to anchor citations..."
+                      placeholder="Draft your scholarly section text in Markdown & LaTeX. Use [@CitationKey] to anchor citations, \begin{figure} for images, and $$ for display math equations..."
                       disabled={!userAccess.isAuthor && !userAccess.isSupervisor}
-                      className="w-full flex-1 bg-transparent text-slate-200 placeholder-slate-600 focus:outline-none resize-none font-serif text-base leading-relaxed selection:bg-amber-500/20 selection:text-amber-200"
+                      className="w-full flex-1 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none resize-none font-serif text-[15px] sm:text-base leading-[1.8] selection:bg-amber-500/25 selection:text-amber-100"
                       spellCheck
                     />
+
+                    {/* Editor Bottom Keyboard Hint Bar */}
+                    <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 font-mono border-t border-slate-800/60 select-none">
+                      <div className="flex items-center gap-3">
+                        <span>Figure: <kbd className="px-1 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">Ctrl+Shift+F</kbd></span>
+                        <span>Guide: <kbd className="px-1 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">Ctrl+/</kbd></span>
+                      </div>
+                      <span>{(activeContent.trim() ? activeContent.trim().split(/\s+/).length : 0).toLocaleString()} section words</span>
+                    </div>
 
                     {/* Quick helper for selected snippet review anchoring */}
                     {selectedSnippet && (
@@ -1248,6 +1339,20 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
           insertFormatting(dto.inTextLabel || `[@${dto.citationKey}]`);
           await fetchManuscriptData();
         }}
+      />
+
+      {/* Insert Scientific Figure / Media Modal */}
+      <InsertFigureModal
+        isOpen={isFigureModalOpen}
+        onClose={() => setIsFigureModalOpen(false)}
+        onInsertFigure={(snippet) => insertSnippetAtCursor(snippet)}
+      />
+
+      {/* Manuscript Guidelines & Cheatsheet Modal */}
+      <ManuscriptGuidelinesModal
+        isOpen={isGuidelinesModalOpen}
+        onClose={() => setIsGuidelinesModalOpen(false)}
+        onInsertSnippet={(snippet) => insertSnippetAtCursor(snippet)}
       />
 
       {/* Why Did I Cite This Modal */}
