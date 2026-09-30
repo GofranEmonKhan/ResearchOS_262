@@ -16,7 +16,6 @@
     "@researchos/shared-types": "workspace:*",
     "@supabase/supabase-js": "^2.49.1",
     "clsx": "^2.1.1",
-    "framer-motion": "^13.1.0",
     "lucide-react": "^0.479.0",
     "pdfjs-dist": "^6.3.289",
     "react": "^19.0.0",

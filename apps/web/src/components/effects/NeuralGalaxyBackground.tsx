@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 
 interface Node {
   x: number;
@@ -193,12 +192,7 @@ export const NeuralGalaxyBackground: React.FC = () => {
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1.2, ease: 'easeOut' }}
-      className="absolute inset-0 pointer-events-none overflow-hidden z-0"
-    >
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 transition-opacity duration-1000 opacity-100">
       {/* Background Deep Cosmic Mesh & Glow Orbs */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-purple-600/20 via-indigo-600/15 to-transparent rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute -bottom-20 right-10 w-[480px] h-[480px] bg-indigo-600/15 rounded-full blur-[90px] pointer-events-none" />
@@ -209,6 +203,6 @@ export const NeuralGalaxyBackground: React.FC = () => {
         ref={canvasRef}
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
-    </motion.div>
+    </div>
   );
 };
