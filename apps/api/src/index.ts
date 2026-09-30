@@ -17,6 +17,7 @@ import notificationRoutes from './routes/notification.routes.js';
 import paperRoutes from './routes/paper.routes.js';
 import collectionRoutes from './routes/collection.routes.js';
 import { experimentRouter } from './routes/experiment.routes.js';
+import { manuscriptRouter } from './routes/manuscript.routes.js';
 import { forumRouter } from './routes/forum.routes.js';
 import { directMessageRouter } from './routes/directMessage.routes.js';
 import { communityRouter } from './routes/community.routes.js';
@@ -78,6 +79,9 @@ app.use('/collections', collectionRoutes);
 
 // Spec 04 API Route Mounts
 app.use('/', experimentRouter);
+
+// Spec 05 API Route Mounts (Manuscript Writing & Internal Peer Review)
+app.use('/', manuscriptRouter);
 
 // Spec 06 API Route Mounts (Discussion Forum & Research Community)
 app.use('/forum', forumRouter);
