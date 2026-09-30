@@ -56,6 +56,13 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Extend Notification Types for Spec 05
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'ReviewerAssigned';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'ReviewCommentAdded';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'CommentFixed';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'CommentResolved';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'ManuscriptStatusChanged';
+
 -- 2. Manuscripts Table
 CREATE TABLE IF NOT EXISTS manuscripts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
