@@ -236,17 +236,20 @@ export class CitationService {
   }
 
   /**
-   * Search literature papers for citation picker
+   * Search literature papers for citation picker - strictly scoped to the research project
    */
   static async searchLiteratureForCitation(
     projectId: string,
     query: string = ''
   ): Promise<Partial<Paper>[]> {
+    if (!projectId) return [];
+
     let q = supabaseAdmin
       .from('papers')
       .select('id, title, authors, year, venue, doi, reading_status')
-      .or(`project_id.eq.${projectId},project_id.is.null`)
-      .limit(30);
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(50);
 
     if (query && query.trim()) {
       const term = `%${query.trim()}%`;
