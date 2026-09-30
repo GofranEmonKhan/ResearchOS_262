@@ -46,6 +46,8 @@ import { ReviewCommentDrawer } from '../../components/manuscripts/ReviewCommentD
 import { SubmissionChecklistCard } from '../../components/manuscripts/SubmissionChecklistCard.js';
 import { AssignReviewerModal } from '../../components/manuscripts/AssignReviewerModal.js';
 import { VersionHistoryModal } from '../../components/manuscripts/VersionHistoryModal.js';
+import { NoticeModal } from '../../components/common/NoticeModal.js';
+import { ConfirmDeleteDialog } from '../../components/common/ConfirmDeleteDialog.js';
 
 interface ManuscriptEditorPageProps {
   manuscriptId: string;
@@ -93,6 +95,9 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
   const [whyCiteKey, setWhyCiteKey] = useState<string | null>(null);
   const [isAssignReviewerOpen, setIsAssignReviewerOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [sectionToDelete, setSectionToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isDeletingSection, setIsDeletingSection] = useState(false);
+  const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
   // Selected Text Snippet for Review Anchor
   const [selectedSnippet, setSelectedSnippet] = useState<string | null>(null);
@@ -251,7 +256,7 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
       setActiveSectionId(newSec.id);
       setActiveContent('');
     } catch (err: any) {
-      alert(err.message || 'Failed to add section');
+      setErrorNotice(err.message || 'Failed to add section');
     }
   };
 
@@ -273,21 +278,24 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
     try {
       await api.reorderManuscriptSections(manuscriptId, { sectionOrders: payload });
     } catch (err: any) {
-      alert(err.message || 'Failed to reorder sections');
+      setErrorNotice(err.message || 'Failed to reorder sections');
       await fetchManuscriptData();
     }
   };
 
   // Section Management: Delete Section
-  const handleDeleteSection = async (sectionId: string, sectionTitle: string) => {
-    const confirmed = window.confirm(`Are you sure you want to delete "${sectionTitle}"? This cannot be undone.`);
-    if (!confirmed) return;
+  const handleDeleteSection = (sectionId: string, sectionTitle: string) => {
+    setSectionToDelete({ id: sectionId, title: sectionTitle });
+  };
 
+  const handleConfirmDeleteSection = async () => {
+    if (!sectionToDelete) return;
+    setIsDeletingSection(true);
     try {
-      await api.deleteManuscriptSection(manuscriptId, sectionId);
-      const remaining = sections.filter((s) => s.id !== sectionId);
+      await api.deleteManuscriptSection(manuscriptId, sectionToDelete.id);
+      const remaining = sections.filter((s) => s.id !== sectionToDelete.id);
       setSections(remaining);
-      if (activeSectionId === sectionId) {
+      if (activeSectionId === sectionToDelete.id) {
         if (remaining.length > 0) {
           setActiveSectionId(remaining[0].id);
           setActiveContent(remaining[0].contentMarkdown || '');
@@ -296,8 +304,11 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
           setActiveContent('');
         }
       }
+      setSectionToDelete(null);
     } catch (err: any) {
-      alert(err.message || 'Failed to delete section');
+      setErrorNotice(err.message || 'Failed to delete section');
+    } finally {
+      setIsDeletingSection(false);
     }
   };
 
@@ -1009,6 +1020,27 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
         canEdit={userAccess.isAuthor || userAccess.isSupervisor}
         onRefreshVersions={fetchManuscriptData}
         onVersionRestored={fetchManuscriptData}
+      />
+
+      {/* Confirm Delete Section Dialog */}
+      <ConfirmDeleteDialog
+        isOpen={!!sectionToDelete}
+        title="Delete Manuscript Section"
+        message={`Are you sure you want to permanently delete "${sectionToDelete?.title}"? Any uncommitted draft text in this section will be lost.`}
+        confirmText="Delete Section"
+        isDeleting={isDeletingSection}
+        onConfirm={handleConfirmDeleteSection}
+        onClose={() => setSectionToDelete(null)}
+      />
+
+      {/* Error / Warning Notice Modal */}
+      <NoticeModal
+        isOpen={!!errorNotice}
+        type="error"
+        title="Manuscript Action Error"
+        message={errorNotice || 'An unexpected error occurred.'}
+        primaryActionText="Acknowledge"
+        onClose={() => setErrorNotice(null)}
       />
     </div>
   );
