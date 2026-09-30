@@ -181,6 +181,40 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
   // Selected Text Snippet for Review Anchor
   const [selectedSnippet, setSelectedSnippet] = useState<string | null>(null);
 
+  // Manuscript Figure Assets Store: maps clean paths ('figures/plot.png') to image data
+  const [figureAssets, setFigureAssets] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!manuscriptId) return;
+    try {
+      const stored = localStorage.getItem(`researchos_figures_${manuscriptId}`);
+      if (stored) {
+        setFigureAssets(JSON.parse(stored));
+      } else {
+        setFigureAssets({});
+      }
+    } catch (err) {
+      console.warn('Failed to parse manuscript figures from localStorage', err);
+    }
+  }, [manuscriptId]);
+
+  const registerFigureAsset = useCallback(
+    (path: string, dataUrl: string) => {
+      setFigureAssets((prev) => {
+        const updated = { ...prev, [path]: dataUrl };
+        const altKey = path.startsWith('figures/') ? path.replace('figures/', '') : `figures/${path}`;
+        updated[altKey] = dataUrl;
+        try {
+          localStorage.setItem(`researchos_figures_${manuscriptId}`, JSON.stringify(updated));
+        } catch (err) {
+          console.warn('Failed to save figure asset to localStorage', err);
+        }
+        return updated;
+      });
+    },
+    [manuscriptId]
+  );
+
   // Loading & Error States
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -361,6 +395,88 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
       }
     }
   };
+
+  // Base64 Image Detection & Automatic / One-Click Cleanup into LaTeX Figures
+  const hasRawBase64Images = /data:image\/[a-zA-Z0-9+]+;base64,[A-Za-z0-9+/=]{80,}/.test(activeContent);
+
+  const cleanUpRawBase64Images = useCallback(() => {
+    let updatedContent = activeContent;
+    const newAssets: Record<string, string> = {};
+    let convertedCount = 0;
+
+    // Pattern 1: \includegraphics[...]{data:image/...} (supports optional whitespace/newlines before {)
+    const includegraphicsRegex = /\\includegraphics(?:\[[^\]]*\])?\s*\{(data:image\/[a-zA-Z0-9+]+;base64,[A-Za-z0-9+/=]+)\}/g;
+    let match: RegExpExecArray | null;
+
+    const matches: Array<{ fullMatch: string; dataUrl: string; index: number }> = [];
+    while ((match = includegraphicsRegex.exec(activeContent)) !== null) {
+      matches.push({
+        fullMatch: match[0],
+        dataUrl: match[1],
+        index: match.index,
+      });
+    }
+
+    for (const item of matches) {
+      convertedCount++;
+      // Search for enclosing \begin{figure} ... \end{figure} block
+      const figureBlockStart = activeContent.lastIndexOf('\\begin{figure}', item.index);
+      const figureBlockEnd = activeContent.indexOf('\\end{figure}', item.index);
+      let labelName = `figure_${convertedCount}`;
+      if (figureBlockStart !== -1 && figureBlockEnd !== -1 && figureBlockEnd > figureBlockStart) {
+        const figureBlock = activeContent.slice(figureBlockStart, figureBlockEnd + 12);
+        const labelMatch = figureBlock.match(/\\label\{fig:([a-zA-Z0-9_-]+)\}/);
+        if (labelMatch) {
+          labelName = labelMatch[1];
+        }
+      }
+
+      const cleanPath = `figures/${labelName}.png`;
+      newAssets[cleanPath] = item.dataUrl;
+      newAssets[`${labelName}.png`] = item.dataUrl;
+
+      updatedContent = updatedContent.replace(item.dataUrl, cleanPath);
+    }
+
+    // Pattern 2: Markdown image ![caption](data:image/...)
+    const mdRegex = /!\[([^\]]*)\]\((data:image\/[a-zA-Z0-9+]+;base64,[A-Za-z0-9+/=]+)\)/g;
+    while ((match = mdRegex.exec(activeContent)) !== null) {
+      convertedCount++;
+      const captionText = match[1] || `figure_${convertedCount}`;
+      const cleanName = captionText.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 30) || `figure_${convertedCount}`;
+      const cleanPath = `figures/${cleanName}.png`;
+
+      newAssets[cleanPath] = match[2];
+      newAssets[`${cleanName}.png`] = match[2];
+
+      updatedContent = updatedContent.replace(match[2], cleanPath);
+    }
+
+    // Pattern 3: Any leftover generic {data:image/png;base64,...}
+    const genericRegex = /\{data:image\/[a-zA-Z0-9+]+;base64,[A-Za-z0-9+/=]+\}/g;
+    updatedContent = updatedContent.replace(genericRegex, (raw) => {
+      convertedCount++;
+      const dataUrl = raw.slice(1, -1);
+      const cleanPath = `figures/figure_${convertedCount}.png`;
+      newAssets[cleanPath] = dataUrl;
+      newAssets[`figure_${convertedCount}.png`] = dataUrl;
+      return `{${cleanPath}}`;
+    });
+
+    if (convertedCount > 0) {
+      setFigureAssets((prev) => {
+        const merged = { ...prev, ...newAssets };
+        try {
+          localStorage.setItem(`researchos_figures_${manuscriptId}`, JSON.stringify(merged));
+        } catch (err) {
+          console.warn('Failed to save cleaned figures to localStorage', err);
+        }
+        return merged;
+      });
+
+      handleEditorChange(updatedContent);
+    }
+  }, [activeContent, manuscriptId, handleEditorChange]);
 
   // Section Management: Create Section
   const handleAddSection = async () => {
@@ -1032,6 +1148,37 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                       viewMode === 'edit' ? 'flex-1' : 'min-w-[240px]'
                     }`}
                   >
+                    {/* Unwanted Raw Base64 Detection & One-Click Cleanup Banner */}
+                    {hasRawBase64Images && (
+                      <div className="mb-4 p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-between gap-3 text-xs shrink-0 animate-in fade-in duration-200">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+                            <AlertCircle className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-amber-200 flex items-center gap-1.5">
+                              Large Raw Base64 Image String Detected
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300">
+                                Clutters LaTeX Code
+                              </span>
+                            </p>
+                            <p className="text-slate-300 text-[11px] truncate">
+                              Convert raw base64 data to clean standard LaTeX paths (<code className="font-mono text-amber-300">\includegraphics&#123;figures/...&#125;</code>) to eliminate editor lag and restore clean formatting.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={cleanUpRawBase64Images}
+                          className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs shrink-0 flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+                          title="Extract base64 to manuscript asset store and replace with clean figures/... path"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Clean Up Figure Path</span>
+                        </button>
+                      </div>
+                    )}
+
                     <textarea
                       id="manuscript-editor-textarea"
                       value={activeContent}
@@ -1099,6 +1246,7 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                       activeSectionId={activeSectionId}
                       activeSectionContent={activeContent}
                       citations={citations}
+                      figureAssets={figureAssets}
                       onCitationClick={(citKey) => setWhyCiteKey(citKey)}
                     />
                   </div>
@@ -1345,7 +1493,12 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
       <InsertFigureModal
         isOpen={isFigureModalOpen}
         onClose={() => setIsFigureModalOpen(false)}
-        onInsertFigure={(snippet) => insertSnippetAtCursor(snippet)}
+        onInsertFigure={(snippet, asset) => {
+          if (asset) {
+            registerFigureAsset(asset.path, asset.dataUrl);
+          }
+          insertSnippetAtCursor(snippet);
+        }}
       />
 
       {/* Manuscript Guidelines & Cheatsheet Modal */}

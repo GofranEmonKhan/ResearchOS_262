@@ -10,7 +10,7 @@ import { SubmissionChecklistCard } from '../components/manuscripts/SubmissionChe
 import { AssignReviewerModal } from '../components/manuscripts/AssignReviewerModal.js';
 import { VersionHistoryModal } from '../components/manuscripts/VersionHistoryModal.js';
 import { LatexPaperPreview } from '../components/manuscripts/LatexPaperPreview.js';
-import { InsertFigureModal } from '../components/manuscripts/InsertFigureModal.js';
+import { InsertFigureModal, sanitizeFigurePath } from '../components/manuscripts/InsertFigureModal.js';
 import { ManuscriptGuidelinesModal } from '../components/manuscripts/ManuscriptGuidelinesModal.js';
 import {
   Manuscript,
@@ -480,5 +480,69 @@ describe('Spec 05 — Manuscript Writing & Peer Review UI Component Tests', () =
     assert.ok(html.includes('Architecture search DAG on genomic motifs.'), 'Should render parsed caption');
     assert.ok(html.includes('\\fig:nas-dag'), 'Should render label badge');
     assert.ok(html.includes('Click to expand figure'), 'Should render interactive zoom hint');
+  });
+
+  it('14. sanitizeFigurePath sanitizes user uploaded filenames to clean Overleaf-style relative paths', () => {
+    assert.equal(
+      sanitizeFigurePath('Distribution Imbalanced Dataset.PNG'),
+      'figures/distribution_imbalanced_dataset.png'
+    );
+    assert.equal(
+      sanitizeFigurePath('plot (1) final!.jpeg'),
+      'figures/plot_1_final.jpeg'
+    );
+    assert.equal(
+      sanitizeFigurePath(''),
+      'figures/figure1.png'
+    );
+  });
+
+  it('15. LatexPaperPreview resolves clean relative figures/... path from figureAssets registry', () => {
+    const figureSection: ManuscriptSection = {
+      id: 'sec-fig-test',
+      manuscriptId: 'manu-101',
+      title: 'Methodology and Visualizations',
+      sectionType: 'Methodology',
+      orderIndex: 3,
+      contentMarkdown: `\\begin{figure}[h]\n  \\centering\n  \\includegraphics[width=0.9\\linewidth]{figures/nas_distribution.png}\n  \\caption{Bar graph of the dataset, imbalanced state.}\n  \\label{fig:nas-cell}\n\\end{figure}`,
+      contentLatex: '',
+      wordCount: 20,
+      createdAt: '2026-09-30T10:00:00.000Z',
+      updatedAt: '2026-09-30T10:00:00.000Z',
+    };
+
+    const mockAssets = {
+      'figures/nas_distribution.png': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+    };
+
+    const html = renderToString(
+      <LatexPaperPreview
+        manuscript={mockManuscript}
+        sections={[figureSection]}
+        activeSectionId="sec-fig-test"
+        activeSectionContent={figureSection.contentMarkdown}
+        citations={[]}
+        figureAssets={mockAssets}
+        onCitationClick={() => {}}
+      />
+    );
+
+    // Verify the image source is resolved to the cached binary data
+    assert.ok(
+      html.includes('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),
+      'Preview should resolve clean figures/... path to registered binary data'
+    );
+    assert.ok(
+      html.includes('Bar graph of the dataset, imbalanced state.'),
+      'Preview should render parsed caption'
+    );
+    assert.ok(
+      html.includes('\\fig:nas-cell'),
+      'Preview should render label'
+    );
+    assert.ok(
+      html.includes('figures/nas_distribution.png'),
+      'Preview should display clean relative asset path badge'
+    );
   });
 });

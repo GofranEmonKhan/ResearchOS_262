@@ -17,6 +17,7 @@ interface LatexPaperPreviewProps {
   activeSectionId: string | null;
   activeSectionContent: string;
   citations: ManuscriptCitation[];
+  figureAssets?: Record<string, string>;
   onCitationClick: (citationKey: string) => void;
 }
 
@@ -26,6 +27,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
   activeSectionId,
   activeSectionContent,
   citations,
+  figureAssets,
   onCitationClick,
 }) => {
   // Preview options
@@ -243,6 +245,25 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
     figIndex: number,
     key: string | number
   ) => {
+    // Resolve URL from figureAssets if it matches a registered relative path (e.g. figures/plot.png)
+    let resolvedUrl = url;
+    if (figureAssets) {
+      if (figureAssets[url]) {
+        resolvedUrl = figureAssets[url];
+      } else if (figureAssets['figures/' + url]) {
+        resolvedUrl = figureAssets['figures/' + url];
+      } else if (url.startsWith('figures/') && figureAssets[url.replace('figures/', '')]) {
+        resolvedUrl = figureAssets[url.replace('figures/', '')];
+      } else {
+        // Match by filename alone
+        const bareFileName = url.replace(/^.*[\\/]/, '');
+        const matchingKey = Object.keys(figureAssets).find((k) => k.endsWith(bareFileName));
+        if (matchingKey && figureAssets[matchingKey]) {
+          resolvedUrl = figureAssets[matchingKey];
+        }
+      }
+    }
+
     return (
       <figure
         key={key}
@@ -256,7 +277,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
         <div
           onClick={() =>
             setActiveLightboxImage({
-              url,
+              url: resolvedUrl,
               caption: caption || `Figure ${figIndex}`,
               label,
               figureNumber: figIndex,
@@ -265,7 +286,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
           className="relative inline-block max-w-full overflow-hidden rounded-lg cursor-zoom-in transition-transform duration-200 group-hover:scale-[1.01]"
         >
           <img
-            src={url}
+            src={resolvedUrl}
             alt={caption || `Figure ${figIndex}`}
             className="max-h-[380px] w-auto mx-auto object-contain rounded-md shadow-md"
             onError={(e) => {
@@ -273,7 +294,8 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
               const target = e.currentTarget;
               target.onerror = null;
               target.src =
-                'https://placehold.co/800x450/0f172a/f59e0b?text=Scientific+Figure+Media';
+                'https://placehold.co/800x450/0f172a/f59e0b?text=' +
+                encodeURIComponent(`Figure: ${url}`);
             }}
           />
           {/* Zoom Overlay Hint */}
@@ -306,6 +328,18 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
               }`}
             >
               {`\\${label}`}
+            </span>
+          )}
+          {url.startsWith('figures/') && (
+            <span
+              className={`ml-1.5 inline-flex items-center text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                paperTheme === 'dark'
+                  ? 'text-slate-500 bg-slate-900 border border-slate-800'
+                  : 'text-slate-500 bg-slate-100 border border-slate-200'
+              }`}
+              title="LaTeX Relative Asset Path"
+            >
+              {url}
             </span>
           )}
         </figcaption>
