@@ -62,6 +62,7 @@ import {
   ManuscriptListResponse,
   ReviewAssignment,
   ReviewComment,
+  WhyDidICiteThisContext,
 } from '@researchos/shared-types';
 
 export type {
@@ -642,20 +643,8 @@ export const api = {
     });
   },
 
-  async getWhyDidICiteThis(id: string, citationKey: string): Promise<{
-    citation: ManuscriptCitation;
-    paper: Paper;
-    sidebarFields: PaperSidebarFields | null;
-    annotations: PaperAnnotation[];
-    isMasked: boolean;
-  }> {
-    return fetchApi<{
-      citation: ManuscriptCitation;
-      paper: Paper;
-      sidebarFields: PaperSidebarFields | null;
-      annotations: PaperAnnotation[];
-      isMasked: boolean;
-    }>(`/manuscripts/${id}/citations/${encodeURIComponent(citationKey)}/why`);
+  async getWhyDidICiteThis(id: string, citationKey: string): Promise<WhyDidICiteThisContext> {
+    return fetchApi<WhyDidICiteThisContext>(`/manuscripts/${id}/citations/${encodeURIComponent(citationKey)}/why`);
   },
 
   async searchLiteratureForCitation(projectId: string, query: string = ''): Promise<Paper[]> {
