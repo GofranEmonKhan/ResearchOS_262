@@ -101,6 +101,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       icon: FileText,
       category: 'Publishing',
       badge: 'M05',
+      isNavigate: true,
+      route: '/manuscripts',
     },
     {
       id: 'community',

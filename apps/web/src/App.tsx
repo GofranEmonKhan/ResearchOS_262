@@ -13,6 +13,8 @@ import { LibraryPage } from './pages/dashboards/LibraryPage.js';
 import { PaperViewerPage } from './pages/dashboards/PaperViewerPage.js';
 import { ExperimentTrackerPage } from './pages/dashboards/ExperimentTrackerPage.js';
 import { CommunityPage } from './pages/dashboards/CommunityPage.js';
+import { ManuscriptsPage } from './pages/dashboards/ManuscriptsPage.js';
+import { ManuscriptEditorPage } from './pages/dashboards/ManuscriptEditorPage.js';
 import { ExitWorkspaceModal } from './components/workspace/ExitWorkspaceModal.js';
 
 
@@ -139,6 +141,22 @@ function AppContent() {
     ) {
       const initialTab = currentRoute.startsWith('/messages') ? 'dms' : undefined;
       return <CommunityPage onNavigate={navigate} initialTab={initialTab} />;
+    }
+
+    // Manuscript In-Browser Editor (Spec 05)
+    if (currentRoute.startsWith('/manuscripts/')) {
+      const manuscriptId = currentRoute.replace('/manuscripts/', '').split('/')[0]?.split('?')[0];
+      if (manuscriptId) {
+        return <ManuscriptEditorPage manuscriptId={manuscriptId} onNavigate={navigate} />;
+      }
+    }
+
+    // Manuscripts Dashboard / List (Spec 05)
+    if (
+      currentRoute === '/manuscripts' ||
+      currentRoute.startsWith('/manuscripts')
+    ) {
+      return <ManuscriptsPage onNavigate={navigate} />;
     }
 
     // Dashboard & Project Workspace — any path starting with /projects or /dashboard

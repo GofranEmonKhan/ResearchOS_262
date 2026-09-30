@@ -35,6 +35,69 @@ import {
   ResolveExperimentFlagDto,
   ExperimentComment,
   AddExperimentCommentDto,
+  Manuscript,
+  ManuscriptAuthor,
+  ManuscriptSection,
+  ManuscriptCitation,
+  ManuscriptVersion,
+  ManuscriptRevisionLog,
+  ManuscriptChecklistItem,
+  CreateManuscriptDto,
+  UpdateManuscriptDto,
+  AddManuscriptAuthorDto,
+  CreateManuscriptSectionDto,
+  UpdateManuscriptSectionDto,
+  ReorderSectionsDto,
+  InsertCitationDto,
+  AssignReviewerDto,
+  CreateReviewCommentDto,
+  FixReviewCommentDto,
+  ResolveReviewCommentDto,
+  ReopenReviewCommentDto,
+  CreateManuscriptVersionDto,
+  CreateChecklistItemDto,
+  UpdateChecklistItemDto,
+  TransitionManuscriptStatusDto,
+  ManuscriptSearchParams,
+  ManuscriptListResponse,
+  ReviewAssignment,
+  ReviewComment,
+} from '@researchos/shared-types';
+
+export type {
+  Manuscript,
+  ManuscriptAuthor,
+  ManuscriptSection,
+  ManuscriptCitation,
+  ManuscriptVersion,
+  ManuscriptRevisionLog,
+  ManuscriptChecklistItem,
+  CreateManuscriptDto,
+  UpdateManuscriptDto,
+  AddManuscriptAuthorDto,
+  UpdateManuscriptAuthorDto,
+  CreateManuscriptSectionDto,
+  UpdateManuscriptSectionDto,
+  ReorderSectionsDto,
+  InsertCitationDto,
+  AssignReviewerDto,
+  CreateReviewCommentDto,
+  FixReviewCommentDto,
+  ResolveReviewCommentDto,
+  ReopenReviewCommentDto,
+  CreateManuscriptVersionDto,
+  RestoreManuscriptVersionDto,
+  CreateChecklistItemDto,
+  UpdateChecklistItemDto,
+  TransitionManuscriptStatusDto,
+  ManuscriptSearchParams,
+  ManuscriptListResponse,
+  ManuscriptStatus,
+  ManuscriptSectionType,
+  ReviewAssignment,
+  ReviewComment,
+  ReviewCommentSeverity,
+  ReviewCommentStatus,
 } from '@researchos/shared-types';
 
 export const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {}) as any;
@@ -477,5 +540,203 @@ export const api = {
     return fetchApi<{ success: boolean; message: string }>(`/tasks/${taskId}/experiments/${experimentId}`, {
       method: 'DELETE',
     });
+  },
+
+  // ==========================================
+  // Manuscripts & Peer Review (Module 05)
+  // ==========================================
+  async createManuscript(projectId: string, dto: CreateManuscriptDto): Promise<Manuscript> {
+    return fetchApi<Manuscript>(`/projects/${projectId}/manuscripts`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async listProjectManuscripts(projectId: string, params: ManuscriptSearchParams = {}): Promise<ManuscriptListResponse> {
+    const query = new URLSearchParams();
+    if (params.status) query.set('status', params.status);
+    if (params.search) query.set('search', params.search);
+    if (params.page) query.set('page', params.page.toString());
+    if (params.limit) query.set('limit', params.limit.toString());
+    return fetchApi<ManuscriptListResponse>(`/projects/${projectId}/manuscripts?${query.toString()}`);
+  },
+
+  async listManuscripts(params: ManuscriptSearchParams = {}): Promise<ManuscriptListResponse> {
+    const query = new URLSearchParams();
+    if (params.projectId) query.set('projectId', params.projectId);
+    if (params.status) query.set('status', params.status);
+    if (params.search) query.set('search', params.search);
+    if (params.page) query.set('page', params.page.toString());
+    if (params.limit) query.set('limit', params.limit.toString());
+    return fetchApi<ManuscriptListResponse>(`/manuscripts?${query.toString()}`);
+  },
+
+  async getManuscript(id: string): Promise<Manuscript & { userAccess?: { isAuthor: boolean; isSupervisor: boolean; isReviewer: boolean; isReader: boolean } }> {
+    return fetchApi<Manuscript & { userAccess?: { isAuthor: boolean; isSupervisor: boolean; isReviewer: boolean; isReader: boolean } }>(`/manuscripts/${id}`);
+  },
+
+  async updateManuscript(id: string, dto: UpdateManuscriptDto): Promise<Manuscript> {
+    return fetchApi<Manuscript>(`/manuscripts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async transitionManuscriptStatus(id: string, dto: TransitionManuscriptStatusDto): Promise<Manuscript> {
+    return fetchApi<Manuscript>(`/manuscripts/${id}/status`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async addManuscriptAuthor(id: string, dto: AddManuscriptAuthorDto): Promise<ManuscriptAuthor[]> {
+    return fetchApi<ManuscriptAuthor[]>(`/manuscripts/${id}/authors`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async removeManuscriptAuthor(id: string, authorUserId: string): Promise<{ success: boolean }> {
+    return fetchApi<{ success: boolean }>(`/manuscripts/${id}/authors/${authorUserId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async createManuscriptSection(id: string, dto: CreateManuscriptSectionDto): Promise<ManuscriptSection> {
+    return fetchApi<ManuscriptSection>(`/manuscripts/${id}/sections`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async updateManuscriptSection(id: string, sectionId: string, dto: UpdateManuscriptSectionDto): Promise<ManuscriptSection> {
+    return fetchApi<ManuscriptSection>(`/manuscripts/${id}/sections/${sectionId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async reorderManuscriptSections(id: string, dto: ReorderSectionsDto): Promise<ManuscriptSection[]> {
+    return fetchApi<ManuscriptSection[]>(`/manuscripts/${id}/sections/reorder`, {
+      method: 'PUT',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async deleteManuscriptSection(id: string, sectionId: string): Promise<{ success: boolean }> {
+    return fetchApi<{ success: boolean }>(`/manuscripts/${id}/sections/${sectionId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async insertCitation(id: string, dto: InsertCitationDto): Promise<ManuscriptCitation> {
+    return fetchApi<ManuscriptCitation>(`/manuscripts/${id}/citations`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async removeCitation(id: string, citationId: string): Promise<{ success: boolean }> {
+    return fetchApi<{ success: boolean }>(`/manuscripts/${id}/citations/${citationId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async getWhyDidICiteThis(id: string, citationKey: string): Promise<{
+    citation: ManuscriptCitation;
+    paper: Paper;
+    sidebarFields: PaperSidebarFields | null;
+    annotations: PaperAnnotation[];
+    isMasked: boolean;
+  }> {
+    return fetchApi<{
+      citation: ManuscriptCitation;
+      paper: Paper;
+      sidebarFields: PaperSidebarFields | null;
+      annotations: PaperAnnotation[];
+      isMasked: boolean;
+    }>(`/manuscripts/${id}/citations/${encodeURIComponent(citationKey)}/why`);
+  },
+
+  async searchLiteratureForCitation(projectId: string, query: string = ''): Promise<Paper[]> {
+    const q = new URLSearchParams();
+    if (query) q.set('q', query);
+    return fetchApi<Paper[]>(`/projects/${projectId}/citations/search?${q.toString()}`);
+  },
+
+  async assignReviewer(id: string, dto: AssignReviewerDto): Promise<ReviewAssignment> {
+    return fetchApi<ReviewAssignment>(`/manuscripts/${id}/reviewers`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async removeReviewer(id: string, reviewerId: string): Promise<{ success: boolean }> {
+    return fetchApi<{ success: boolean }>(`/manuscripts/${id}/reviewers/${reviewerId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async createReviewComment(id: string, dto: CreateReviewCommentDto): Promise<ReviewComment> {
+    return fetchApi<ReviewComment>(`/manuscripts/${id}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async fixReviewComment(id: string, commentId: string, dto: FixReviewCommentDto): Promise<ReviewComment> {
+    return fetchApi<ReviewComment>(`/manuscripts/${id}/comments/${commentId}/fix`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async resolveReviewComment(id: string, commentId: string, dto: ResolveReviewCommentDto = {}): Promise<ReviewComment> {
+    return fetchApi<ReviewComment>(`/manuscripts/${id}/comments/${commentId}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async reopenReviewComment(id: string, commentId: string, dto: ReopenReviewCommentDto): Promise<ReviewComment> {
+    return fetchApi<ReviewComment>(`/manuscripts/${id}/comments/${commentId}/reopen`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async createChecklistItem(id: string, dto: CreateChecklistItemDto): Promise<ManuscriptChecklistItem> {
+    return fetchApi<ManuscriptChecklistItem>(`/manuscripts/${id}/checklist`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async updateChecklistItem(id: string, itemId: string, dto: UpdateChecklistItemDto): Promise<ManuscriptChecklistItem> {
+    return fetchApi<ManuscriptChecklistItem>(`/manuscripts/${id}/checklist/${itemId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async createSnapshotVersion(id: string, dto: CreateManuscriptVersionDto): Promise<ManuscriptVersion> {
+    return fetchApi<ManuscriptVersion>(`/manuscripts/${id}/versions`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async getManuscriptVersions(id: string): Promise<ManuscriptVersion[]> {
+    return fetchApi<ManuscriptVersion[]>(`/manuscripts/${id}/versions`);
+  },
+
+  async restoreManuscriptVersion(id: string, versionId: string): Promise<Manuscript> {
+    return fetchApi<Manuscript>(`/manuscripts/${id}/versions/${versionId}/restore`, {
+      method: 'POST',
+    });
+  },
+
+  async getManuscriptRevisionLogs(id: string): Promise<ManuscriptRevisionLog[]> {
+    return fetchApi<ManuscriptRevisionLog[]>(`/manuscripts/${id}/logs`);
   },
 };
