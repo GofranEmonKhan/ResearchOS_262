@@ -143,11 +143,17 @@ describe('Spec 05 — Manuscript Writing & Peer Review UI Component Tests', () =
         isOpen={true}
         onClose={() => {}}
         projectId="proj-1"
+        projects={[
+          { id: 'proj-1', title: 'Deep Learning & Neural Systems Laboratory', isPersonal: false } as any,
+          { id: 'proj-2', title: 'Transformer Memory Optimization', isPersonal: true } as any,
+        ]}
         onManuscriptCreated={() => {}}
       />
     );
 
     assert.ok(html.includes('New Academic Manuscript'), 'Should render title header');
+    assert.ok(html.includes('Research Project Workspace'), 'Should render project selector');
+    assert.ok(html.includes('Deep Learning &amp; Neural Systems Laboratory'), 'Should list project option');
     assert.ok(html.includes('Target Publication Venue'), 'Should render target venue field');
     assert.ok(html.includes('Initialize Standard IMRAD Section Structure'), 'Should render IMRAD toggle');
   });
