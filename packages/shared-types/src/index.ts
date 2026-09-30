@@ -108,7 +108,12 @@ export type NotificationType =
   | 'AnswerAccepted'
   | 'ExpertVerified'
   | 'DirectMessageReceived'
-  | 'ContentReported';
+  | 'ContentReported'
+  | 'ReviewerAssigned'
+  | 'ReviewCommentAdded'
+  | 'CommentFixed'
+  | 'CommentResolved'
+  | 'ManuscriptStatusChanged';
 
 export const NOTIFICATION_TYPES: Record<NotificationType, NotificationType> = {
   TaskAssigned: 'TaskAssigned',
@@ -125,6 +130,11 @@ export const NOTIFICATION_TYPES: Record<NotificationType, NotificationType> = {
   ExpertVerified: 'ExpertVerified',
   DirectMessageReceived: 'DirectMessageReceived',
   ContentReported: 'ContentReported',
+  ReviewerAssigned: 'ReviewerAssigned',
+  ReviewCommentAdded: 'ReviewCommentAdded',
+  CommentFixed: 'CommentFixed',
+  CommentResolved: 'CommentResolved',
+  ManuscriptStatusChanged: 'ManuscriptStatusChanged',
 };
 
 export type NotificationChannel = 'InApp' | 'Email';
@@ -1271,6 +1281,421 @@ export interface ForumPostListResponse {
   limit: number;
   totalPages: number;
 }
+
+// ==========================================
+// 9. Manuscript Writing & Internal Peer Review (Spec 05)
+// ==========================================
+
+export type ManuscriptStatus =
+  | 'Draft'
+  | 'UnderInternalReview'
+  | 'Revising'
+  | 'ReadyForSubmission'
+  | 'Submitted'
+  | 'Published'
+  | 'Archived';
+
+export const MANUSCRIPT_STATUSES: Record<ManuscriptStatus, ManuscriptStatus> = {
+  Draft: 'Draft',
+  UnderInternalReview: 'UnderInternalReview',
+  Revising: 'Revising',
+  ReadyForSubmission: 'ReadyForSubmission',
+  Submitted: 'Submitted',
+  Published: 'Published',
+  Archived: 'Archived',
+};
+
+export type ManuscriptSectionType =
+  | 'Abstract'
+  | 'Introduction'
+  | 'RelatedWork'
+  | 'Methodology'
+  | 'Experiments'
+  | 'Results'
+  | 'Discussion'
+  | 'Conclusion'
+  | 'Custom';
+
+export const MANUSCRIPT_SECTION_TYPES: Record<ManuscriptSectionType, ManuscriptSectionType> = {
+  Abstract: 'Abstract',
+  Introduction: 'Introduction',
+  RelatedWork: 'RelatedWork',
+  Methodology: 'Methodology',
+  Experiments: 'Experiments',
+  Results: 'Results',
+  Discussion: 'Discussion',
+  Conclusion: 'Conclusion',
+  Custom: 'Custom',
+};
+
+export type ReviewCommentSeverity =
+  | 'GrammarOrTypo'
+  | 'MinorScientific'
+  | 'MajorScientific'
+  | 'CriticalFlaw';
+
+export const REVIEW_COMMENT_SEVERITIES: Record<ReviewCommentSeverity, ReviewCommentSeverity> = {
+  GrammarOrTypo: 'GrammarOrTypo',
+  MinorScientific: 'MinorScientific',
+  MajorScientific: 'MajorScientific',
+  CriticalFlaw: 'CriticalFlaw',
+};
+
+export type ReviewCommentStatus =
+  | 'Open'
+  | 'FixedByResearcher'
+  | 'Resolved'
+  | 'Reopened';
+
+export const REVIEW_COMMENT_STATUSES: Record<ReviewCommentStatus, ReviewCommentStatus> = {
+  Open: 'Open',
+  FixedByResearcher: 'FixedByResearcher',
+  Resolved: 'Resolved',
+  Reopened: 'Reopened',
+};
+
+export type ReviewAssignmentStatus = 'Assigned' | 'InProgress' | 'Completed';
+
+export const REVIEW_ASSIGNMENT_STATUSES: Record<ReviewAssignmentStatus, ReviewAssignmentStatus> = {
+  Assigned: 'Assigned',
+  InProgress: 'InProgress',
+  Completed: 'Completed',
+};
+
+export interface ManuscriptAuthor {
+  id: string;
+  manuscriptId: string;
+  userId: string;
+  authorOrder: number;
+  affiliation?: string | null;
+  isCorresponding: boolean;
+  createdAt: string;
+  user?: Partial<Profile> | null;
+}
+
+export interface ManuscriptSection {
+  id: string;
+  manuscriptId: string;
+  title: string;
+  sectionType: ManuscriptSectionType;
+  orderIndex: number;
+  contentMarkdown: string;
+  contentLatex: string;
+  wordCount: number;
+  updatedBy?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  updater?: Partial<Profile> | null;
+  commentsCount?: number;
+}
+
+export interface ManuscriptCitation {
+  id: string;
+  manuscriptId: string;
+  sectionId?: string | null;
+  paperId: string;
+  citationKey: string;
+  inTextLabel?: string | null;
+  contextNote?: string | null;
+  createdBy?: string | null;
+  createdAt: string;
+  paper?: Partial<Paper> | null;
+  creator?: Partial<Profile> | null;
+}
+
+export interface WhyDidICiteThisContext {
+  citationKey: string;
+  inTextLabel?: string | null;
+  contextNote?: string | null;
+  paper: {
+    id: string;
+    title: string;
+    authors: string[];
+    year?: number | null;
+    venue?: string | null;
+    doi?: string | null;
+  };
+  highlights: {
+    id: string;
+    page: number;
+    highlightedText: string;
+    stickyNote?: string | null;
+  }[];
+  sidebarSummary?: {
+    researchGap?: string | null;
+    methodology?: string | null;
+    results?: string | null;
+    limitations?: string | null;
+    personalNotes?: string | null; // Masked to null if requester != uploader & visible=false
+  } | null;
+  isMaskedNote: boolean;
+}
+
+export interface ReviewAssignment {
+  id: string;
+  manuscriptId: string;
+  reviewerId: string;
+  assignedBy: string;
+  deadline?: string | null;
+  status: ReviewAssignmentStatus;
+  createdAt: string;
+  reviewer?: Partial<Profile> | null;
+  assigner?: Partial<Profile> | null;
+}
+
+export interface ReviewComment {
+  id: string;
+  manuscriptId: string;
+  sectionId?: string | null;
+  reviewerId: string;
+  parentCommentId?: string | null;
+  highlightedText?: string | null;
+  commentText: string;
+  severity: ReviewCommentSeverity;
+  status: ReviewCommentStatus;
+  fixNote?: string | null;
+  resolvedBy?: string | null;
+  resolvedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  reviewer?: Partial<Profile> | null;
+  resolver?: Partial<Profile> | null;
+  section?: Partial<ManuscriptSection> | null;
+  replies?: ReviewComment[];
+}
+
+export interface ManuscriptVersion {
+  id: string;
+  manuscriptId: string;
+  versionNumber: number;
+  versionName: string;
+  snapshotData: {
+    title: string;
+    abstract?: string | null;
+    targetVenue?: string | null;
+    status: ManuscriptStatus;
+    sections: {
+      title: string;
+      sectionType: ManuscriptSectionType;
+      orderIndex: number;
+      contentMarkdown: string;
+      contentLatex: string;
+      wordCount: number;
+    }[];
+    authors: {
+      userId: string;
+      fullName?: string;
+      authorOrder: number;
+      affiliation?: string | null;
+      isCorresponding: boolean;
+    }[];
+    citations: {
+      citationKey: string;
+      inTextLabel?: string | null;
+      paperTitle?: string;
+      paperDoi?: string | null;
+      contextNote?: string | null;
+    }[];
+  };
+  createdBy: string;
+  createdAt: string;
+  creator?: Partial<Profile> | null;
+}
+
+export interface ManuscriptRevisionLog {
+  id: string;
+  manuscriptId: string;
+  sectionId?: string | null;
+  actorId?: string | null;
+  action: string;
+  details?: Record<string, unknown> | null;
+  createdAt: string;
+  actor?: Partial<Profile> | null;
+}
+
+export interface ManuscriptChecklistItem {
+  id: string;
+  manuscriptId: string;
+  label: string;
+  isCompleted: boolean;
+  completedBy?: string | null;
+  completedAt?: string | null;
+  isLocked: boolean;
+  orderIndex: number;
+  createdAt: string;
+  completedByUser?: Partial<Profile> | null;
+}
+
+export interface Manuscript {
+  id: string;
+  projectId: string;
+  title: string;
+  abstract?: string | null;
+  targetVenue?: string | null;
+  status: ManuscriptStatus;
+  createdBy: string;
+  supervisorId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: Partial<Project> | null;
+  creator?: Partial<Profile> | null;
+  supervisor?: Partial<Profile> | null;
+  authors?: ManuscriptAuthor[];
+  sections?: ManuscriptSection[];
+  citations?: ManuscriptCitation[];
+  reviewAssignments?: ReviewAssignment[];
+  comments?: ReviewComment[];
+  versions?: ManuscriptVersion[];
+  checklistItems?: ManuscriptChecklistItem[];
+  totalWordCount?: number;
+  openCommentsCount?: number;
+  unresolvedMajorCount?: number;
+}
+
+// Manuscript DTOs
+export interface CreateManuscriptDto {
+  projectId: string;
+  title: string;
+  abstract?: string;
+  targetVenue?: string;
+  authors?: {
+    userId: string;
+    authorOrder: number;
+    affiliation?: string;
+    isCorresponding?: boolean;
+  }[];
+  defaultSections?: boolean; // If true, creates standard IMRAD sections
+}
+
+export interface UpdateManuscriptDto {
+  title?: string;
+  abstract?: string | null;
+  targetVenue?: string | null;
+}
+
+export interface AddManuscriptAuthorDto {
+  userId: string;
+  authorOrder?: number;
+  affiliation?: string;
+  isCorresponding?: boolean;
+}
+
+export interface UpdateManuscriptAuthorDto {
+  authorOrder?: number;
+  affiliation?: string;
+  isCorresponding?: boolean;
+}
+
+export interface CreateManuscriptSectionDto {
+  title: string;
+  sectionType?: ManuscriptSectionType;
+  orderIndex?: number;
+  contentMarkdown?: string;
+  contentLatex?: string;
+}
+
+export interface UpdateManuscriptSectionDto {
+  title?: string;
+  sectionType?: ManuscriptSectionType;
+  orderIndex?: number;
+  contentMarkdown?: string;
+  contentLatex?: string;
+}
+
+export interface ReorderSectionsDto {
+  sectionOrders: {
+    sectionId: string;
+    orderIndex: number;
+  }[];
+}
+
+export interface InsertCitationDto {
+  paperId: string;
+  citationKey: string;
+  sectionId?: string | null;
+  inTextLabel?: string;
+  contextNote?: string;
+}
+
+export interface AssignReviewerDto {
+  reviewerId: string;
+  deadline?: string;
+}
+
+export interface CreateReviewCommentDto {
+  sectionId?: string | null;
+  parentCommentId?: string | null;
+  highlightedText?: string;
+  commentText: string;
+  severity?: ReviewCommentSeverity;
+}
+
+export interface FixReviewCommentDto {
+  fixNote: string;
+}
+
+export interface ResolveReviewCommentDto {
+  resolutionNote?: string;
+}
+
+export interface ReopenReviewCommentDto {
+  reopenReason: string;
+}
+
+export interface CreateManuscriptVersionDto {
+  versionName: string;
+}
+
+export interface RestoreManuscriptVersionDto {
+  versionId: string;
+}
+
+export interface CreateChecklistItemDto {
+  label: string;
+  orderIndex?: number;
+}
+
+export interface UpdateChecklistItemDto {
+  isCompleted?: boolean;
+  label?: string;
+  orderIndex?: number;
+}
+
+export interface TransitionManuscriptStatusDto {
+  status: ManuscriptStatus;
+  note?: string;
+}
+
+export interface ManuscriptExportOptions {
+  format: 'markdown' | 'latex' | 'bibtex' | 'bundle';
+  includeAbstract?: boolean;
+  includeAuthorBlock?: boolean;
+  includeBibTeX?: boolean;
+}
+
+export interface ManuscriptExportResult {
+  fileName: string;
+  mimeType: string;
+  content: string;
+  bibtexContent?: string;
+}
+
+export interface ManuscriptSearchParams {
+  projectId?: string;
+  status?: ManuscriptStatus;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ManuscriptListResponse {
+  manuscripts: Manuscript[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 
 
 
