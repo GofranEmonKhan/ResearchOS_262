@@ -8,13 +8,36 @@ import {
   Check,
   Code,
   AlertCircle,
+  FileCode,
 } from 'lucide-react';
+
+export interface FigureAssetPayload {
+  path: string;
+  dataUrl: string;
+}
 
 interface InsertFigureModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onInsertFigure: (snippet: string) => void;
+  onInsertFigure: (snippet: string, asset?: FigureAssetPayload) => void;
 }
+
+export const sanitizeFigurePath = (rawName: string): string => {
+  if (!rawName.trim()) return 'figures/figure1.png';
+  const cleanName = rawName.replace(/^.*[\\/]/, '');
+  const lastDot = cleanName.lastIndexOf('.');
+  const ext = lastDot !== -1 ? cleanName.slice(lastDot).toLowerCase() : '.png';
+  const base = lastDot !== -1 ? cleanName.slice(0, lastDot) : cleanName;
+  const safeBase = base
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 45);
+
+  const validExt = ['.png', '.jpg', '.jpeg', '.svg', '.webp', '.pdf'].includes(ext) ? ext : '.png';
+  return `figures/${safeBase || 'figure'}${validExt}`;
+};
 
 export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
   isOpen,
@@ -24,6 +47,7 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
   const [sourceType, setSourceType] = useState<'upload' | 'url' | 'presets'>('upload');
   const [imageUrl, setImageUrl] = useState('');
   const [fileName, setFileName] = useState('');
+  const [figurePath, setFigurePath] = useState('figures/overview_diagram.png');
   const [caption, setCaption] = useState('');
   const [label, setLabel] = useState('fig:overview');
   const [width, setWidth] = useState<'0.9\\linewidth' | '0.75\\linewidth' | '\\linewidth' | '0.5\\linewidth'>('0.9\\linewidth');
@@ -42,24 +66,28 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
       label: 'fig:nas-cell',
       caption: 'Continuous relaxation architecture search over directed acyclic graph cells.',
       url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1000&q=80',
+      path: 'figures/nas_architecture_dag.png',
     },
     {
       title: 'Model Training & Validation Curves',
       label: 'fig:loss-curves',
       caption: 'Convergence trajectories of cross-entropy loss and top-1 accuracy over 200 epochs.',
       url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1000&q=80',
+      path: 'figures/training_loss_curves.png',
     },
     {
       title: 'Genomic Sequence Alignment & Heatmap',
       label: 'fig:genomics-heatmap',
       caption: 'Saturation mutagenesis impact scores across transcription factor binding motifs.',
       url: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1000&q=80',
+      path: 'figures/genomics_alignment_heatmap.png',
     },
     {
       title: 'Benchmark Performance Comparison',
       label: 'fig:benchmark-comparison',
       caption: 'Comparative throughput (FPS) vs parameters (M) on standardized benchmark datasets.',
       url: 'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&w=1000&q=80',
+      path: 'figures/benchmark_comparison_matrix.png',
     },
   ];
 
@@ -78,6 +106,9 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
     }
 
     setFileName(file.name);
+    const cleanPath = sanitizeFigurePath(file.name);
+    setFigurePath(cleanPath);
+
     // Derive initial label from filename
     const cleanName = file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9]/g, '-');
     if (!label || label === 'fig:overview') {
@@ -103,7 +134,12 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
   };
 
   const generateSnippet = () => {
-    const src = imageUrl || 'https://example.com/figure.png';
+    let src = figurePath.trim() || 'figures/figure1.png';
+    // Ensure relative path convention if no protocol and no slash
+    if (!src.startsWith('http://') && !src.startsWith('https://') && !src.includes('/')) {
+      src = `figures/${src}`;
+    }
+
     const cap = caption.trim() || 'Scholarly illustration and experimental diagram.';
     const cleanLabel = (label.trim().startsWith('fig:') ? label.trim() : `fig:${label.trim()}`) || 'fig:figure1';
 
@@ -125,7 +161,15 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
       return;
     }
     const snippet = generateSnippet();
-    onInsertFigure(snippet);
+    let src = figurePath.trim() || 'figures/figure1.png';
+    if (!src.startsWith('http://') && !src.startsWith('https://') && !src.includes('/')) {
+      src = `figures/${src}`;
+    }
+
+    onInsertFigure(snippet, {
+      path: src,
+      dataUrl: imageUrl,
+    });
     onClose();
   };
 
@@ -142,11 +186,11 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
                 Insert Scholarly Figure
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                  LaTeX & Markdown
+                  Standard LaTeX Path
                 </span>
               </h3>
               <p className="text-xs text-slate-400">
-                Embed scientific diagrams, architecture DAGs, and plots with LaTeX figure environments
+                Embed scientific diagrams with clean file paths and Overleaf-compatible figure environments
               </p>
             </div>
           </div>
@@ -234,7 +278,7 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
                   </div>
                   {fileName && (
                     <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Image loaded ready for insertion
+                      <Check className="w-3 h-3" /> Image loaded · LaTeX path ready
                     </span>
                   )}
                 </div>
@@ -251,8 +295,15 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
                   type="url"
                   value={imageUrl}
                   onChange={(e) => {
-                    setImageUrl(e.target.value);
+                    const val = e.target.value;
+                    setImageUrl(val);
                     if (!caption) setCaption('Figure illustrating experimental results.');
+                    if (val.includes('/')) {
+                      const urlLastPart = val.split('?')[0].split('/').pop() || 'figure.png';
+                      if (urlLastPart.includes('.')) {
+                        setFigurePath(sanitizeFigurePath(urlLastPart));
+                      }
+                    }
                   }}
                   placeholder="https://example.com/figures/architecture.png"
                   className="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50"
@@ -272,6 +323,8 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
                   key={idx}
                   onClick={() => {
                     setImageUrl(preset.url);
+                    setFileName(preset.title);
+                    setFigurePath(preset.path);
                     setCaption(preset.caption);
                     setLabel(preset.label);
                   }}
@@ -289,9 +342,35 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
                     />
                   </div>
                   <h4 className="text-xs font-bold text-slate-200 truncate">{preset.title}</h4>
-                  <span className="text-[10px] font-mono text-amber-400">{preset.label}</span>
+                  <span className="text-[10px] font-mono text-amber-400">{preset.path}</span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Loaded Image Thumbnail & Path Badge */}
+          {imageUrl && (
+            <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-3">
+              <div className="w-14 h-12 rounded-lg overflow-hidden bg-slate-900 border border-slate-700/80 shrink-0">
+                <img
+                  src={imageUrl}
+                  alt="Figure preview"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-slate-200 truncate">
+                  {fileName || figurePath}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Binary Cached
+                  </span>
+                  <span className="text-[10px] font-mono text-amber-300 truncate">
+                    \includegraphics&#123;{figurePath}&#125;
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -304,6 +383,27 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
 
           {/* Metadata Controls */}
           <div className="space-y-3 pt-2 border-t border-slate-800/80">
+            {/* Clean Figure Path Input */}
+            <div>
+              <label className="text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <FileCode className="w-3.5 h-3.5 text-amber-400" />
+                  LaTeX Figure Relative Path (<code className="text-amber-400 text-[10px]">\includegraphics&#123;...&#125;</code>)
+                </span>
+                <span className="text-[10px] text-slate-500 font-normal">Standard LaTeX convention</span>
+              </label>
+              <input
+                type="text"
+                value={figurePath}
+                onChange={(e) => setFigurePath(e.target.value)}
+                placeholder="figures/dataset_distribution.png"
+                className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700/80 rounded-xl text-xs font-mono text-amber-300 placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              />
+              <span className="text-[10px] text-slate-500 mt-1 block">
+                Stored cleanly in LaTeX code. Raw base64 data is managed in the manuscript asset store without cluttering your editor.
+              </span>
+            </div>
+
             <div>
               <label className="text-xs font-semibold text-slate-300 mb-1 block">
                 Figure Caption <span className="text-amber-400">*</span>
@@ -388,7 +488,7 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
               <span className="flex items-center gap-1.5 text-amber-400 font-semibold">
                 <Code className="w-3.5 h-3.5" /> Generated Insertion Snippet
               </span>
-              <span>At Cursor</span>
+              <span className="text-emerald-400 text-[10px]">Clean LaTeX Path</span>
             </div>
             <pre className="text-[11px] font-mono text-slate-300 whitespace-pre-wrap overflow-x-auto p-2 rounded bg-slate-950/70 border border-slate-900">
               {generateSnippet()}

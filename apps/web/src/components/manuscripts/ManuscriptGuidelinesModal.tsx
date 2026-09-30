@@ -262,7 +262,7 @@ export const ManuscriptGuidelinesModal: React.FC<ManuscriptGuidelinesModalProps>
                           <button
                             onClick={() => handleInsertSnippet(`\\begin{figure}[h]
   \\centering
-  \\includegraphics[width=0.9\\linewidth]{https://example.com/figure.png}
+  \\includegraphics[width=0.9\\linewidth]{figures/cell_topology.png}
   \\caption{Neural Architecture Search cell topology with continuous relaxation.}
   \\label{fig:cell-topology}
 \\end{figure}`)}
@@ -274,7 +274,7 @@ export const ManuscriptGuidelinesModal: React.FC<ManuscriptGuidelinesModalProps>
                         <button
                           onClick={() => copyToClipboard(`\\begin{figure}[h]
   \\centering
-  \\includegraphics[width=0.9\\linewidth]{https://example.com/figure.png}
+  \\includegraphics[width=0.9\\linewidth]{figures/cell_topology.png}
   \\caption{Neural Architecture Search cell topology with continuous relaxation.}
   \\label{fig:cell-topology}
 \\end{figure}`, 'fig-sample')}
@@ -286,7 +286,7 @@ export const ManuscriptGuidelinesModal: React.FC<ManuscriptGuidelinesModalProps>
                       </div>
                       <pre className="text-amber-300">{`\\begin{figure}[h]
   \\centering
-  \\includegraphics[width=0.9\\linewidth]{https://example.com/figure.png}
+  \\includegraphics[width=0.9\\linewidth]{figures/cell_topology.png}
   \\caption{Neural Architecture Search cell topology with continuous relaxation.}
   \\label{fig:cell-topology}
 \\end{figure}`}</pre>
