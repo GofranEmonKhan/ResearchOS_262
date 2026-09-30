@@ -31,6 +31,9 @@ export default defineConfig({
       '/forum': 'http://localhost:3001',
       '/leaderboard': 'http://localhost:3001',
       '/users': 'http://localhost:3001',
+      '/manuscripts': 'http://localhost:3001',
+      '/sections': 'http://localhost:3001',
+      '/citations': 'http://localhost:3001',
       '/api': {
         target: 'http://localhost:3001',
         rewrite: (path) => path.replace(/^\/api/, ''),
