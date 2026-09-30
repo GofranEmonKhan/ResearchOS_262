@@ -11,14 +11,10 @@ import {
   Loader2,
   X,
   Sparkles,
+  AlertCircle,
 } from 'lucide-react';
 import { api } from '../../lib/api.js';
-import {
-  ManuscriptCitation,
-  Paper,
-  PaperSidebarFields,
-  PaperAnnotation,
-} from '@researchos/shared-types';
+import { WhyDidICiteThisContext } from '@researchos/shared-types';
 
 interface WhyDidICiteThisModalProps {
   isOpen: boolean;
@@ -37,13 +33,9 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<{
-    citation: ManuscriptCitation;
-    paper: Paper;
-    sidebarFields: PaperSidebarFields | null;
-    annotations: PaperAnnotation[];
-    isMasked: boolean;
-  } | null>(null);
+  const [data, setData] = useState<WhyDidICiteThisContext | null>(null);
+
+  const cleanKey = (citationKey || '').replace(/^\[@|\]$/g, '');
 
   useEffect(() => {
     if (!isOpen || !manuscriptId || !citationKey) return;
@@ -53,7 +45,7 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const res = await api.getWhyDidICiteThis(manuscriptId, citationKey);
+        const res = await api.getWhyDidICiteThis(manuscriptId, cleanKey);
         if (isMounted) setData(res);
       } catch (err: any) {
         if (isMounted) setError(err.message || 'Failed to load citation context');
@@ -67,9 +59,16 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, manuscriptId, citationKey]);
+  }, [isOpen, manuscriptId, citationKey, cleanKey]);
 
   if (!isOpen) return null;
+
+  // Safe accessor fallbacks handling both canonical and alias payload keys
+  const contextNote = data?.contextNote ?? (data as any)?.citation?.contextNote;
+  const inTextLabel = data?.inTextLabel ?? (data as any)?.citation?.inTextLabel;
+  const sidebar = data?.sidebarSummary ?? (data as any)?.sidebarFields;
+  const highlightsList = data?.highlights ?? (data as any)?.annotations ?? [];
+  const isMasked = data?.isMaskedNote ?? (data as any)?.isMasked;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -91,7 +90,7 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
                   Why Did I Cite This?
                 </h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
-                  {`@${citationKey}`}
+                  {`@${cleanKey}`}
                 </span>
               </div>
               <p className="text-xs text-slate-400">
@@ -116,8 +115,9 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
               <p className="text-xs font-mono">Retrieving scholarly context & annotations...</p>
             </div>
           ) : error ? (
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
-              {error}
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              <span>{error}</span>
             </div>
           ) : data ? (
             <>
@@ -125,9 +125,9 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
               <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2.5">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-sm font-semibold text-white leading-snug">
-                    {data.paper.title}
+                    {data.paper?.title || 'Referenced Literature'}
                   </h3>
-                  {data.paper.doi && (
+                  {data.paper?.doi && (
                     <a
                       href={`https://doi.org/${data.paper.doi}`}
                       target="_blank"
@@ -141,21 +141,21 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
-                  <span>{data.paper.authors?.join(', ') || 'Unknown Authors'}</span>
-                  {data.paper.year && (
+                  <span>{data.paper?.authors?.join(', ') || 'Unknown Authors'}</span>
+                  {data.paper?.year && (
                     <span className="flex items-center gap-1 text-slate-500">
                       <Calendar className="w-3 h-3" />
                       {data.paper.year}
                     </span>
                   )}
-                  {data.paper.venue && (
+                  {data.paper?.venue && (
                     <span className="text-slate-500 italic">
                       {data.paper.venue}
                     </span>
                   )}
                 </div>
 
-                {onOpenPaper && (
+                {onOpenPaper && data.paper?.id && (
                   <button
                     onClick={() => {
                       onClose();
@@ -176,17 +176,17 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
                   Author's Citation Context
                 </span>
                 <p className="text-xs text-slate-200 italic leading-relaxed">
-                  "{data.citation.contextNote || 'No specific context note was provided at citation time.'}"
+                  "{contextNote || 'No specific context note was provided at citation time.'}"
                 </p>
-                {data.citation.inTextLabel && (
+                {inTextLabel && (
                   <div className="text-[11px] text-slate-500 font-mono mt-1">
-                    In-text marker: <span className="text-slate-400">{data.citation.inTextLabel}</span>
+                    In-text marker: <span className="text-slate-400">{inTextLabel}</span>
                   </div>
                 )}
               </div>
 
               {/* Structured Literature Insights (Sidebar Fields) */}
-              {data.sidebarFields && (
+              {sidebar && (
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-slate-500" />
@@ -194,46 +194,46 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
                   </h4>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                    {data.sidebarFields.researchGap && (
+                    {sidebar.researchGap && (
                       <div className="p-3 rounded-lg bg-slate-900/40 border border-slate-800 space-y-1">
                         <span className="text-[10px] font-semibold text-violet-400 uppercase">
                           Research Gap
                         </span>
                         <p className="text-xs text-slate-300 leading-relaxed">
-                          {data.sidebarFields.researchGap}
+                          {sidebar.researchGap}
                         </p>
                       </div>
                     )}
 
-                    {data.sidebarFields.methodology && (
+                    {sidebar.methodology && (
                       <div className="p-3 rounded-lg bg-slate-900/40 border border-slate-800 space-y-1">
                         <span className="text-[10px] font-semibold text-blue-400 uppercase">
                           Methodology
                         </span>
                         <p className="text-xs text-slate-300 leading-relaxed">
-                          {data.sidebarFields.methodology}
+                          {sidebar.methodology}
                         </p>
                       </div>
                     )}
 
-                    {data.sidebarFields.results && (
+                    {sidebar.results && (
                       <div className="p-3 rounded-lg bg-slate-900/40 border border-slate-800 space-y-1">
                         <span className="text-[10px] font-semibold text-emerald-400 uppercase">
                           Key Results
                         </span>
                         <p className="text-xs text-slate-300 leading-relaxed">
-                          {data.sidebarFields.results}
+                          {sidebar.results}
                         </p>
                       </div>
                     )}
 
-                    {data.sidebarFields.limitation && (
+                    {(sidebar.limitations || sidebar.limitation) && (
                       <div className="p-3 rounded-lg bg-slate-900/40 border border-slate-800 space-y-1">
                         <span className="text-[10px] font-semibold text-amber-400 uppercase">
                           Limitations
                         </span>
                         <p className="text-xs text-slate-300 leading-relaxed">
-                          {data.sidebarFields.limitation}
+                          {sidebar.limitations || sidebar.limitation}
                         </p>
                       </div>
                     )}
@@ -242,15 +242,15 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
               )}
 
               {/* Highlighted Annotations */}
-              {data.annotations && data.annotations.length > 0 && (
+              {highlightsList && highlightsList.length > 0 && (
                 <div className="space-y-2.5">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                     <Highlighter className="w-3.5 h-3.5 text-slate-500" />
-                    Key Excerpts from Paper ({data.annotations.length})
+                    Key Excerpts from Paper ({highlightsList.length})
                   </h4>
 
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {data.annotations.map((ann) => (
+                    {highlightsList.map((ann: any) => (
                       <div
                         key={ann.id}
                         className="p-3 rounded-lg bg-slate-900/30 border border-slate-800/80 space-y-1"
@@ -263,9 +263,11 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
                             Note: {ann.stickyNote}
                           </p>
                         )}
-                        <span className="text-[10px] text-slate-500 block pl-2.5">
-                          Page {ann.page}
-                        </span>
+                        {ann.page && (
+                          <span className="text-[10px] text-slate-500 block pl-2.5">
+                            Page {ann.page}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -274,7 +276,7 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
 
               {/* Privacy Governance Badge */}
               <div className="pt-2">
-                {data.isMasked ? (
+                {isMasked ? (
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 text-xs">
                     <Lock className="w-4 h-4 text-slate-500 shrink-0" />
                     <span>
@@ -285,7 +287,7 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
                     <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>
-                      <strong>Full Uploader Access:</strong> You are the verified uploader of this literature record and can view all personal notes and highlights.
+                      <strong>Verified Grounding:</strong> Full literature record loaded with authenticated research synthesis fields.
                     </span>
                   </div>
                 )}
