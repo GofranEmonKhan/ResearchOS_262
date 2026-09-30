@@ -133,12 +133,16 @@ export class CitationService {
     citationKey: string,
     requestingUserId: string
   ): Promise<WhyDidICiteThisContext> {
+    const cleanKey = citationKey.replace(/^\[@|\]$/g, '');
+    const bracketedKey = `[@${cleanKey}]`;
+
     const { data: citation, error: citErr } = await supabaseAdmin
       .from('manuscript_citations')
       .select('*')
       .eq('manuscript_id', manuscriptId)
-      .eq('citation_key', citationKey)
-      .single();
+      .or(`citation_key.eq."${cleanKey}",citation_key.eq."${bracketedKey}"`)
+      .limit(1)
+      .maybeSingle();
 
     if (citErr || !citation) {
       throw new Error(`Citation '${citationKey}' not found in manuscript`);
