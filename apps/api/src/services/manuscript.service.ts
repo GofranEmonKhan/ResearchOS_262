@@ -25,14 +25,13 @@ export class ManuscriptService {
    */
   static countWords(text: string = ''): number {
     if (!text || !text.trim()) return 0;
-    // Strip markdown formatting symbols roughly and split by whitespace
     const cleanText = text
-      .replace(/```[\s\S]*?```/g, '') // code blocks
-      .replace(/`.*?`/g, '') // inline code
-      .replace(/#+\s+/g, '') // headers
-      .replace(/!\[.*?\]\(.*?\)/g, '') // images
-      .replace(/\[.*?\]\(.*?\)/g, '$1') // links
-      .replace(/[*_~>]/g, '') // formatting chars
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/`[^`]*`/g, ' ')
+      .replace(/#+\s+/g, ' ')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[*_~>]/g, ' ')
       .trim();
     const words = cleanText.split(/\s+/).filter(Boolean);
     return words.length;
@@ -510,7 +509,7 @@ export class ManuscriptService {
 
     // Validate state transitions
     const validTransitions: Record<ManuscriptStatus, ManuscriptStatus[]> = {
-      Draft: ['UnderInternalReview', 'Archived'],
+      Draft: ['UnderInternalReview', 'ReadyForSubmission', 'Archived'],
       UnderInternalReview: ['Revising', 'ReadyForSubmission', 'Draft', 'Archived'],
       Revising: ['UnderInternalReview', 'ReadyForSubmission', 'Archived'],
       ReadyForSubmission: ['Submitted', 'Revising', 'Archived'],

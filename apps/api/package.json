@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "seed:blogs": "tsx src/scripts/seedBlogs.ts",
     "lint": "echo \"@researchos/api: lint passed\"",
-    "test": "tsx --test --test-concurrency=1 src/tests/auth-rbac.test.ts src/tests/workspace.test.ts src/tests/literature.test.ts src/tests/literature-rls.test.ts src/tests/experiment-contracts.test.ts src/tests/experiment.test.ts src/tests/forum-community-contracts.test.ts src/tests/forum-community.test.ts"
+    "test": "tsx --test --test-concurrency=1 src/tests/auth-rbac.test.ts src/tests/workspace.test.ts src/tests/literature.test.ts src/tests/literature-rls.test.ts src/tests/experiment-contracts.test.ts src/tests/experiment.test.ts src/tests/forum-community-contracts.test.ts src/tests/forum-community.test.ts src/tests/manuscript.test.ts"
   },
   "dependencies": {
     "@researchos/shared-types": "workspace:*",
