@@ -11,6 +11,7 @@ import {
   Loader2,
   BookOpen,
   FolderPlus,
+  Folder,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { api } from '../../lib/api.js';
@@ -286,7 +287,9 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {manuscripts.map((m) => (
+            {manuscripts.map((m) => {
+              const project = projects.find((p) => p.id === m.projectId);
+              return (
               <div
                 key={m.id}
                 onClick={() => onNavigate(`/manuscripts/${m.id}`)}
@@ -294,9 +297,17 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    {getStatusBadge(m.status)}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {getStatusBadge(m.status)}
+                      {project && (
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium bg-slate-900/90 px-2 py-0.5 rounded-md border border-slate-800 truncate max-w-[140px]">
+                          <Folder className="w-3 h-3 text-amber-500/80 shrink-0" />
+                          <span className="truncate">{project.title}</span>
+                        </span>
+                      )}
+                    </div>
                     {m.targetVenue && (
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium truncate max-w-[140px]">
+                      <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium truncate max-w-[130px]">
                         <Building className="w-3 h-3 text-amber-400 shrink-0" />
                         {m.targetVenue}
                       </span>
@@ -331,7 +342,8 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
                   </span>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -342,6 +354,7 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           projectId={selectedProjectId || projects[0].id}
+          projects={projects}
           onManuscriptCreated={(created) => {
             onNavigate(`/manuscripts/${created.id}`);
           }}
