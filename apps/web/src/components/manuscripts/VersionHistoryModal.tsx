@@ -166,7 +166,7 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
-                        v{ver.versionNumber}.0
+                        {`v${ver.versionNumber}.0`}
                       </span>
                       <h4 className="text-xs font-bold text-white">
                         {ver.versionName}

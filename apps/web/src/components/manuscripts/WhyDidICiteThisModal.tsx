@@ -91,7 +91,7 @@ export const WhyDidICiteThisModal: React.FC<WhyDidICiteThisModalProps> = ({
                   Why Did I Cite This?
                 </h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
-                  @{citationKey}
+                  {`@${citationKey}`}
                 </span>
               </div>
               <p className="text-xs text-slate-400">

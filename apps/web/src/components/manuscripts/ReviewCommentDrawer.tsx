@@ -216,7 +216,7 @@ export const ReviewCommentDrawer: React.FC<ReviewCommentDrawerProps> = ({
           <div className="flex items-center space-x-2">
             <MessageSquare className="w-4 h-4 text-amber-400" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-              Peer Review Comments ({comments.length})
+              {`Peer Review Comments (${comments.length})`}
             </h3>
           </div>
         </div>
