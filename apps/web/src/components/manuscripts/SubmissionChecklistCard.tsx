@@ -42,18 +42,19 @@ export const SubmissionChecklistCard: React.FC<SubmissionChecklistCardProps> = (
   // Toggle checklist item completion
   const handleToggleItem = async (item: ManuscriptChecklistItem) => {
     if (item.isLocked && !isSupervisor) {
-      alert('This checklist requirement is locked by the project supervisor.');
+      setTransitionError('This checklist requirement is locked by the project supervisor.');
       return;
     }
 
     setUpdatingItemId(item.id);
+    setTransitionError(null);
     try {
       await api.updateChecklistItem(manuscript.id, item.id, {
         isCompleted: !item.isCompleted,
       });
       await onRefreshManuscript();
     } catch (err: any) {
-      alert(err.message || 'Failed to update checklist item');
+      setTransitionError(err.message || 'Failed to update checklist item');
     } finally {
       setUpdatingItemId(null);
     }

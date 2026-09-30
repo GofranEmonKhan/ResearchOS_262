@@ -158,21 +158,24 @@ export const ReviewCommentDrawer: React.FC<ReviewCommentDrawerProps> = ({
     }
   };
 
+  const [actionError, setActionError] = useState<string | null>(null);
+
   // Researcher marks comment as Fixed
   const handleFixSubmit = async (commentId: string) => {
     if (!fixNote.trim()) {
-      alert('A descriptive fix note is required to explain how the issue was addressed.');
+      setActionError('A descriptive fix note is required to explain how the issue was addressed.');
       return;
     }
 
     setSubmittingFix(true);
+    setActionError(null);
     try {
       await api.fixReviewComment(manuscriptId, commentId, { fixNote: fixNote.trim() });
       setFixingCommentId(null);
       setFixNote('');
       await onRefreshComments();
     } catch (err: any) {
-      alert(err.message || 'Failed to update comment status');
+      setActionError(err.message || 'Failed to update comment status');
     } finally {
       setSubmittingFix(false);
     }
@@ -180,29 +183,31 @@ export const ReviewCommentDrawer: React.FC<ReviewCommentDrawerProps> = ({
 
   // Supervisor resolves comment
   const handleResolve = async (commentId: string) => {
+    setActionError(null);
     try {
       await api.resolveReviewComment(manuscriptId, commentId);
       await onRefreshComments();
     } catch (err: any) {
-      alert(err.message || 'Failed to resolve comment');
+      setActionError(err.message || 'Failed to resolve comment');
     }
   };
 
   // Supervisor reopens comment
   const handleReopenSubmit = async (commentId: string) => {
     if (!reopenReason.trim()) {
-      alert('Please specify the reason why this issue is being reopened.');
+      setActionError('Please specify the reason why this issue is being reopened.');
       return;
     }
 
     setSubmittingReopen(true);
+    setActionError(null);
     try {
       await api.reopenReviewComment(manuscriptId, commentId, { reopenReason: reopenReason.trim() });
       setReopeningCommentId(null);
       setReopenReason('');
       await onRefreshComments();
     } catch (err: any) {
-      alert(err.message || 'Failed to reopen comment');
+      setActionError(err.message || 'Failed to reopen comment');
     } finally {
       setSubmittingReopen(false);
     }
@@ -261,6 +266,15 @@ export const ReviewCommentDrawer: React.FC<ReviewCommentDrawerProps> = ({
             </button>
           ))}
         </div>
+
+        {actionError && (
+          <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-center justify-between">
+            <span>{actionError}</span>
+            <button onClick={() => setActionError(null)} className="text-slate-400 hover:text-white p-0.5">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Comments List */}
