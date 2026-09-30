@@ -48,6 +48,7 @@ import { AssignReviewerModal } from '../../components/manuscripts/AssignReviewer
 import { VersionHistoryModal } from '../../components/manuscripts/VersionHistoryModal.js';
 import { NoticeModal } from '../../components/common/NoticeModal.js';
 import { ConfirmDeleteDialog } from '../../components/common/ConfirmDeleteDialog.js';
+import { LatexPaperPreview } from '../../components/manuscripts/LatexPaperPreview.js';
 
 interface ManuscriptEditorPageProps {
   manuscriptId: string;
@@ -85,7 +86,7 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Editor View Mode: 'edit' | 'preview' | 'split'
-  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split');
 
   // Right Drawer Tab: 'citations' | 'reviews' | 'checklist'
   const [rightTab, setRightTab] = useState<'citations' | 'reviews' | 'checklist'>('citations');
@@ -766,57 +767,17 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                   </div>
                 )}
 
-                {/* Preview View */}
+                {/* Scholarly LaTeX Paper Preview */}
                 {(viewMode === 'preview' || viewMode === 'split') && (
-                  <div className="flex-1 p-6 overflow-y-auto bg-slate-950/40">
-                    <div className="prose prose-invert prose-amber max-w-none font-serif text-sm leading-relaxed space-y-4">
-                      {activeContent ? (
-                        activeContent.split('\n\n').map((para, i) => {
-                          // Render headings
-                          if (para.startsWith('### ')) {
-                            return <h3 key={i} className="text-base font-bold text-white mt-4">{para.replace('### ', '')}</h3>;
-                          }
-                          if (para.startsWith('## ')) {
-                            return <h2 key={i} className="text-lg font-bold text-white mt-5">{para.replace('## ', '')}</h2>;
-                          }
-                          if (para.startsWith('# ')) {
-                            return <h1 key={i} className="text-xl font-bold text-white mt-6">{para.replace('# ', '')}</h1>;
-                          }
-                          if (para.startsWith('> ')) {
-                            return (
-                              <blockquote key={i} className="border-l-2 border-amber-500 pl-4 italic text-slate-300">
-                                {para.replace('> ', '')}
-                              </blockquote>
-                            );
-                          }
-
-                          // Replace citation patterns [@Key] with interactive clickable badge
-                          const parts = para.split(/(\[@[\w-]+\])/g);
-                          return (
-                            <p key={i} className="text-slate-300 leading-relaxed">
-                              {parts.map((part, pIdx) => {
-                                if (part.startsWith('[@') && part.endsWith(']')) {
-                                  const citKey = part.slice(2, -1);
-                                  return (
-                                    <button
-                                      key={pIdx}
-                                      onClick={() => setWhyCiteKey(citKey)}
-                                      className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-mono font-bold cursor-pointer transition-colors mx-0.5"
-                                      title="Click to view 'Why Did I Cite This?'"
-                                    >
-                                      <span>@{citKey}</span>
-                                    </button>
-                                  );
-                                }
-                                return part;
-                              })}
-                            </p>
-                          );
-                        })
-                      ) : (
-                        <p className="text-slate-600 italic">Section is currently empty.</p>
-                      )}
-                    </div>
+                  <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                    <LatexPaperPreview
+                      manuscript={manuscript}
+                      sections={sections}
+                      activeSectionId={activeSectionId}
+                      activeSectionContent={activeContent}
+                      citations={citations}
+                      onCitationClick={(citKey) => setWhyCiteKey(citKey)}
+                    />
                   </div>
                 )}
               </div>
