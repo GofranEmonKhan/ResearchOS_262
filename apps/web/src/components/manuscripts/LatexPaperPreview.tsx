@@ -193,7 +193,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
   const renderSectionBody = (content: string) => {
     if (!content || !content.trim()) {
       return (
-        <p className={`italic text-xs py-3 ${paperTheme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>
+        <p className={`italic text-xs py-3 ${paperTheme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`}>
           [This section is currently empty]
         </p>
       );
@@ -431,15 +431,14 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
       </div>
 
       {/* ── Scrollable Document Surface ── */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center bg-[#070A12]">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 bg-[#070A12]">
         <div
           style={{
-            transform: `scale(${zoomLevel / 100})`,
-            transformOrigin: 'top center',
+            zoom: zoomLevel !== 100 ? `${zoomLevel}%` : undefined,
             backgroundColor: paperTheme === 'dark' ? '#0D111D' : '#FFFFFF',
             color: paperTheme === 'dark' ? '#F1F5F9' : '#0F172A',
           }}
-          className={`w-full max-w-3xl rounded-lg transition-all duration-150 p-8 sm:p-12 md:p-14 shadow-2xl relative border ${
+          className={`mx-auto w-full max-w-3xl min-h-full rounded-lg transition-colors p-8 sm:p-12 md:p-14 shadow-2xl relative border ${
             paperTheme === 'dark'
               ? 'border-slate-800/80 shadow-black/80'
               : 'border-slate-300 shadow-slate-900/20'
@@ -565,16 +564,16 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                 return (
                   <div
                     key={section.id}
-                    className={`relative rounded-md transition-colors ${
+                    className={`relative rounded-md transition-colors p-3 ${
                       isCurrentActive
                         ? paperTheme === 'dark'
-                          ? 'ring-1 ring-amber-500/40 p-3 bg-amber-500/5'
-                          : 'ring-1 ring-amber-400/60 p-3 bg-amber-50/40'
+                          ? 'ring-1 ring-amber-500/40 bg-amber-500/5'
+                          : 'ring-1 ring-amber-400/60 bg-amber-50/40'
                         : ''
                     }`}
                   >
                     {isCurrentActive && (
-                      <span className="absolute -top-2.5 right-2 text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500 text-black font-bold uppercase">
+                      <span className="absolute -top-2.5 right-2 text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500 text-black font-bold uppercase shadow-sm">
                         Editing Active Section
                       </span>
                     )}
