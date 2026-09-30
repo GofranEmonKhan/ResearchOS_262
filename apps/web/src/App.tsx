@@ -159,9 +159,13 @@ function AppContent() {
       return <ManuscriptsPage onNavigate={navigate} />;
     }
 
-    // Dashboard & Project Workspace — any path starting with /projects or /dashboard
-    if (currentRoute.startsWith('/projects') || currentRoute.startsWith('/dashboard')) {
-
+    // Dashboard & Project Workspace — any path starting with /projects, /dashboard, or /workspace
+    if (
+      currentRoute.startsWith('/projects') ||
+      currentRoute.startsWith('/dashboard') ||
+      currentRoute === '/workspace' ||
+      currentRoute.startsWith('/workspace')
+    ) {
       return <DashboardRouter onNavigate={navigate} currentRoute={currentRoute} />;
     }
 

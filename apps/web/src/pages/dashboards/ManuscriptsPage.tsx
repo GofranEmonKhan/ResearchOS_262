@@ -18,6 +18,7 @@ import { Manuscript, ManuscriptStatus, Project } from '@researchos/shared-types'
 import { WorkspaceLayout } from '../../components/layout/WorkspaceLayout.js';
 import { CreateManuscriptModal } from '../../components/manuscripts/CreateManuscriptModal.js';
 import { NoticeModal } from '../../components/common/NoticeModal.js';
+import { supabase } from '../../supabase.js';
 
 interface ManuscriptsPageProps {
   onNavigate: (route: string) => void;
@@ -38,13 +39,23 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      // Resolve current user session token
+      const session = (await supabase.auth.getSession()).data.session;
+      const token = session?.access_token;
+
       const [manuscriptRes, projectRes] = await Promise.all([
         api.listManuscripts({
           search: search.trim() || undefined,
           status: statusFilter !== 'ALL' ? (statusFilter as ManuscriptStatus) : undefined,
           projectId: selectedProjectId || undefined,
         }).catch(() => ({ manuscripts: [], total: 0 })),
-        api.getProjects().catch(() => []),
+        token
+          ? fetch('/projects', {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+              .then(async (res) => (res.ok ? await res.json() : []))
+              .catch(() => [])
+          : api.getProjects().catch(() => []),
       ]);
 
       setManuscripts(manuscriptRes.manuscripts || []);
@@ -54,7 +65,7 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, selectedProjectId]);
+  }, [user, search, statusFilter, selectedProjectId]);
 
   useEffect(() => {
     fetchData();
@@ -243,12 +254,12 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
                 <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4 shadow-lg shadow-amber-500/5">
                   <FolderPlus className="w-7 h-7" />
                 </div>
-                <h3 className="text-base font-bold text-white mb-1">Research Project Required</h3>
-                <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
-                  Manuscripts in ResearchOS are anchored to collaborative research projects to enable team co-authoring, project literature grounding, and supervisor peer review.
+                <h3 className="text-base font-bold text-white mb-1">Project Required</h3>
+                <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
+                  Please select or create a research project to start drafting your manuscript.
                 </p>
                 <button
-                  onClick={() => onNavigate('/workspace')}
+                  onClick={() => onNavigate('/dashboard')}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-lg shadow-amber-600/25 transition-all"
                 >
                   <span>Go to Research Workspace</span>
@@ -341,13 +352,13 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
       <NoticeModal
         isOpen={isProjectRequiredModalOpen}
         type="project-required"
-        title="Research Project Required"
-        message="Manuscripts in ResearchOS are organized inside research projects to enable collaborative co-authoring, project literature citations, and supervisor peer review. Please create or join a project before drafting."
+        title="Project Required"
+        message="Please select or create a research project to start drafting your manuscript."
         primaryActionText="Go to Research Workspace"
         secondaryActionText="Dismiss"
         onPrimaryAction={() => {
           setIsProjectRequiredModalOpen(false);
-          onNavigate('/workspace');
+          onNavigate('/dashboard');
         }}
         onClose={() => setIsProjectRequiredModalOpen(false)}
       />
