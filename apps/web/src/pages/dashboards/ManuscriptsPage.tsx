@@ -10,12 +10,14 @@ import {
   CheckCircle2,
   Loader2,
   BookOpen,
+  FolderPlus,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { api } from '../../lib/api.js';
 import { Manuscript, ManuscriptStatus, Project } from '@researchos/shared-types';
 import { WorkspaceLayout } from '../../components/layout/WorkspaceLayout.js';
 import { CreateManuscriptModal } from '../../components/manuscripts/CreateManuscriptModal.js';
+import { NoticeModal } from '../../components/common/NoticeModal.js';
 
 interface ManuscriptsPageProps {
   onNavigate: (route: string) => void;
@@ -30,6 +32,7 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isProjectRequiredModalOpen, setIsProjectRequiredModalOpen] = useState(false);
 
   // Fetch manuscripts & projects
   const fetchData = useCallback(async () => {
@@ -40,17 +43,8 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
           search: search.trim() || undefined,
           status: statusFilter !== 'ALL' ? (statusFilter as ManuscriptStatus) : undefined,
           projectId: selectedProjectId || undefined,
-        }),
-        api.getMe().then(async () => {
-          // Fetch user projects
-          const res = await fetch('/projects', {
-            headers: {
-              Authorization: `Bearer ${(await api.getMe()).id}`,
-            },
-          });
-          if (res.ok) return await res.json();
-          return [];
-        }).catch(() => []),
+        }).catch(() => ({ manuscripts: [], total: 0 })),
+        api.getProjects().catch(() => []),
       ]);
 
       setManuscripts(manuscriptRes.manuscripts || []);
@@ -143,7 +137,7 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
             <button
               onClick={() => {
                 if (projects.length === 0) {
-                  alert('Please create or join a project before drafting a manuscript.');
+                  setIsProjectRequiredModalOpen(true);
                   return;
                 }
                 setIsCreateModalOpen(true);
@@ -244,20 +238,39 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
           </div>
         ) : manuscripts.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-800 p-12 text-center flex flex-col items-center justify-center">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
-              <BookOpen className="w-7 h-7" />
-            </div>
-            <h3 className="text-base font-bold text-white mb-1">No Manuscripts Found</h3>
-            <p className="text-xs text-slate-400 max-w-sm mb-6">
-              Create your first academic manuscript to start writing with IMRAD sections, linked citations, and internal review.
-            </p>
-            {projects.length > 0 && (
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-lg shadow-amber-600/20 transition-all"
-              >
-                Draft New Manuscript
-              </button>
+            {projects.length === 0 ? (
+              <>
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4 shadow-lg shadow-amber-500/5">
+                  <FolderPlus className="w-7 h-7" />
+                </div>
+                <h3 className="text-base font-bold text-white mb-1">Research Project Required</h3>
+                <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
+                  Manuscripts in ResearchOS are anchored to collaborative research projects to enable team co-authoring, project literature grounding, and supervisor peer review.
+                </p>
+                <button
+                  onClick={() => onNavigate('/workspace')}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-lg shadow-amber-600/25 transition-all"
+                >
+                  <span>Go to Research Workspace</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4 shadow-lg shadow-amber-500/5">
+                  <BookOpen className="w-7 h-7" />
+                </div>
+                <h3 className="text-base font-bold text-white mb-1">No Manuscripts Found</h3>
+                <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
+                  Create your first academic manuscript to start writing with IMRAD sections, linked citations, and internal review.
+                </p>
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-lg shadow-amber-600/25 transition-all"
+                >
+                  Draft New Manuscript
+                </button>
+              </>
             )}
           </div>
         ) : (
@@ -323,6 +336,21 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
           }}
         />
       )}
+
+      {/* Project Required Notice Modal */}
+      <NoticeModal
+        isOpen={isProjectRequiredModalOpen}
+        type="project-required"
+        title="Research Project Required"
+        message="Manuscripts in ResearchOS are organized inside research projects to enable collaborative co-authoring, project literature citations, and supervisor peer review. Please create or join a project before drafting."
+        primaryActionText="Go to Research Workspace"
+        secondaryActionText="Dismiss"
+        onPrimaryAction={() => {
+          setIsProjectRequiredModalOpen(false);
+          onNavigate('/workspace');
+        }}
+        onClose={() => setIsProjectRequiredModalOpen(false)}
+      />
     </WorkspaceLayout>
   );
 };
