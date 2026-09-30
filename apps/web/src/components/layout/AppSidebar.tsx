@@ -88,10 +88,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     },
     {
       id: 'experiments',
-      label: 'Lab & Experiments',
+      label: 'Experiment Tracker',
       icon: FlaskConical,
       category: 'Research Engine',
       badge: 'M04',
+      isNavigate: true,
+      route: '/experiments',
     },
     {
       id: 'manuscripts',
@@ -104,8 +106,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       id: 'community',
       label: 'Community & Peer Feed',
       icon: MessagesSquare,
-      category: 'Publishing',
+      category: 'Community',
       badge: 'M06',
+      isNavigate: true,
+      route: '/community',
     },
     {
       id: 'marketplace',

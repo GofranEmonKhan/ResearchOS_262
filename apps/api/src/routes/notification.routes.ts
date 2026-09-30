@@ -5,7 +5,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   getUnreadNotificationsCount,
-} from '../../../../../aps/api/src/services/notification.service.js';
+} from '../services/notification.service.js';
 
 const router: Router = Router();
 

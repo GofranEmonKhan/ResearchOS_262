@@ -102,7 +102,13 @@ export type NotificationType =
   | 'ReviewDeadline'
   | 'BookingRequest'
   | 'ForumReply'
-  | 'MilestoneDue';
+  | 'MilestoneDue'
+  | 'ExperimentFlagged'
+  | 'ExperimentCommented'
+  | 'AnswerAccepted'
+  | 'ExpertVerified'
+  | 'DirectMessageReceived'
+  | 'ContentReported';
 
 export const NOTIFICATION_TYPES: Record<NotificationType, NotificationType> = {
   TaskAssigned: 'TaskAssigned',
@@ -113,6 +119,12 @@ export const NOTIFICATION_TYPES: Record<NotificationType, NotificationType> = {
   BookingRequest: 'BookingRequest',
   ForumReply: 'ForumReply',
   MilestoneDue: 'MilestoneDue',
+  ExperimentFlagged: 'ExperimentFlagged',
+  ExperimentCommented: 'ExperimentCommented',
+  AnswerAccepted: 'AnswerAccepted',
+  ExpertVerified: 'ExpertVerified',
+  DirectMessageReceived: 'DirectMessageReceived',
+  ContentReported: 'ContentReported',
 };
 
 export type NotificationChannel = 'InApp' | 'Email';
@@ -684,4 +696,581 @@ export interface PaperListResponse {
   limit: number;
   totalPages: number;
 }
+
+// ==========================================
+// 6. Experiment Tracker Types & Contracts (Spec 04)
+// ==========================================
+
+export type ExperimentPurpose =
+  | 'ModelTesting'
+  | 'HyperparameterTuning'
+  | 'DatasetComparison'
+  | 'PerformanceEvaluation'
+  | 'Baseline'
+  | 'Final';
+
+export const EXPERIMENT_PURPOSES: Record<ExperimentPurpose, ExperimentPurpose> = {
+  ModelTesting: 'ModelTesting',
+  HyperparameterTuning: 'HyperparameterTuning',
+  DatasetComparison: 'DatasetComparison',
+  PerformanceEvaluation: 'PerformanceEvaluation',
+  Baseline: 'Baseline',
+  Final: 'Final',
+};
+
+export type ExperimentStatus = 'Draft' | 'Final';
+
+export const EXPERIMENT_STATUSES: Record<ExperimentStatus, ExperimentStatus> = {
+  Draft: 'Draft',
+  Final: 'Final',
+};
+
+export type ExperimentFlagType = 'NeedsRerun' | 'NotReproducible';
+
+export const EXPERIMENT_FLAG_TYPES: Record<ExperimentFlagType, ExperimentFlagType> = {
+  NeedsRerun: 'NeedsRerun',
+  NotReproducible: 'NotReproducible',
+};
+
+export interface ExperimentConfig {
+  model?: string;
+  hyperparameters?: Record<string, string | number | boolean>;
+  dataset?: string;
+  hardware?: string;
+  codeCommit?: string;
+  notebookFileId?: string | null;
+  environmentNotes?: string;
+  [key: string]: any;
+}
+
+export type ExperimentMetrics = Record<string, number | string>;
+
+export interface Experiment {
+  id: string;
+  projectId: string;
+  ownerId: string;
+  name: string;
+  purpose: ExperimentPurpose;
+  hypothesis?: string | null;
+  date: string;
+  config: ExperimentConfig;
+  metrics: ExperimentMetrics;
+  outputFileIds: string[];
+  observation?: string | null;
+  status: ExperimentStatus;
+  createdAt: string;
+  updatedAt: string;
+  // Enriched relations
+  ownerName?: string;
+  ownerAvatarUrl?: string | null;
+  projectName?: string;
+  flags?: ExperimentFlag[];
+  linkedTasks?: { id: string; title: string; status: TaskStatus }[];
+  outputFiles?: FileAsset[];
+  commentsCount?: number;
+}
+
+export interface ExperimentFlag {
+  id: string;
+  experimentId: string;
+  flaggedBy: string;
+  type: ExperimentFlagType;
+  note: string;
+  raisedTaskId?: string | null;
+  resolvedAt?: string | null;
+  resolutionNote?: string | null;
+  createdAt: string;
+  flaggedByName?: string;
+  raisedTaskTitle?: string | null;
+}
+
+export interface TaskExperimentLink {
+  taskId: string;
+  experimentId: string;
+  createdAt: string;
+}
+
+export interface ExperimentComment {
+  id: string;
+  experimentId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+  authorName?: string;
+  authorAvatarUrl?: string | null;
+}
+
+export interface CreateExperimentDto {
+  name: string;
+  purpose: ExperimentPurpose;
+  hypothesis?: string;
+  date?: string;
+  config?: ExperimentConfig;
+  metrics?: ExperimentMetrics;
+  outputFileIds?: string[];
+  observation?: string;
+  status?: ExperimentStatus;
+}
+
+export interface UpdateExperimentDto {
+  name?: string;
+  purpose?: ExperimentPurpose;
+  hypothesis?: string | null;
+  date?: string;
+  config?: ExperimentConfig;
+  metrics?: ExperimentMetrics;
+  outputFileIds?: string[];
+  observation?: string | null;
+}
+
+export interface CreateExperimentFlagDto {
+  type: ExperimentFlagType;
+  note: string;
+  createRevisionTask?: boolean;
+  taskTitle?: string;
+  taskDueDate?: string;
+}
+
+export interface ResolveExperimentFlagDto {
+  resolutionNote: string;
+}
+
+export interface AddExperimentCommentDto {
+  body: string;
+}
+
+export interface LinkTaskExperimentDto {
+  experimentId: string;
+}
+
+export interface ExperimentSearchParams {
+  projectId?: string;
+  purpose?: ExperimentPurpose;
+  status?: ExperimentStatus;
+  search?: string;
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ExperimentListResponse {
+  experiments: Experiment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AlignedParameterRow {
+  parameterKey: string;
+  group: 'model' | 'hyperparameter' | 'dataset' | 'hardware' | 'codeCommit' | 'environment';
+  isIdentical: boolean;
+  values: Record<string, string | number | boolean | null>;
+}
+
+export interface AlignedMetricRow {
+  metricKey: string;
+  isNumeric: boolean;
+  values: Record<string, number | string | null>;
+  min?: number;
+  max?: number;
+  bestExperimentId?: string;
+}
+
+export interface ExperimentComparisonResponse {
+  experiments: Experiment[];
+  parameterMatrix: AlignedParameterRow[];
+  metricMatrix: AlignedMetricRow[];
+  summary: {
+    totalCompared: number;
+    differingParametersCount: number;
+    commonParametersCount: number;
+    commonDataset?: string;
+  };
+}
+
+// ==========================================
+// 8. Discussion Forum & Community (Spec 06)
+// ==========================================
+
+export type ForumTargetType = 'Post' | 'Answer';
+
+export const FORUM_TARGET_TYPES: Record<ForumTargetType, ForumTargetType> = {
+  Post: 'Post',
+  Answer: 'Answer',
+};
+
+export type ForumVoteValue =
+  | 'Up'
+  | 'Down'
+  | 'Like'
+  | 'Love'
+  | 'Insightful'
+  | 'Celebrate'
+  | 'Curious'
+  | 'Support';
+
+export const FORUM_VOTE_VALUES: Record<ForumVoteValue, ForumVoteValue> = {
+  Up: 'Up',
+  Down: 'Down',
+  Like: 'Like',
+  Love: 'Love',
+  Insightful: 'Insightful',
+  Celebrate: 'Celebrate',
+  Curious: 'Curious',
+  Support: 'Support',
+};
+
+export type ReportTargetType = 'Post' | 'Answer' | 'Comment' | 'DirectMessage';
+
+export const REPORT_TARGET_TYPES: Record<ReportTargetType, ReportTargetType> = {
+  Post: 'Post',
+  Answer: 'Answer',
+  Comment: 'Comment',
+  DirectMessage: 'DirectMessage',
+};
+
+export type ReportStatus = 'Pending' | 'ActionTaken' | 'Dismissed';
+
+export const REPORT_STATUSES: Record<ReportStatus, ReportStatus> = {
+  Pending: 'Pending',
+  ActionTaken: 'ActionTaken',
+  Dismissed: 'Dismissed',
+};
+
+export interface ReactionCounts {
+  like: number;
+  love: number;
+  insightful: number;
+  celebrate: number;
+  curious: number;
+  support: number;
+  up: number;
+  down: number;
+  totalReactions: number;
+}
+
+export interface ReactionUser {
+  userId: string;
+  fullName: string;
+  photoUrl?: string | null;
+  role: UserRole;
+  value: ForumVoteValue;
+  createdAt: string;
+}
+
+export interface ForumPost {
+  id: string;
+  authorId: string;
+  projectId?: string | null;
+  title: string;
+  body: string;
+  tags: string[];
+  attachmentIds: string[];
+  isPinned: boolean;
+  isLocked: boolean;
+  viewsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  // Enriched relations
+  author?: {
+    id: string;
+    fullName: string;
+    photoUrl?: string | null;
+    role: UserRole;
+    reputationPoints: number;
+    institution?: string;
+    isFacultyVerified?: boolean;
+  };
+  projectName?: string | null;
+  score?: number;
+  upvotesCount?: number;
+  downvotesCount?: number;
+  reactions?: ReactionCounts;
+  currentUserReaction?: ForumVoteValue | null;
+  currentUserVote?: 'Up' | 'Down' | null;
+  answersCount?: number;
+  hasAcceptedAnswer?: boolean;
+  attachments?: FileAsset[];
+  answers?: ForumAnswer[];
+  comments?: ForumComment[];
+}
+
+export interface ForumAnswer {
+  id: string;
+  postId: string;
+  authorId: string;
+  body: string;
+  isAccepted: boolean;
+  expertVerifiedBy?: string | null;
+  expertVerifiedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Enriched relations
+  author?: {
+    id: string;
+    fullName: string;
+    photoUrl?: string | null;
+    role: UserRole;
+    reputationPoints: number;
+    institution?: string;
+    isFacultyVerified?: boolean;
+  };
+  expertVerifier?: {
+    id: string;
+    fullName: string;
+    photoUrl?: string | null;
+    role?: UserRole;
+    reputationPoints?: number;
+    institution?: string;
+    department?: string;
+    isFacultyVerified?: boolean;
+  } | null;
+  score?: number;
+  upvotesCount?: number;
+  downvotesCount?: number;
+  reactions?: ReactionCounts;
+  currentUserReaction?: ForumVoteValue | null;
+  currentUserVote?: 'Up' | 'Down' | null;
+  comments?: ForumComment[];
+}
+
+export interface ForumComment {
+  id: string;
+  targetType: ForumTargetType;
+  targetId: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+  updatedAt?: string;
+  author?: {
+    id: string;
+    fullName: string;
+    photoUrl?: string | null;
+    role: UserRole;
+  };
+}
+
+export interface ForumVote {
+  id: string;
+  targetType: ForumTargetType;
+  targetId: string;
+  voterId: string;
+  value: ForumVoteValue;
+  createdAt: string;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  criteria: string;
+  description: string;
+  icon: string;
+  createdAt: string;
+}
+
+export interface UserBadge {
+  userId: string;
+  badgeId: string;
+  awardedAt: string;
+  badge?: Badge;
+}
+
+export interface TagFollow {
+  userId: string;
+  tag: string;
+  createdAt: string;
+}
+
+export interface DirectMessage {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
+  sender?: {
+    id: string;
+    fullName: string;
+    photoUrl?: string | null;
+    role: UserRole;
+  };
+  recipient?: {
+    id: string;
+    fullName: string;
+    photoUrl?: string | null;
+    role: UserRole;
+  };
+}
+
+export interface DirectMessageThread {
+  partnerId: string;
+  partner: {
+    id: string;
+    fullName: string;
+    photoUrl?: string | null;
+    role: UserRole;
+    institution?: string;
+    reputationPoints: number;
+    isFacultyVerified?: boolean;
+  };
+  lastMessage: DirectMessage;
+  unreadCount: number;
+  isBlocked: boolean;
+  hasBlockedYou: boolean;
+}
+
+export interface UserBlock {
+  blockerId: string;
+  blockedId: string;
+  createdAt: string;
+  blockedUser?: {
+    id: string;
+    fullName: string;
+    photoUrl?: string | null;
+    role: UserRole;
+  };
+}
+
+export interface ForumReport {
+  id: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reporterId: string;
+  reason: string;
+  description?: string | null;
+  status: ReportStatus;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  resolvedBy?: string | null;
+  resolvedAt?: string | null;
+  actionTaken?: string | null;
+  actionNote?: string | null;
+  targetSummary?: string;
+  targetAuthorId?: string;
+  targetAuthorName?: string;
+  createdAt: string;
+  reporter?: {
+    id: string;
+    fullName: string;
+    role: UserRole;
+    photoUrl?: string | null;
+  };
+  resolver?: {
+    id: string;
+    fullName: string;
+    role: UserRole;
+  };
+  reviewedByUser?: {
+    id: string;
+    fullName: string;
+    role: UserRole;
+  };
+}
+
+export interface CommunityProfile {
+  userId: string;
+  fullName: string;
+  photoUrl?: string | null;
+  bio?: string | null;
+  institution: string;
+  department: string;
+  role: UserRole;
+  status: UserStatus;
+  isFacultyVerified: boolean;
+  reputationPoints: number;
+  researchFieldTags: string[];
+  badges: UserBadge[];
+  stats: {
+    postsCount: number;
+    answersCount: number;
+    acceptedAnswersCount: number;
+    expertVerifiedCount: number;
+    upvotesReceived: number;
+  };
+  recentPosts: ForumPost[];
+  recentAnswers: ForumAnswer[];
+}
+
+export interface CreateForumPostDto {
+  title: string;
+  body: string;
+  tags?: string[];
+  attachmentIds?: string[];
+  projectId?: string;
+}
+
+export interface UpdateForumPostDto {
+  title?: string;
+  body?: string;
+  tags?: string[];
+  attachmentIds?: string[];
+  isPinned?: boolean;
+  isLocked?: boolean;
+}
+
+export interface CreateForumAnswerDto {
+  body: string;
+}
+
+export interface UpdateForumAnswerDto {
+  body: string;
+}
+
+export interface AddForumCommentDto {
+  body: string;
+}
+
+export interface UpdateForumCommentDto {
+  body: string;
+}
+
+export interface VoteForumDto {
+  value: ForumVoteValue;
+}
+
+export interface CreateReportDto {
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: string;
+}
+
+export interface ActionReportDto {
+  status: ReportStatus;
+  actionTaken?: string;
+  actionNote?: string;
+  deleteTarget?: boolean;
+  lockTarget?: boolean;
+}
+
+export interface SendDirectMessageDto {
+  recipientId: string;
+  body: string;
+}
+
+export interface BlockUserDto {
+  targetUserId: string;
+}
+
+export interface ForumPostSearchParams {
+  tag?: string;
+  search?: string;
+  authorId?: string;
+  projectId?: string;
+  filter?: 'all' | 'following' | 'unanswered' | 'my-posts';
+  sort?: 'newest' | 'top' | 'activity';
+  page?: number;
+  limit?: number;
+}
+
+export interface ForumPostListResponse {
+  posts: ForumPost[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+
 

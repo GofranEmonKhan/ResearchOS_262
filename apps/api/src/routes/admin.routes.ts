@@ -284,4 +284,63 @@ router.patch('/users/:id/role', async (req: Request<{ id: string }, {}, ChangeUs
   return res.json(mapDbProfileToProfile(updatedProfile));
 });
 
+/**
+ * GET /admin/forum/reports
+ * Moderation queue for reported forum content (DM bodies strictly redacted per AC-13)
+ */
+router.get('/forum/reports', async (req: Request, res: Response) => {
+  try {
+    const { status, targetType, page = '1', limit = '50' } = req.query as any;
+    const { ForumReportService } = await import('../services/forumReport.service.js');
+
+    const reports = await ForumReportService.listReports({
+      status: status as any,
+      targetType: targetType as any,
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 50,
+    });
+
+    return res.json(reports);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/forum/reports/:id/action
+ * Resolve or take action on a reported piece of content
+ */
+router.post('/forum/reports/:id/action', async (req: Request, res: Response) => {
+  try {
+    const reportId = req.params.id as string;
+    const { action, actionNotes, actionTaken, actionNote, status, deleteTarget, lockTarget } = req.body;
+    const adminId = req.userId!;
+
+    const { ForumReportService } = await import('../services/forumReport.service.js');
+    const resolved = await ForumReportService.resolveReport(reportId, adminId, {
+      action,
+      actionNotes,
+      actionTaken,
+      actionNote,
+      status,
+      deleteTarget,
+      lockTarget,
+    });
+
+    await createAuditLog({
+      actorId: adminId,
+      action: 'resolve_forum_report',
+      targetType: 'Report',
+      targetId: reportId,
+      ipAddress: req.ip,
+      metadata: { action: action || actionTaken, status: status || resolved.status },
+    });
+
+    return res.json(resolved);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
 export default router;
+

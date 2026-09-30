@@ -24,6 +24,17 @@ export default defineConfig({
       '/milestones': 'http://localhost:3001',
       '/tasks': 'http://localhost:3001',
       '/notifications': 'http://localhost:3001',
+      '/messages': 'http://localhost:3001',
+      '/papers': 'http://localhost:3001',
+      '/collections': 'http://localhost:3001',
+      '/experiments': 'http://localhost:3001',
+      '/forum': 'http://localhost:3001',
+      '/leaderboard': 'http://localhost:3001',
+      '/users': 'http://localhost:3001',
+      '/api': {
+        target: 'http://localhost:3001',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
   },
 });

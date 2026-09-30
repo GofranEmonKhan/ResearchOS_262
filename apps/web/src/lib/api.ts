@@ -23,18 +23,33 @@ import {
   PaperComment,
   AddPaperCommentDto,
   CitationPurpose,
-  CreateCitationPurposeDto
+  CreateCitationPurposeDto,
+  Experiment,
+  CreateExperimentDto,
+  UpdateExperimentDto,
+  ExperimentSearchParams,
+  ExperimentListResponse,
+  ExperimentComparisonResponse,
+  ExperimentFlag,
+  CreateExperimentFlagDto,
+  ResolveExperimentFlagDto,
+  ExperimentComment,
+  AddExperimentCommentDto,
 } from '@researchos/shared-types';
 
-const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {}) as any;
-const API_BASE = env?.VITE_API_URL || 'http://localhost:3001';
+export const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {}) as any;
+export const API_BASE = env?.VITE_API_URL || '';
+
+export async function getAuthToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || (typeof localStorage !== 'undefined' ? localStorage.getItem('supabase_auth_token') || '' : '');
+}
 
 /**
  * Standard authenticated fetch helper that attaches the live Supabase JWT
  */
-async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
+export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const token = await getAuthToken();
 
   const headers = new Headers(options.headers || {});
   headers.set('Content-Type', 'application/json');
@@ -361,6 +376,105 @@ export const api = {
 
   async deleteCitation(citationId: string): Promise<{ message: string }> {
     return fetchApi<{ message: string }>(`/citations/${citationId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // ==========================================
+  // Experiment Tracker (Spec 04)
+  // ==========================================
+  async getProjectExperiments(projectId: string, params?: ExperimentSearchParams): Promise<ExperimentListResponse> {
+    const query = new URLSearchParams();
+    if (params?.purpose) query.set('purpose', params.purpose);
+    if (params?.status) query.set('status', params.status);
+    if (params?.search) query.set('search', params.search);
+    if (params?.fromDate) query.set('fromDate', params.fromDate);
+    if (params?.toDate) query.set('toDate', params.toDate);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+
+    const qs = query.toString();
+    return fetchApi<ExperimentListResponse>(`/projects/${projectId}/experiments${qs ? `?${qs}` : ''}`);
+  },
+
+  async createExperiment(projectId: string, dto: CreateExperimentDto): Promise<Experiment> {
+    return fetchApi<Experiment>(`/projects/${projectId}/experiments`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async getExperimentById(experimentId: string): Promise<Experiment> {
+    return fetchApi<Experiment>(`/experiments/${experimentId}`);
+  },
+
+  async updateExperiment(experimentId: string, dto: UpdateExperimentDto): Promise<Experiment> {
+    return fetchApi<Experiment>(`/experiments/${experimentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async deleteExperiment(experimentId: string): Promise<void> {
+    return fetchApi<void>(`/experiments/${experimentId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async finalizeExperiment(experimentId: string): Promise<Experiment> {
+    return fetchApi<Experiment>(`/experiments/${experimentId}/finalize`, {
+      method: 'POST',
+    });
+  },
+
+  async compareExperiments(experimentIds: string[]): Promise<ExperimentComparisonResponse> {
+    const query = new URLSearchParams();
+    query.set('ids', experimentIds.join(','));
+    return fetchApi<ExperimentComparisonResponse>(`/experiments/compare?${query.toString()}`);
+  },
+
+  async getExperimentFlags(experimentId: string): Promise<ExperimentFlag[]> {
+    return fetchApi<ExperimentFlag[]>(`/experiments/${experimentId}/flags`);
+  },
+
+  async createExperimentFlag(experimentId: string, dto: CreateExperimentFlagDto): Promise<ExperimentFlag> {
+    return fetchApi<ExperimentFlag>(`/experiments/${experimentId}/flags`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async resolveExperimentFlag(flagId: string, dto: ResolveExperimentFlagDto): Promise<ExperimentFlag> {
+    return fetchApi<ExperimentFlag>(`/experiments/flags/${flagId}/resolve`, {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async getExperimentComments(experimentId: string): Promise<ExperimentComment[]> {
+    return fetchApi<ExperimentComment[]>(`/experiments/${experimentId}/comments`);
+  },
+
+  async addExperimentComment(experimentId: string, dto: AddExperimentCommentDto): Promise<ExperimentComment> {
+    return fetchApi<ExperimentComment>(`/experiments/${experimentId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async getTaskLinkedExperiments(taskId: string): Promise<Experiment[]> {
+    return fetchApi<Experiment[]>(`/tasks/${taskId}/experiments`);
+  },
+
+  async linkTaskExperiment(taskId: string, experimentId: string): Promise<{ success: boolean; message: string }> {
+    return fetchApi<{ success: boolean; message: string }>(`/tasks/${taskId}/experiments`, {
+      method: 'POST',
+      body: JSON.stringify({ experimentId }),
+    });
+  },
+
+  async unlinkTaskExperiment(taskId: string, experimentId: string): Promise<{ success: boolean; message: string }> {
+    return fetchApi<{ success: boolean; message: string }>(`/tasks/${taskId}/experiments/${experimentId}`, {
       method: 'DELETE',
     });
   },

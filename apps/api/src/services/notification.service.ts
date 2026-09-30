@@ -105,3 +105,13 @@ export async function getUnreadNotificationsCount(userId: string): Promise<numbe
   return count ?? 0;
 }
 
+export class NotificationService {
+  static createNotification = createNotification;
+  static listUserNotifications = listUserNotifications;
+  static markNotificationAsRead = markNotificationAsRead;
+  static markAllNotificationsAsRead = markAllNotificationsAsRead;
+  static getUnreadNotificationsCount = getUnreadNotificationsCount;
+}
+
+
+

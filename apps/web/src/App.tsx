@@ -11,7 +11,10 @@ import { ProfilePage } from './pages/dashboards/ProfilePage.js';
 import { NotificationsPage } from './pages/dashboards/NotificationsPage.js';
 import { LibraryPage } from './pages/dashboards/LibraryPage.js';
 import { PaperViewerPage } from './pages/dashboards/PaperViewerPage.js';
+import { ExperimentTrackerPage } from './pages/dashboards/ExperimentTrackerPage.js';
+import { CommunityPage } from './pages/dashboards/CommunityPage.js';
 import { ExitWorkspaceModal } from './components/workspace/ExitWorkspaceModal.js';
+
 
 function AppContent() {
   const { user, signOut } = useAuth();
@@ -117,8 +120,30 @@ function AppContent() {
       return <LibraryPage onNavigate={navigate} />;
     }
 
+    // Experiment Tracker (Spec 04)
+    if (
+      currentRoute === '/experiments' ||
+      currentRoute.startsWith('/experiments')
+    ) {
+      return <ExperimentTrackerPage onNavigate={navigate} />;
+    }
+
+    // Community & Forum & Direct Messages (Spec 06)
+    if (
+      currentRoute === '/community' ||
+      currentRoute.startsWith('/community') ||
+      currentRoute === '/forum' ||
+      currentRoute.startsWith('/forum') ||
+      currentRoute === '/messages' ||
+      currentRoute.startsWith('/messages')
+    ) {
+      const initialTab = currentRoute.startsWith('/messages') ? 'dms' : undefined;
+      return <CommunityPage onNavigate={navigate} initialTab={initialTab} />;
+    }
+
     // Dashboard & Project Workspace — any path starting with /projects or /dashboard
     if (currentRoute.startsWith('/projects') || currentRoute.startsWith('/dashboard')) {
+
       return <DashboardRouter onNavigate={navigate} currentRoute={currentRoute} />;
     }
 
