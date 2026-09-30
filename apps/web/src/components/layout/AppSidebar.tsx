@@ -25,6 +25,17 @@ export interface AppSidebarProps {
   onHoverChange?: (hovered: boolean) => void;
 }
 
+interface NavItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  category: string;
+  isNavigate?: boolean;
+  route?: string;
+  badge?: string;
+  glow?: boolean;
+}
+
 export const AppSidebar: React.FC<AppSidebarProps> = ({
   activeTab = 'dashboard',
   onTabChange,
@@ -54,7 +65,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   // Navigation items — workspace-internal items only switch tabs, they DON'T navigate.
   // "Dashboard" is the ONLY item that navigates to /dashboard.
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       id: 'dashboard',
       label: 'Dashboard',
@@ -82,7 +93,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       label: 'Literature Discovery',
       icon: BookOpen,
       category: 'Research Engine',
-      badge: 'M03',
       isNavigate: true,
       route: '/literature',
     },
@@ -91,7 +101,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       label: 'Experiment Tracker',
       icon: FlaskConical,
       category: 'Research Engine',
-      badge: 'M04',
       isNavigate: true,
       route: '/experiments',
     },
@@ -100,7 +109,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       label: 'Manuscripts & Review',
       icon: FileText,
       category: 'Publishing',
-      badge: 'M05',
       isNavigate: true,
       route: '/manuscripts',
     },
@@ -109,7 +117,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       label: 'Community & Peer Feed',
       icon: MessagesSquare,
       category: 'Community',
-      badge: 'M06',
       isNavigate: true,
       route: '/community',
     },
@@ -118,14 +125,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       label: 'Equipment & Services',
       icon: Store,
       category: 'Ecosystem',
-      badge: 'M07',
     },
     {
       id: 'ai-assistant',
       label: 'Research AI Co-Pilot',
       icon: Sparkles,
       category: 'Ecosystem',
-      badge: 'M08',
       glow: true,
     },
   ];
