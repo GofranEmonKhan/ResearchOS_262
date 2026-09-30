@@ -135,16 +135,24 @@ export class CitationService {
   ): Promise<WhyDidICiteThisContext> {
     const { data: citation, error: citErr } = await supabaseAdmin
       .from('manuscript_citations')
-      .select('*, paper:paper_id(*)')
+      .select('*')
       .eq('manuscript_id', manuscriptId)
       .eq('citation_key', citationKey)
       .single();
 
-    if (citErr || !citation || !citation.paper) {
+    if (citErr || !citation) {
       throw new Error(`Citation '${citationKey}' not found in manuscript`);
     }
 
-    const paper = citation.paper;
+    const { data: paper, error: paperErr } = await supabaseAdmin
+      .from('papers')
+      .select('*')
+      .eq('id', citation.paper_id)
+      .single();
+
+    if (paperErr || !paper) {
+      throw new Error(`Linked paper for citation '${citationKey}' not found`);
+    }
 
     // Fetch Paper Highlights / Annotations
     const { data: annotations } = await supabaseAdmin
