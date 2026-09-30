@@ -36,19 +36,23 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
     ? activeSectionContent
     : manuscript.abstract || sections.find((s) => s.sectionType === 'Abstract')?.contentMarkdown || '';
 
-  // Helper to resolve citation in-text label
-  const getCitationLabel = (rawKey: string, fallbackIndex: number) => {
+  // Helper to resolve citation in-text label (stripped of outer brackets so wrapping with [{...}] is never nested)
+  const getCitationLabel = (rawKey: string, _fallbackIndex?: number) => {
     const cleanKey = rawKey.replace(/^\[@|\]$/g, '');
     const found = citations.find(
       (c) => c.citationKey === rawKey || c.citationKey === cleanKey || c.citationKey === `[@${cleanKey}]`
     );
-    if (found?.inTextLabel) return found.inTextLabel;
+    if (found?.inTextLabel) {
+      // Strip any outer brackets to avoid double-bracket rendering like [[@Key]]
+      const stripped = found.inTextLabel.replace(/^\[+|\]+$/g, '').trim();
+      if (stripped) return stripped;
+    }
     if (found?.paper?.authors && found.paper.authors.length > 0) {
       const firstAuthor = found.paper.authors[0].split(' ').pop() || found.paper.authors[0];
       const year = found.paper.year || '';
       return `${firstAuthor} et al., ${year}`;
     }
-    return `[${fallbackIndex + 1}]`;
+    return `@${cleanKey}`;
   };
 
   // Math equation renderer with equation numbering
@@ -164,7 +168,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                                     }`}
                                     title="View citation synthesis"
                                   >
-                                    [{getCitationLabel(part, pI)}]
+                                    {`[${getCitationLabel(part, pI)}]`}
                                   </button>
                                 );
                               }
@@ -308,7 +312,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                   }`}
                   title={`Click to view 'Why Did I Cite This?' for @${citeKey}`}
                 >
-                  [{label}]
+                  {`[${label}]`}
                 </button>
               );
             }
@@ -528,7 +532,7 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                                 : 'text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300'
                             }`}
                           >
-                            [{getCitationLabel(part, idx)}]
+                            {`[${getCitationLabel(part, idx)}]`}
                           </button>
                         );
                       }

@@ -9,9 +9,11 @@ import { ReviewCommentDrawer } from '../components/manuscripts/ReviewCommentDraw
 import { SubmissionChecklistCard } from '../components/manuscripts/SubmissionChecklistCard.js';
 import { AssignReviewerModal } from '../components/manuscripts/AssignReviewerModal.js';
 import { VersionHistoryModal } from '../components/manuscripts/VersionHistoryModal.js';
+import { LatexPaperPreview } from '../components/manuscripts/LatexPaperPreview.js';
 import {
   Manuscript,
   ManuscriptSection,
+  ManuscriptCitation,
   ManuscriptChecklistItem,
   ReviewComment,
   ManuscriptVersion,
@@ -285,5 +287,118 @@ describe('Spec 05 — Manuscript Writing & Peer Review UI Component Tests', () =
     assert.ok(html.includes('Initial Internal Draft'), 'Should render snapshot version name');
     assert.ok(html.includes('Alex Researcher'), 'Should render creator name');
     assert.ok(html.includes('Create Frozen Snapshot'), 'Should render create snapshot form');
+  });
+
+  it('9. LatexPaperPreview renders citation markers without duplicate double-brackets', () => {
+    const mockCitations: ManuscriptCitation[] = [
+      {
+        id: 'cit-1',
+        manuscriptId: 'manu-101',
+        paperId: 'paper-1',
+        citationKey: 'Tunzina2026GreenaiComparative',
+        inTextLabel: '[@Tunzina2026GreenaiComparative]',
+        contextNote: 'Related Prior Research',
+        paper: {
+          id: 'paper-1',
+          title: 'GreenAI: A Comparative Analysis of Environmental Efficiency',
+          authors: ['Tayrin Tunzina', 'Alex Vance'],
+          year: 2026,
+          venue: 'ACM Computing Surveys',
+        },
+        createdAt: '2026-09-30T10:00:00.000Z',
+      },
+    ];
+
+    const testSections: ManuscriptSection[] = [
+      {
+        id: 'sec-1',
+        manuscriptId: 'manu-101',
+        title: 'Abstract',
+        sectionType: 'Abstract',
+        orderIndex: 0,
+        contentMarkdown: 'Investigating environmental efficiency [@Tunzina2026GreenaiComparative] in deep learning.',
+        contentLatex: '',
+        wordCount: 15,
+        createdAt: '2026-09-30T10:00:00.000Z',
+        updatedAt: '2026-09-30T10:00:00.000Z',
+      },
+    ];
+
+    const html = renderToString(
+      <LatexPaperPreview
+        manuscript={mockManuscript}
+        sections={testSections}
+        activeSectionId="sec-1"
+        activeSectionContent="Investigating environmental efficiency [@Tunzina2026GreenaiComparative] in deep learning."
+        citations={mockCitations}
+        onCitationClick={() => {}}
+      />
+    );
+
+    // Verify it renders single bracket [@Tunzina2026GreenaiComparative] and NEVER [[@Tunzina2026GreenaiComparative]]
+    assert.ok(
+      html.includes('[@Tunzina2026GreenaiComparative]'),
+      'Should render single-bracketed citation marker'
+    );
+    assert.ok(
+      !html.includes('[[@Tunzina2026GreenaiComparative]]'),
+      'Must NOT contain duplicate outer brackets [[@...]]'
+    );
+  });
+
+  it('10. LatexPaperPreview resolves author-year citations properly when inTextLabel is clean', () => {
+    const mockCitations: ManuscriptCitation[] = [
+      {
+        id: 'cit-2',
+        manuscriptId: 'manu-101',
+        paperId: 'paper-2',
+        citationKey: 'Vaswani2017Attention',
+        inTextLabel: 'Vaswani et al., 2017',
+        contextNote: 'Foundational transformer architecture',
+        paper: {
+          id: 'paper-2',
+          title: 'Attention Is All You Need',
+          authors: ['Ashish Vaswani', 'Noam Shazeer'],
+          year: 2017,
+          venue: 'NeurIPS',
+        },
+        createdAt: '2026-09-30T10:00:00.000Z',
+      },
+    ];
+
+    const testSections: ManuscriptSection[] = [
+      {
+        id: 'sec-2',
+        manuscriptId: 'manu-101',
+        title: 'Methodology',
+        sectionType: 'Methodology',
+        orderIndex: 1,
+        contentMarkdown: 'We apply attention [@Vaswani2017Attention] to genomic sequence tokens.',
+        contentLatex: '',
+        wordCount: 12,
+        createdAt: '2026-09-30T10:00:00.000Z',
+        updatedAt: '2026-09-30T10:00:00.000Z',
+      },
+    ];
+
+    const html = renderToString(
+      <LatexPaperPreview
+        manuscript={mockManuscript}
+        sections={testSections}
+        activeSectionId="sec-2"
+        activeSectionContent="We apply attention [@Vaswani2017Attention] to genomic sequence tokens."
+        citations={mockCitations}
+        onCitationClick={() => {}}
+      />
+    );
+
+    assert.ok(
+      html.includes('[Vaswani et al., 2017]'),
+      'Should format author-year cleanly as [Vaswani et al., 2017]'
+    );
+    assert.ok(
+      !html.includes('[[Vaswani et al., 2017]]'),
+      'Must NOT double bracket author-year citation'
+    );
   });
 });
