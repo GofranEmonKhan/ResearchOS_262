@@ -24,12 +24,17 @@ import {
   Clock,
   Plus,
   ArrowLeft,
+  ArrowRight,
   Layers,
   Target,
   Loader2,
   Key,
   BookOpen,
   Bookmark,
+  Sparkles,
+  TrendingUp,
+  Activity,
+  Flame,
 } from 'lucide-react';
 
 interface ResearcherWorkspacePageProps {
@@ -359,39 +364,68 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
   const overdueCount = 0; // Placeholder — would need cross-project task due date check
 
   // ─────────────────────────── RENDER ───────────────────────────
+  // ─────────────────────────── RENDER ───────────────────────────
   const renderDashboardHome = () => (
-    <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-indigo-950/50 via-[#0E1118] to-violet-950/30 border border-indigo-500/20 p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <UserAvatar
-              photoUrl={profile?.photoUrl}
-              name={profile?.fullName}
-              role={profile?.role}
-              size="xl"
-              className="ring-2 ring-indigo-500/30 shadow-lg"
-            />
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold text-white tracking-tight">
-                Welcome back, {profile?.fullName?.split(' ')[0] || 'Researcher'}
-              </h1>
-              <p className="text-sm text-slate-400">
-                {profile?.institution} · {profile?.department} · <span className="text-indigo-400 font-medium">{profile?.role}</span>
-              </p>
+    <div className="space-y-8 animate-in fade-in duration-200">
+      {/* ─── 1. ACADEMIC WORKSTATION HERO BANNER ────────────────────────────────────────── */}
+      <div className="rounded-3xl bg-gradient-to-br from-violet-950/40 via-[#090A16]/95 to-indigo-950/40 border border-slate-800/90 shadow-2xl p-6 sm:p-8 relative overflow-hidden backdrop-blur-xl">
+        {/* Subtle Ambient Radial Glow */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 -mb-20 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-4 sm:gap-5">
+            <div className="relative">
+              <UserAvatar
+                photoUrl={profile?.photoUrl}
+                name={profile?.fullName}
+                role={profile?.role}
+                size="xl"
+                className="ring-2 ring-violet-500/40 shadow-xl shadow-violet-950/50"
+              />
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#090A16] shadow-sm" title="Online" />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Welcome back, {profile?.fullName?.split(' ')[0] || 'Researcher'}
+                </h1>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/15 text-violet-300 border border-violet-500/30">
+                  <Sparkles className="w-3 h-3 text-violet-400" />
+                  {profile?.role || 'Researcher'}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-400">
+                <span className="text-slate-200 font-medium">{profile?.institution || 'Research Institute'}</span>
+                {profile?.department && (
+                  <>
+                    <span className="text-slate-600">•</span>
+                    <span className="text-slate-300">{profile?.department}</span>
+                  </>
+                )}
+                <span className="text-slate-600">•</span>
+                <span className="text-emerald-400 font-mono text-xs flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Realtime Workspace Active
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2.5 shrink-0">
+
+          {/* Quick Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3 shrink-0 self-stretch sm:self-auto">
             <button
               onClick={() => setIsJoinProjectModalOpen(true)}
-              className="px-4 py-2.5 rounded-2xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white text-xs font-bold transition-all flex items-center space-x-2"
+              className="px-4 py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 text-slate-200 hover:text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer hover:border-slate-600"
             >
               <Key className="w-4 h-4 text-cyan-400" />
               <span>Join Project</span>
             </button>
             <button
               onClick={() => setIsNewProjectModalOpen(true)}
-              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-violet-600/30 transition-all hover:scale-105 flex items-center space-x-2"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-violet-600/30 transition-all hover:scale-105 flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>New Personal Workspace</span>
@@ -400,49 +434,100 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {/* ─── 2. QUICK METRICS CARDS (LINEAR / VERCEL STYLE) ───────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Projects', value: projects.length, icon: Layers, color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20' },
-          { label: 'Active Tasks', value: totalTasks, icon: Target, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
-          { label: 'Completed', value: completedProjects, icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-          { label: 'Overdue', value: overdueCount, icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+          {
+            label: 'Total Workspaces',
+            value: projects.length,
+            subtext: 'Across all labs & personal',
+            icon: Layers,
+            accent: 'from-violet-500/20 via-violet-500/5 to-transparent',
+            borderColor: 'border-violet-500/30 hover:border-violet-500/60',
+            iconBg: 'bg-violet-500/15 border-violet-500/30 text-violet-400',
+            textColor: 'text-violet-300',
+          },
+          {
+            label: 'Scheduled Tasks',
+            value: totalTasks,
+            subtext: 'Deliverables across milestones',
+            icon: Target,
+            accent: 'from-cyan-500/20 via-cyan-500/5 to-transparent',
+            borderColor: 'border-cyan-500/30 hover:border-cyan-500/60',
+            iconBg: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400',
+            textColor: 'text-cyan-300',
+          },
+          {
+            label: 'Completed Projects',
+            value: completedProjects,
+            subtext: 'Verified research milestones',
+            icon: CheckCircle2,
+            accent: 'from-emerald-500/20 via-emerald-500/5 to-transparent',
+            borderColor: 'border-emerald-500/30 hover:border-emerald-500/60',
+            iconBg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+            textColor: 'text-emerald-300',
+          },
+          {
+            label: 'Attention Required',
+            value: overdueCount,
+            subtext: overdueCount > 0 ? 'Urgent items need review' : 'All deliverables on track',
+            icon: overdueCount > 0 ? Flame : Activity,
+            accent: 'from-amber-500/20 via-amber-500/5 to-transparent',
+            borderColor: 'border-amber-500/30 hover:border-amber-500/60',
+            iconBg: 'bg-amber-500/15 border-amber-500/30 text-amber-400',
+            textColor: 'text-amber-300',
+          },
         ].map((stat) => (
-          <div key={stat.label} className={`rounded-2xl border p-4 ${stat.bg}`}>
-            <div className="flex items-center justify-between mb-2">
-              <stat.icon className={`w-5 h-5 ${stat.color}`} />
-              <span className={`text-2xl font-bold ${stat.color}`}>{stat.value}</span>
+          <div
+            key={stat.label}
+            className={`rounded-2xl p-5 bg-[#090A16]/95 border ${stat.borderColor} transition-all duration-200 hover:-translate-y-0.5 shadow-xl space-y-3 relative overflow-hidden group`}
+          >
+            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.accent}`} />
+            <div className="flex items-center justify-between">
+              <div className={`p-2.5 rounded-xl border ${stat.iconBg}`}>
+                <stat.icon className="w-4 h-4" />
+              </div>
+              <span className="text-3xl font-black text-white font-mono tracking-tight">
+                {stat.value}
+              </span>
             </div>
-            <span className="text-xs text-slate-400 font-medium">{stat.label}</span>
+            <div>
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                {stat.label}
+              </h4>
+              <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                {stat.subtext}
+              </p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Project Cards Grid */}
+      {/* ─── 3. MY RESEARCH PROJECTS SECTION ────────────────────────────────────────── */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
+        <div className="flex items-center justify-center py-20 rounded-2xl bg-slate-900/20 border border-slate-800/80">
           <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
         </div>
       ) : projects.length === 0 ? (
-        <div className="py-24 max-w-lg mx-auto text-center space-y-4">
+        <div className="py-20 max-w-lg mx-auto text-center space-y-4 rounded-3xl bg-slate-900/40 border border-slate-800/80 p-8">
           <div className="w-16 h-16 rounded-3xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 mx-auto shadow-2xl">
             <FolderKanban className="w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Create your Research Workspace</h2>
+          <h2 className="text-xl font-extrabold text-white tracking-tight">Create your Research Workspace</h2>
           <p className="text-xs text-slate-400 leading-relaxed">
             Organize experimental tasks, track milestone progress, and collaborate in real-time.
           </p>
-          <div className="flex items-center justify-center space-x-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <button
               onClick={() => setIsJoinProjectModalOpen(true)}
-              className="px-5 py-2.5 rounded-2xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-white text-xs font-bold transition-all flex items-center space-x-2"
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
             >
               <Key className="w-4 h-4 text-cyan-400" />
               <span>Join with Invite Code</span>
             </button>
             <button
               onClick={() => setIsNewProjectModalOpen(true)}
-              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold shadow-lg shadow-violet-600/30 transition-all hover:scale-105 flex items-center space-x-2"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold shadow-lg shadow-violet-600/30 transition-all hover:scale-105 flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Create Personal Workspace</span>
@@ -450,75 +535,137 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
           </div>
         </div>
       ) : (
-        <div>
-          <h2 className="text-sm font-bold text-white mb-4 flex items-center space-x-2">
-            <FolderKanban className="w-4 h-4 text-violet-400" />
-            <span>My Research Projects</span>
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-violet-500/15 border border-violet-500/30 text-violet-400">
+                <FolderKanban className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-extrabold text-white tracking-tight">
+                  My Research Projects
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Select a workspace to enter its Kanban board, calendar, and research notes
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300">
+              {projects.length} Workspaces
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {projects.map((project) => (
               <button
                 key={project.id}
                 onClick={() => handleSelectProject(project)}
-                className="text-left rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-violet-500/30 p-5 transition-all group"
+                className="text-left rounded-2xl border border-slate-800/90 bg-[#090A16]/95 hover:bg-[#0E1022] hover:border-violet-500/50 p-5 transition-all duration-200 hover:-translate-y-1 shadow-xl hover:shadow-violet-950/40 group flex flex-col justify-between cursor-pointer space-y-4"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-sm font-bold text-white group-hover:text-violet-300 transition-colors truncate pr-2">
-                    {project.title}
-                  </h3>
-                  {project.isPersonal && (
-                    <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-white/5 shrink-0">
-                      Personal
-                    </span>
+                {/* Card Top: Title & Workspace Scope Pill */}
+                <div className="space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-extrabold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
+                      {project.title}
+                    </h3>
+                    {project.isPersonal ? (
+                      <span className="text-[10px] font-bold bg-indigo-500/15 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30 shrink-0">
+                        Personal
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold bg-violet-500/15 text-violet-300 px-2 py-0.5 rounded-full border border-violet-500/30 shrink-0 flex items-center gap-1">
+                        <Users className="w-2.5 h-2.5" /> Lab
+                      </span>
+                    )}
+                  </div>
+
+                  {project.abstract && (
+                    <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                      {project.abstract}
+                    </p>
                   )}
                 </div>
 
-                {/* Status + Progress */}
-                <div className="flex items-center space-x-2 mb-3">
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                    project.status === 'Ongoing' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                    project.status === 'Planning' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
-                    project.status === 'Completed' ? 'bg-violet-500/10 border-violet-500/20 text-violet-400' :
-                    'bg-slate-500/10 border-slate-500/20 text-slate-400'
-                  }`}>
-                    {project.status}
-                  </span>
-                  <span className="text-[11px] text-violet-400 font-medium">{project.progressPercent}%</span>
-                </div>
+                {/* Status + Progress Meter */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1.5 ${
+                        project.status === 'Ongoing'
+                          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                          : project.status === 'Planning'
+                          ? 'bg-sky-500/15 border-sky-500/30 text-sky-300'
+                          : project.status === 'Writing'
+                          ? 'bg-purple-500/15 border-purple-500/30 text-purple-300'
+                          : project.status === 'Completed'
+                          ? 'bg-violet-500/15 border-violet-500/30 text-violet-300'
+                          : 'bg-slate-500/15 border-slate-500/30 text-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          project.status === 'Ongoing'
+                            ? 'bg-emerald-400'
+                            : project.status === 'Planning'
+                            ? 'bg-sky-400'
+                            : project.status === 'Writing'
+                            ? 'bg-purple-400'
+                            : 'bg-violet-400'
+                        }`}
+                      />
+                      {project.status}
+                    </span>
 
-                {/* Progress Bar */}
-                <div className="w-full h-1.5 rounded-full bg-white/5 mb-3 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all"
-                    style={{ width: `${project.progressPercent}%` }}
-                  />
+                    <span className="font-mono font-bold text-slate-300 text-[11px]">
+                      {project.progressPercent}%
+                    </span>
+                  </div>
+
+                  {/* Progress Bar Track */}
+                  <div className="w-full h-1.5 rounded-full bg-slate-900 border border-slate-800/80 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-violet-500 via-indigo-500 to-cyan-400 transition-all duration-300"
+                      style={{ width: `${Math.max(project.progressPercent, 4)}%` }}
+                    />
+                  </div>
                 </div>
 
                 {/* Domain Tags */}
                 {project.domainTags && project.domainTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
+                  <div className="flex flex-wrap gap-1">
                     {project.domainTags.slice(0, 3).map((tag: string) => (
-                      <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/15">
+                      <span
+                        key={tag}
+                        className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-slate-900/90 text-slate-300 border border-slate-800"
+                      >
                         {tag}
                       </span>
                     ))}
                   </div>
                 )}
 
-                {/* Meta Row */}
-                <div className="flex items-center space-x-3 text-[11px] text-slate-500">
-                  {project.membersCount !== undefined && (
-                    <span className="flex items-center space-x-1">
-                      <Users className="w-3 h-3" />
-                      <span>{project.membersCount}</span>
-                    </span>
-                  )}
-                  {project.tasksCount !== undefined && (
-                    <span className="flex items-center space-x-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{project.tasksCount} tasks</span>
-                    </span>
-                  )}
+                {/* Footer: Collaborators, Tasks, & Action Arrow */}
+                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    {project.membersCount !== undefined && (
+                      <span className="flex items-center gap-1 text-slate-300">
+                        <Users className="w-3 h-3 text-slate-400" />
+                        <span>{project.membersCount}</span>
+                      </span>
+                    )}
+                    {project.tasksCount !== undefined && (
+                      <span className="flex items-center gap-1 text-slate-300">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        <span>{project.tasksCount} tasks</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <span className="text-violet-400 group-hover:text-violet-300 font-bold text-xs flex items-center gap-1">
+                    <span>Open</span>
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                  </span>
                 </div>
               </button>
             ))}
@@ -526,21 +673,21 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
         </div>
       )}
 
-      {/* Literature Discovery & Reading Queue Card */}
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-violet-950/20 via-surface-2 to-indigo-950/20 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0">
+      {/* ─── 4. LITERATURE DISCOVERY & READING QUEUE CARD ───────────────────────────── */}
+      <div className="rounded-3xl border border-slate-800/90 bg-gradient-to-r from-violet-950/30 via-[#090A16]/95 to-indigo-950/30 p-6 sm:p-7 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 shadow-2xl backdrop-blur-xl">
+        <div className="flex items-start gap-4 sm:gap-5">
+          <div className="w-12 h-12 rounded-2xl bg-violet-600/20 border border-violet-500/35 flex items-center justify-center text-violet-300 shrink-0 shadow-lg shadow-violet-600/20">
             <BookOpen className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm sm:text-base font-extrabold text-white flex flex-wrap items-center gap-2">
               <span>Literature Library & Reading Queue</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center gap-1">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center gap-1">
                 <Bookmark className="w-3 h-3 fill-amber-400" />
                 Required Reading
               </span>
             </h3>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+            <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
               Upload PDF papers, extract metadata via CrossRef & OpenAlex, highlight text with scale-invariant coordinates, and synthesize research gaps in the Smart Research Sidebar.
             </p>
           </div>
@@ -548,10 +695,11 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
 
         <button
           onClick={() => onNavigate('/literature')}
-          className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 transition-all hover:scale-105 shrink-0 flex items-center gap-2"
+          className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold shadow-lg shadow-violet-600/30 transition-all hover:scale-105 shrink-0 flex items-center gap-2 cursor-pointer"
         >
           <BookOpen className="w-4 h-4" />
           <span>Open Library</span>
+          <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
