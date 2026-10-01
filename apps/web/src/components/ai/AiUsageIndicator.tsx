@@ -85,17 +85,19 @@ export const AiUsageIndicator: React.FC<AiUsageIndicatorProps> = ({
 
   if (variant === 'compact') {
     return (
-      <div className={`p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] ${className}`}>
-        <div className="flex items-center justify-between text-[11px] mb-1.5">
-          <div className="flex items-center gap-1.5 text-slate-300 font-medium">
-            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+      <div className={`p-2.5 rounded-xl bg-[#0E0F1D]/80 border border-slate-800/90 shadow-sm ${className}`}>
+        <div className="flex items-center justify-between text-[11px] mb-2">
+          <div className="flex items-center gap-1.5 text-slate-200 font-semibold">
+            <div className="p-0.5 rounded bg-violet-500/15 border border-violet-500/30 text-violet-400">
+              <Sparkles className="w-3 h-3" />
+            </div>
             <span>AI Token Quota</span>
           </div>
-          <span className="font-mono text-slate-400">
+          <span className="font-mono text-[10px] text-violet-300/90 font-medium px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/20">
             {usage ? `${formatTokens(usage.tokensUsedThisMonth)} / ${formatTokens(usage.monthlyLimit)}` : '...'}
           </span>
         </div>
-        <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+        <div className="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-slate-800/80">
           <div
             className={`h-full rounded-full transition-all duration-500 ${barColor}`}
             style={{ width: `${percent}%` }}

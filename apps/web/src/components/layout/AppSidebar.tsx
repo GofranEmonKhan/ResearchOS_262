@@ -65,15 +65,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     onNavigate?.('/');
   };
 
-  // Navigation items — workspace-internal items only switch tabs, they DON'T navigate.
-  // "Dashboard" is the ONLY item that navigates to /dashboard.
+  // Navigation items — workspace-internal items switch tabs, others navigate
   const navItems: NavItem[] = [
     {
       id: 'dashboard',
       label: 'Dashboard',
       icon: LayoutDashboard,
       category: 'Workspace',
-      isNavigate: true,  // This one navigates
+      isNavigate: true,
       route: '/dashboard',
     },
     {
@@ -81,14 +80,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       label: 'Workspace Board',
       icon: FolderKanban,
       category: 'Workspace',
-      isNavigate: false,  // Tab switch only
+      isNavigate: false,
     },
     {
       id: 'calendar',
       label: 'Milestones & Calendar',
       icon: Calendar,
       category: 'Workspace',
-      isNavigate: false,  // Tab switch only
+      isNavigate: false,
     },
     {
       id: 'literature',
@@ -146,165 +145,176 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   return (
     <>
       <aside
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={`fixed top-16 left-0 h-[calc(100vh-4rem)] z-40 bg-[#0A0914]/95 backdrop-blur-2xl border-r border-white/10 flex flex-col justify-between transition-all duration-300 ease-in-out select-none shadow-2xl shadow-black/80 ${
-        isExpanded ? 'w-64' : 'w-[72px]'
-      }`}
-      aria-label="Sidebar Navigation"
-    >
-      {/* Navigation Item List */}
-      <nav className="p-3 space-y-1.5 overflow-y-auto flex-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] z-40 bg-[#07080F]/95 backdrop-blur-2xl border-r border-slate-800/80 flex flex-col justify-between transition-all duration-300 ease-in-out select-none shadow-2xl shadow-black/80 ${
+          isExpanded ? 'w-64' : 'w-[72px]'
+        }`}
+        aria-label="Sidebar Navigation"
+      >
+        {/* Navigation Item List */}
+        <nav className="p-2.5 space-y-1 overflow-y-auto flex-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                if (item.id === 'ai-assistant') {
-                  setIsAiCoPilotOpen(true);
-                  return;
-                }
-                // Handle kanban & calendar tabs
-                if (item.id === 'kanban' || item.id === 'calendar') {
-                  if (onTabChange) {
-                    onTabChange(item.id);
-                  } else if (onNavigate) {
-                    const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
-                    if (lastId) {
-                      onNavigate(`/projects/${lastId}?tab=${item.id}`);
-                    } else {
-                      onNavigate(`/dashboard?tab=${item.id}`);
-                    }
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (item.id === 'ai-assistant') {
+                    setIsAiCoPilotOpen(true);
+                    return;
                   }
-                  return;
-                }
-                // If item navigates (like Dashboard), call onNavigate
-                if (item.isNavigate && item.route && onNavigate) {
-                  onNavigate(item.route);
-                }
-                // Always update the active tab
-                if (onTabChange) onTabChange(item.id);
-              }}
-              className={`w-full flex items-center rounded-xl p-2.5 transition-all duration-200 group relative ${
-                isActive
-                  ? 'bg-gradient-to-r from-violet-600/30 to-indigo-600/10 text-white border border-violet-500/30 shadow-lg shadow-violet-600/10'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04] border border-transparent'
-              }`}
-              title={!isExpanded ? item.label : undefined}
-            >
-              {/* Active Indicator Bar */}
-              {isActive && (
-                <div className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-violet-500 to-indigo-500 rounded-r" />
-              )}
-
-              {/* Icon */}
-              <div
-                className={`flex items-center justify-center shrink-0 w-8 h-8 rounded-lg ${
+                  // Handle kanban & calendar tabs
+                  if (item.id === 'kanban' || item.id === 'calendar') {
+                    if (onTabChange) {
+                      onTabChange(item.id);
+                    } else if (onNavigate) {
+                      const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
+                      if (lastId) {
+                        onNavigate(`/projects/${lastId}?tab=${item.id}`);
+                      } else {
+                        onNavigate(`/dashboard?tab=${item.id}`);
+                      }
+                    }
+                    return;
+                  }
+                  // If item navigates (like Dashboard), call onNavigate
+                  if (item.isNavigate && item.route && onNavigate) {
+                    onNavigate(item.route);
+                  }
+                  // Always update the active tab
+                  if (onTabChange) onTabChange(item.id);
+                }}
+                className={`w-full flex items-center rounded-xl px-2.5 py-2 transition-all duration-200 group relative ${
                   isActive
-                    ? 'text-violet-400'
-                    : item.glow
-                    ? 'text-amber-400 group-hover:text-amber-300'
-                    : 'text-slate-400 group-hover:text-slate-200'
+                    ? 'bg-gradient-to-r from-violet-600/25 via-indigo-600/15 to-transparent text-white border border-violet-500/35 shadow-lg shadow-violet-950/40'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent hover:border-slate-700/60'
                 }`}
+                title={!isExpanded ? item.label : undefined}
               >
-                <Icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
-              </div>
-
-              {/* Label & Badges */}
-              <div
-                className={`flex items-center justify-between flex-1 ml-3 overflow-hidden whitespace-nowrap transition-all duration-200 ${
-                  isExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3 pointer-events-none'
-                }`}
-              >
-                <span className="text-xs font-medium truncate">{item.label}</span>
-                {item.badge && (
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 group-hover:text-slate-300">
-                    {item.badge}
-                  </span>
+                {/* Active Indicator Left Accent Bar */}
+                {isActive && (
+                  <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-violet-400 to-indigo-500 rounded-r shadow-[0_0_10px_rgba(139,92,246,0.6)]" />
                 )}
-                {item.glow && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/30 text-amber-300 animate-pulse">
-                    PRO
+
+                {/* Icon Container with subtle glass tinting */}
+                <div
+                  className={`flex items-center justify-center shrink-0 w-8 h-8 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30 shadow-inner'
+                      : item.glow
+                      ? 'text-amber-400 group-hover:text-amber-300 group-hover:bg-amber-500/10'
+                      : 'text-slate-400 group-hover:text-slate-100 group-hover:bg-slate-800/50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
+                </div>
+
+                {/* Label & Badges with enhanced contrast */}
+                <div
+                  className={`flex items-center justify-between flex-1 ml-3 overflow-hidden whitespace-nowrap transition-all duration-200 ${
+                    isExpanded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3 pointer-events-none'
+                  }`}
+                >
+                  <span
+                    className={`text-xs font-semibold tracking-normal truncate ${
+                      isActive ? 'text-white font-bold' : 'text-slate-200 group-hover:text-white'
+                    }`}
+                  >
+                    {item.label}
                   </span>
-                )}
+                  {item.badge && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/10 border border-white/10 text-slate-300 group-hover:text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                  {item.glow && (
+                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-300 shadow-sm shadow-amber-500/20">
+                      PRO
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Profile & Actions */}
+        <div className="p-3 border-t border-slate-800/80 bg-slate-950/50">
+          {/* AI Quota Meter */}
+          <div className="mb-2.5">
+            {isExpanded ? (
+              <AiUsageIndicator variant="compact" />
+            ) : (
+              <div className="flex justify-center">
+                <AiUsageIndicator variant="icon" />
               </div>
-            </button>
-          );
-        })}
-      </nav>
+            )}
+          </div>
 
-      {/* Bottom Profile & Actions */}
-      <div className="p-3 border-t border-white/10 bg-white/[0.01]">
-        {/* AI Quota Meter */}
-        <div className="mb-2">
-          {isExpanded ? (
-            <AiUsageIndicator variant="compact" />
-          ) : (
-            <div className="flex justify-center">
-              <AiUsageIndicator variant="icon" />
-            </div>
-          )}
-        </div>
-
-        {/* User Card */}
-        <div
-          onClick={() => onNavigate?.('/profile')}
-          className={`flex items-center p-2 rounded-xl hover:bg-white/[0.05] cursor-pointer transition-colors group ${
-            isExpanded ? 'space-x-3' : 'justify-center'
-          }`}
-          title={!isExpanded ? `${profile?.fullName || 'User'} (${profile?.role})` : undefined}
-        >
-          <UserAvatar
-            photoUrl={profile?.photoUrl}
-            name={profile?.fullName}
-            role={profile?.role}
-            size="md"
-          />
-
+          {/* User Card */}
           <div
-            className={`flex flex-col flex-1 min-w-0 transition-opacity duration-200 overflow-hidden whitespace-nowrap ${
-              isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'
+            onClick={() => onNavigate?.('/profile')}
+            className={`flex items-center p-2 rounded-xl hover:bg-slate-800/60 border border-transparent hover:border-slate-700/60 cursor-pointer transition-all group ${
+              isExpanded ? 'space-x-3' : 'justify-center'
             }`}
+            title={!isExpanded ? `${profile?.fullName || 'User'} (${profile?.role})` : undefined}
           >
-            <span className="text-xs font-semibold text-white truncate group-hover:text-violet-300 transition-colors">
-              {profile?.fullName || 'Research Scientist'}
-            </span>
-            <div className="flex items-center space-x-1.5 mt-0.5">
-              {getRoleIcon()}
-              <span className="text-[10px] text-slate-400 capitalize">{profile?.role || 'Member'}</span>
+            <div className="relative shrink-0">
+              <UserAvatar
+                photoUrl={profile?.photoUrl}
+                name={profile?.fullName}
+                role={profile?.role}
+                size="md"
+              />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#07080F] rounded-full" />
+            </div>
+
+            <div
+              className={`flex flex-col flex-1 min-w-0 transition-opacity duration-200 overflow-hidden whitespace-nowrap ${
+                isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'
+              }`}
+            >
+              <span className="text-xs font-bold text-slate-100 truncate group-hover:text-violet-300 transition-colors">
+                {profile?.fullName || 'Research Scientist'}
+              </span>
+              <div className="flex items-center space-x-1.5 mt-0.5">
+                {getRoleIcon()}
+                <span className="text-[11px] font-medium text-slate-400 capitalize">
+                  {profile?.role || 'Member'}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Sign Out Action */}
-        <button
-          onClick={handleSignOut}
-          className={`mt-2 w-full flex items-center rounded-xl p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all ${
-            isExpanded ? 'space-x-3 px-3' : 'justify-center'
-          }`}
-          title="Sign Out"
-        >
-          <LogOut className="w-4 h-4 shrink-0" />
-          <span
-            className={`text-xs font-medium transition-opacity duration-200 overflow-hidden whitespace-nowrap ${
-              isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'
+          {/* Sign Out Action */}
+          <button
+            onClick={handleSignOut}
+            className={`mt-2 w-full flex items-center rounded-xl p-2 text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer ${
+              isExpanded ? 'space-x-2.5 px-3' : 'justify-center'
             }`}
+            title="Sign Out"
           >
-            Sign Out
-          </span>
-        </button>
-      </div>
-    </aside>
+            <LogOut className="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-rose-400" />
+            <span
+              className={`text-xs font-semibold transition-opacity duration-200 overflow-hidden whitespace-nowrap ${
+                isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'
+              }`}
+            >
+              Sign Out
+            </span>
+          </button>
+        </div>
+      </aside>
 
-    {/* Research AI Co-Pilot Modal */}
-    <AiCoPilotModal
-      isOpen={isAiCoPilotOpen}
-      onClose={() => setIsAiCoPilotOpen(false)}
-      onNavigate={onNavigate}
-    />
-  </>
+      {/* Research AI Co-Pilot Modal */}
+      <AiCoPilotModal
+        isOpen={isAiCoPilotOpen}
+        onClose={() => setIsAiCoPilotOpen(false)}
+        onNavigate={onNavigate}
+      />
+    </>
   );
 };
