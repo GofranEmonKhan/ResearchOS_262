@@ -13,6 +13,7 @@ import * as annotationService from '../services/annotation.service.js';
 import * as commentService from '../services/comment.service.js';
 import * as citationPurposeService from '../services/citationPurpose.service.js';
 import * as exportService from '../services/export.service.js';
+import { schedulePaperEmbedding, retriggerPaperEmbedding, EmbeddingError } from '../services/ai/index.js';
 import {
   CreatePaperDto,
   UpdatePaperDto,
@@ -65,6 +66,7 @@ router.post(
  * POST /papers
  * Creates a new Paper record with associated FileAsset.
  * User confirms metadata before calling this endpoint.
+ * After the 201 response, fires async embedding pipeline (fire-and-forget).
  */
 router.post(
   '/papers',
@@ -73,6 +75,18 @@ router.post(
   async (req: Request<{}, {}, CreatePaperDto>, res: Response) => {
     try {
       const paper = await paperService.createPaper(req.body, req.userId!);
+
+      // Fire-and-forget: embed the PDF asynchronously after returning 201.
+      // Embedding failures are logged server-side and do not affect the paper record.
+      if (paper.fileAssetId && req.body.storagePath) {
+        schedulePaperEmbedding({
+          paperId:     paper.id,
+          fileAssetId: paper.fileAssetId,
+          storagePath: req.body.storagePath,
+          ownerId:     req.userId!,
+        });
+      }
+
       return res.status(201).json(paper);
     } catch (err: any) {
       if (err instanceof paperService.PaperError) {
@@ -86,6 +100,35 @@ router.post(
     }
   }
 );
+
+/**
+ * POST /papers/:paperId/embed
+ * Manually re-trigger PDF embedding for a paper the user owns.
+ * Useful when the background embedding failed or the paper was uploaded
+ * before the AI provider was configured.
+ */
+router.post(
+  '/papers/:paperId/embed',
+  authenticate,
+  requireStatus('Active'),
+  requirePaperUploader,
+  async (req: Request, res: Response) => {
+    try {
+      const result = await retriggerPaperEmbedding({
+        paperId: req.params.paperId as string,
+        ownerId: req.userId!,
+      });
+      return res.json({ message: 'Embedding complete.', ...result });
+    } catch (err: any) {
+      if (err instanceof EmbeddingError) {
+        return res.status(err.statusCode).json({ error: err.message });
+      }
+      console.error('Error re-triggering embedding:', err);
+      return res.status(500).json({ error: err.message || 'Internal Server Error' });
+    }
+  }
+);
+
 
 /**
  * GET /papers

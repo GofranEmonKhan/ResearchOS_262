@@ -326,4 +326,21 @@ describe('Spec 02 — Workspace Layout & Navigation UI Tests', () => {
     assert.ok(html.includes('Tasks'), 'Renders Tasks filter pill');
     assert.ok(html.includes('Reviews &amp; Approvals') || html.includes('Reviews & Approvals'), 'Renders Reviews filter pill');
   });
+
+  it('14. AppSidebar includes Workspace Board and Milestones & Calendar items, and TopHeader displays project switcher when unselected', async () => {
+    const { TopHeader } = await import('../components/layout/TopHeader.js');
+    const html = renderToString(
+      <AuthProvider>
+        <TopHeader
+          projects={[mockProject]}
+          activeProject={null}
+          onSelectProject={() => {}}
+        />
+      </AuthProvider>
+    );
+
+    assert.ok(html.includes('Research Workspace'), 'Renders Research Workspace button in TopHeader');
+    assert.ok(html.includes('Select Workspace Project'), 'Renders project switcher popover heading');
+    assert.ok(html.includes(mockProject.title), 'Lists available project in switcher dropdown');
+  });
 });

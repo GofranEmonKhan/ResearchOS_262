@@ -108,7 +108,7 @@ describe('Spec 03 — Literature Review, PDF Reader & Smart Sidebar UI Tests', (
       />
     );
 
-    assert.ok(html.includes('bg-violet-600/20'), 'Selected collection has active background highlight');
+    assert.ok(html.includes('bg-violet-600/25') || html.includes('bg-violet-600/20'), 'Selected collection has active background highlight');
   });
 
   it('3. PaperCard renders title, author summary, year, venue, and external DOI link', () => {

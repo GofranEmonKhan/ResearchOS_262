@@ -216,8 +216,15 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
       <WorkspaceLayout
         activeTab="experiments"
         onTabChange={(tab) => {
-          if (tab === 'dashboard' || tab === 'kanban' || tab === 'calendar') {
+          if (tab === 'dashboard') {
             onNavigate('/dashboard');
+          } else if (tab === 'kanban' || tab === 'calendar') {
+            const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
+            if (lastId) {
+              onNavigate(`/projects/${lastId}?tab=${tab}`);
+            } else {
+              onNavigate(`/dashboard?tab=${tab}`);
+            }
           }
         }}
         onNavigate={onNavigate}
@@ -258,8 +265,15 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
     <WorkspaceLayout
       activeTab="experiments"
       onTabChange={(tab) => {
-        if (tab === 'dashboard' || tab === 'kanban' || tab === 'calendar') {
+        if (tab === 'dashboard') {
           onNavigate('/dashboard');
+        } else if (tab === 'kanban' || tab === 'calendar') {
+          const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
+          if (lastId) {
+            onNavigate(`/projects/${lastId}?tab=${tab}`);
+          } else {
+            onNavigate(`/dashboard?tab=${tab}`);
+          }
         }
       }}
       onNavigate={onNavigate}

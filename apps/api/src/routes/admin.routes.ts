@@ -7,8 +7,22 @@ import {
   ChangeUserRoleDto, 
   SupervisorVerificationRequest, 
   Profile, 
-  USER_ROLES 
+  USER_ROLES,
+  UserRole,
+  UpdateAiProviderConfigRequest,
+  UpdateAiQuotaRequest,
+  CreateBlockedPromptRuleRequest,
 } from '@researchos/shared-types';
+import {
+  getAiProviderConfig,
+  updateAiProviderConfig,
+  listAiQuotas,
+  updateAiQuota,
+  getAdminAiUsageAnalytics,
+  listBlockedRules,
+  createBlockedRule,
+  deleteBlockedRule,
+} from '../services/ai/index.js';
 
 const router: Router = Router();
 
@@ -339,6 +353,194 @@ router.post('/forum/reports/:id/action', async (req: Request, res: Response) => 
     return res.json(resolved);
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
+  }
+});
+
+// =============================================================================
+// AI Research Assistant (Spec 08) — Admin Governance Endpoints
+// =============================================================================
+
+/**
+ * GET /admin/ai/config
+ * Read active AI provider configuration (sanitized; never exposes raw secret).
+ */
+router.get('/ai/config', async (_req: Request, res: Response) => {
+  try {
+    const config = await getAiProviderConfig();
+    return res.status(200).json(config ?? { message: 'No AI provider configured' });
+  } catch (err: any) {
+    console.error('[Admin] Read AI config error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to read AI provider config.' });
+  }
+});
+
+/**
+ * PATCH /admin/ai/config
+ * Update active provider, model, apiKeyRef, or active state.
+ */
+router.patch('/ai/config', async (req: Request<{}, {}, UpdateAiProviderConfigRequest>, res: Response) => {
+  const adminId = req.userId!;
+
+  try {
+    const updated = await updateAiProviderConfig(adminId, req.body);
+
+    await createAuditLog({
+      actorId: adminId,
+      action: 'update_ai_provider_config',
+      targetType: 'SystemConfig',
+      targetId: updated.id,
+      ipAddress: req.ip,
+      metadata: req.body as Record<string, unknown>,
+    });
+
+    return res.status(200).json(updated);
+  } catch (err: any) {
+    console.error('[Admin] Update AI config error:', err);
+    return res.status(400).json({ error: err.message || 'Failed to update AI provider config.' });
+  }
+});
+
+/**
+ * GET /admin/ai/quotas
+ * List monthly token quotas for all roles.
+ */
+router.get('/ai/quotas', async (_req: Request, res: Response) => {
+  try {
+    const quotas = await listAiQuotas();
+    return res.status(200).json(quotas);
+  } catch (err: any) {
+    console.error('[Admin] List AI quotas error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to list AI quotas.' });
+  }
+});
+
+/**
+ * PATCH /admin/ai/quotas/:role
+ * Update monthly token limit for a specific role.
+ */
+router.patch('/ai/quotas/:role', async (req: Request<{ role: string }, {}, UpdateAiQuotaRequest>, res: Response) => {
+  const adminId = req.userId!;
+  const role = req.params.role as UserRole;
+  const { monthlyTokenLimit } = req.body;
+
+  if (monthlyTokenLimit === undefined || typeof monthlyTokenLimit !== 'number' || monthlyTokenLimit < 0) {
+    return res.status(400).json({ error: 'monthlyTokenLimit must be a non-negative number.' });
+  }
+
+  const validRoles: UserRole[] = ['Admin', 'Supervisor', 'Researcher'];
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({ error: `Invalid role "${role}". Must be one of: ${validRoles.join(', ')}` });
+  }
+
+  try {
+    const updated = await updateAiQuota(role, monthlyTokenLimit);
+
+    await createAuditLog({
+      actorId: adminId,
+      action: 'update_ai_quota',
+      targetType: 'SystemConfig',
+      targetId: null,
+      ipAddress: req.ip,
+      metadata: { role, monthlyTokenLimit },
+    });
+
+    return res.status(200).json(updated);
+  } catch (err: any) {
+    console.error('[Admin] Update AI quota error:', err);
+    return res.status(400).json({ error: err.message || 'Failed to update AI quota.' });
+  }
+});
+
+/**
+ * GET /admin/ai/usage
+ * Global aggregate AI usage and cost analytics for current month.
+ */
+router.get('/ai/usage', async (_req: Request, res: Response) => {
+  try {
+    const analytics = await getAdminAiUsageAnalytics();
+    return res.status(200).json(analytics);
+  } catch (err: any) {
+    console.error('[Admin] Read AI usage analytics error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to read AI usage analytics.' });
+  }
+});
+
+/**
+ * GET /admin/ai/blocked-rules
+ * List all active content policy / blocked prompt rules.
+ */
+router.get('/ai/blocked-rules', async (_req: Request, res: Response) => {
+  try {
+    const rules = await listBlockedRules();
+    return res.status(200).json(rules);
+  } catch (err: any) {
+    console.error('[Admin] List blocked rules error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to list blocked prompt rules.' });
+  }
+});
+
+/**
+ * POST /admin/ai/blocked-rules
+ * Create a new blocked prompt rule (substring pattern match).
+ */
+router.post('/ai/blocked-rules', async (req: Request<{}, {}, CreateBlockedPromptRuleRequest>, res: Response) => {
+  const adminId = req.userId!;
+  const { pattern, reason } = req.body;
+
+  if (!pattern || typeof pattern !== 'string' || !pattern.trim()) {
+    return res.status(400).json({ error: 'pattern is required and must be a non-empty string.' });
+  }
+  if (!reason || typeof reason !== 'string' || !reason.trim()) {
+    return res.status(400).json({ error: 'reason is required.' });
+  }
+
+  try {
+    const created = await createBlockedRule({
+      pattern: pattern.trim(),
+      reason: reason.trim(),
+      createdBy: adminId,
+    });
+
+    await createAuditLog({
+      actorId: adminId,
+      action: 'create_blocked_prompt_rule',
+      targetType: 'PolicyRule',
+      targetId: created.id,
+      ipAddress: req.ip,
+      metadata: { pattern: pattern.trim(), reason: reason.trim() },
+    });
+
+    return res.status(201).json(created);
+  } catch (err: any) {
+    console.error('[Admin] Create blocked rule error:', err);
+    return res.status(400).json({ error: err.message || 'Failed to create blocked prompt rule.' });
+  }
+});
+
+/**
+ * DELETE /admin/ai/blocked-rules/:id
+ * Delete a blocked prompt rule.
+ */
+router.delete('/ai/blocked-rules/:id', async (req: Request<{ id: string }>, res: Response) => {
+  const adminId = req.userId!;
+  const ruleId = req.params.id as string;
+
+  try {
+    await deleteBlockedRule(ruleId);
+
+    await createAuditLog({
+      actorId: adminId,
+      action: 'delete_blocked_prompt_rule',
+      targetType: 'PolicyRule',
+      targetId: ruleId,
+      ipAddress: req.ip,
+      metadata: { ruleId },
+    });
+
+    return res.status(200).json({ message: 'Blocked prompt rule deleted successfully.' });
+  } catch (err: any) {
+    console.error(`[Admin] Delete blocked rule error for ${ruleId}:`, err);
+    return res.status(500).json({ error: err.message || 'Failed to delete blocked prompt rule.' });
   }
 });
 

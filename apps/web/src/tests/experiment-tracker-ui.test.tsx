@@ -7,9 +7,11 @@ import { CreateExperimentModal } from '../components/experiments/CreateExperimen
 import { SupervisorFlagModal } from '../components/experiments/SupervisorFlagModal.js';
 import { ExperimentDetailModal } from '../components/experiments/ExperimentDetailModal.js';
 import { ExperimentComparisonModal } from '../components/experiments/ExperimentComparisonModal.js';
+import { ExperimentGraphicalVisualizer } from '../components/experiments/ExperimentGraphicalVisualizer.js';
 import {
   Experiment,
   Project,
+  AlignedMetricRow,
 } from '@researchos/shared-types';
 
 describe('Spec 04 — Experiment Tracker UI Component Tests', () => {
@@ -247,8 +249,46 @@ describe('Spec 04 — Experiment Tracker UI Component Tests', () => {
     );
 
     assert.ok(html.includes('Multi-Run Comparison Matrix'), 'Contains comparison modal title');
+    assert.ok(html.includes('Matrix Table'), 'Contains Matrix Table view switcher button');
+    assert.ok(html.includes('Graphical Visualizer'), 'Contains Graphical Visualizer view switcher button');
     assert.ok(html.includes('Diffs Only'), 'Contains diff filter toggle button');
     assert.ok(html.includes('Markdown'), 'Contains Copy Markdown button');
     assert.ok(html.includes('CSV'), 'Contains Export CSV button');
+  });
+
+  it('9. ExperimentGraphicalVisualizer renders grouped bars, export actions, and Save to Paper Figures', () => {
+    const mockMetricMatrix: AlignedMetricRow[] = [
+      {
+        metricKey: 'top1_accuracy',
+        isNumeric: true,
+        values: { 'exp-101': 0.884, 'exp-102': 0.762 },
+        min: 0.762,
+        max: 0.884,
+        bestExperimentId: 'exp-101',
+      },
+      {
+        metricKey: 'val_loss',
+        isNumeric: true,
+        values: { 'exp-101': 0.2841, 'exp-102': 0.3812 },
+        min: 0.2841,
+        max: 0.3812,
+        bestExperimentId: 'exp-101',
+      },
+    ];
+
+    const html = renderToString(
+      <ExperimentGraphicalVisualizer
+        experiments={[mockDraftExperiment, mockFinalExperiment]}
+        metricMatrix={mockMetricMatrix}
+      />
+    );
+
+    assert.ok(html.includes('Grouped Bar'), 'Contains grouped bar chart option');
+    assert.ok(html.includes('Delta vs Baseline'), 'Contains delta vs baseline option');
+    assert.ok(html.includes('Export PNG'), 'Contains PNG export action');
+    assert.ok(html.includes('SVG'), 'Contains Vector SVG export action');
+    assert.ok(html.includes('LaTeX Table'), 'Contains LaTeX table copy action');
+    assert.ok(html.includes('Save to Paper Figures'), 'Contains Save to Paper Figures action button');
+    assert.ok(html.includes('Multi-Experiment Metric Comparison Matrix'), 'Contains visualizer chart title');
   });
 });

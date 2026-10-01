@@ -251,12 +251,35 @@ Only a valid co-supervisor/internal reviewer allowed by project membership may b
 }
 ```
 
+## Scholarly Figure Insertion & Scientific Asset Integration
+
+### 1. Figure Insertion Architecture
+Manuscript sections support scientific figures and diagrams with Overleaf-compatible LaTeX figure environments:
+
+```latex
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figures/exp_benchmark_comparison.png}
+  \caption{Comparative performance evaluation across Model_A and Model_B on test accuracy and F1 score.}
+  \label{fig:exp_benchmark_comparison}
+\end{figure}
+```
+
+### 2. Four Figure Sources in `InsertFigureModal`:
+1. **Upload File**: Upload local scientific diagrams/plots (PNG, JPG, SVG, WebP, PDF) with automated filename sanitization to Overleaf paths (`figures/<safe_base>.png`).
+2. **Image URL**: Remote figure URLs cleanly mapped to local LaTeX figure references.
+3. **Scientific Presets**: Curated scientific presets (Neural Architecture DAG, Loss Curves, Genomics Heatmap, Benchmark Matrix) for rapid prototyping.
+4. **Saved Experiment Figures (Spec 04 Cross-Module Linkage)**:
+   - Browse and embed previously saved experiment comparison graphs, grouped bar charts, and benchmark trajectories directly from the Experiment Tracker.
+   - Automatically pre-fills the clean relative path (`figures/exp_comparison_<id>.png`), pre-formatted scientific caption referencing compared experiment runs, and citation label (`\label{fig:exp_...}`).
+
 ## Role behavior
 
 ### Researcher
 
 - Creates/writes drafts and sections.
 - Inserts citations from Literature Manager.
+- Inserts scholarly figures via Upload, URL, Presets, or Saved Experiment Figures.
 - Uploads figures/files.
 - Requests internal review.
 - Cannot assign a reviewer.
@@ -290,6 +313,9 @@ Only a valid co-supervisor/internal reviewer allowed by project membership may b
 - [ ] Section edits are persisted and version snapshots can be created.
 - [ ] Every citation references a Paper and a ManuscriptSection.
 - [ ] “Why Did I Cite This?” shows CitationPurpose + authorized paper research context.
+- [ ] Figure insertion supports Upload, Image URL, Scientific Presets, and Saved Experiment Figures.
+- [ ] Inserting a saved experiment figure automatically loads the clean relative path, experiment metadata caption, and reference label.
+- [ ] Inserted figures generate standard Overleaf-compatible LaTeX `\begin{figure}` and Markdown formats.
 - [ ] Researcher cannot assign an internal reviewer.
 - [ ] Only the project Supervisor can create ReviewAssignment.
 - [ ] Reviewer can comment only on manuscripts they are actually assigned to.

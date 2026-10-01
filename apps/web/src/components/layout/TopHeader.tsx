@@ -240,9 +240,112 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             </div>
           </div>
         ) : (
-          <div className="flex items-center space-x-2 text-slate-400 text-sm font-medium">
-            <Layers className="w-4 h-4 text-violet-400" />
-            <span>Research Workspace</span>
+          <div className="flex items-center space-x-3">
+            <div 
+              ref={switcherRef}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              className="relative"
+            >
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsProjectSwitcherOpen((prev) => !prev);
+                }}
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all duration-200 select-none ${
+                  isProjectSwitcherOpen
+                    ? 'bg-gradient-to-r from-violet-950/70 to-indigo-950/70 border-violet-500/60 shadow-[0_0_16px_rgba(139,92,246,0.3)] ring-1 ring-violet-500/40 text-white'
+                    : 'bg-white/5 hover:bg-white/[0.08] border-white/10 hover:border-violet-500/30 text-slate-200'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5 text-violet-400" />
+                <span>Research Workspace</span>
+                {projects.length > 0 && (
+                  <ChevronDown 
+                    className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ease-out ${
+                      isProjectSwitcherOpen
+                        ? 'rotate-180 text-violet-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]'
+                        : 'text-slate-400'
+                    }`} 
+                  />
+                )}
+              </button>
+
+              {/* Cosmic Popover Menu for unselected state */}
+              {projects.length > 0 && (
+                <div 
+                  className={`absolute top-full left-0 mt-1.5 w-80 rounded-2xl popover-neon-surface p-1.5 transition-all duration-200 ease-out transform z-50 ${
+                    isProjectSwitcherOpen
+                      ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto visible'
+                      : 'opacity-0 -translate-y-1 scale-98 pointer-events-none invisible'
+                  }`}
+                >
+                  <div className="absolute top-0 left-0 right-0 h-[1.5px] overflow-hidden rounded-t-2xl pointer-events-none">
+                    <div className="w-full h-full bg-gradient-to-r from-transparent via-violet-400 to-transparent popover-neon-sweep opacity-90" />
+                  </div>
+                  <div className="absolute -top-2 left-0 right-0 h-2 bg-transparent" />
+                  
+                  <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-violet-400/90 tracking-wider flex items-center justify-between">
+                    <span>Select Workspace Project</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-violet-500/20 text-violet-200 font-semibold border border-violet-500/30">
+                      {projects.length} {projects.length === 1 ? 'Project' : 'Projects'}
+                    </span>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-0.5 p-0.5 custom-scrollbar">
+                    {projects.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          onSelectProject?.(p);
+                          setIsProjectSwitcherOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between gap-2 text-slate-300 hover:bg-white/[0.08] hover:text-white hover:translate-x-0.5 transition-all duration-150"
+                      >
+                        <div className="flex items-center space-x-2 min-w-0 truncate">
+                          <Layers className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                          <span className="truncate">{p.title}</span>
+                          {p.isPersonal && (
+                            <span className="text-[9px] bg-violet-500/20 text-violet-200 px-1.5 py-0.5 rounded border border-violet-500/30 shrink-0 font-medium">
+                              Personal
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="pt-1 mt-1 border-t border-white/5 space-y-0.5">
+                    {onOpenNewProjectModal && (
+                      <button
+                        onClick={() => {
+                          setIsProjectSwitcherOpen(false);
+                          onOpenNewProjectModal();
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-xs rounded-xl flex items-center space-x-2 text-violet-300 hover:bg-violet-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-violet-400" />
+                        <span>Create Personal Workspace...</span>
+                      </button>
+                    )}
+
+                    {onOpenJoinProjectModal && (
+                      <button
+                        onClick={() => {
+                          setIsProjectSwitcherOpen(false);
+                          onOpenJoinProjectModal();
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-xs rounded-xl flex items-center space-x-2 text-cyan-300 hover:bg-cyan-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
+                      >
+                        <Key className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Join with Invite Code...</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

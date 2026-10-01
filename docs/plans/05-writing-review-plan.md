@@ -605,8 +605,11 @@ development
   ├── 4. feature/manuscript-ui-editor
   │      └── Frontend editor page, section outline, citation picker, comment trays
   │
-  └── 5. feature/manuscript-export-testing
-         └── LaTeX/Markdown export, automated test suite (backend + frontend), full integration
+  ├── 5. feature/manuscript-export-testing
+  │      └── LaTeX/Markdown export, automated test suite (backend + frontend), full integration
+  │
+  └── 6. feature/manuscript-experiment-figures
+         └── Scholarly figure insertion modal, 4 sources (Upload, URL, Presets, Saved Experiment Figures), Overleaf LaTeX path mapping
 ```
 
 ---
@@ -638,3 +641,6 @@ development
 - [ ] **UI-04**: Review comment drawer renders severity badges (`Blocker`, `Major`, `Minor`) and fix note inputs.
 - [ ] **UI-05**: Supervisor review controls display `Approve for Submission` and `Assign Reviewer` buttons only for Supervisors.
 - [ ] **UI-06**: Submission checklist renders locked state before approval and interactive checkboxes after approval.
+- [ ] **UI-07**: `InsertFigureModal` renders all 4 figure source tabs: `Upload File`, `Image URL`, `Scientific Presets`, and `Saved Experiment Figures`.
+- [ ] **UI-08**: Selecting a saved experiment figure automatically loads the clean relative path, metadata caption, and reference label.
+- [ ] **UI-09**: Generated LaTeX `\begin{figure}` block correctly formats Overleaf-compatible paths (`figures/<name>.png`).

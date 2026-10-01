@@ -12,7 +12,7 @@ import { NewProjectModal } from '../../components/workspace/NewProjectModal.js';
 import { JoinProjectModal } from '../../components/workspace/JoinProjectModal.js';
 import { ProjectMembersModal } from '../../components/workspace/ProjectMembersModal.js';
 import { ProjectChatDrawer } from '../../components/workspace/ProjectChatDrawer.js';
-import { Project, Task, Milestone, ProjectMember, TaskStatus } from '@researchos/shared-types';
+import { Project, Task, Milestone, ProjectMember, TaskStatus, SubmissionFile } from '@researchos/shared-types';
 import { supabase } from '../../supabase.js';
 import { UserAvatar } from '../../components/common/UserAvatar.js';
 import {
@@ -35,12 +35,13 @@ import {
 interface ResearcherWorkspacePageProps {
   onNavigate: (route: string) => void;
   projectId?: string;
+  initialTab?: 'dashboard' | 'kanban' | 'calendar';
 }
 
-export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = ({ onNavigate, projectId }) => {
+export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = ({ onNavigate, projectId, initialTab }) => {
   const { user, profile } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<string>(projectId ? 'kanban' : 'dashboard');
+  const [activeTab, setActiveTab] = useState<string>(initialTab || (projectId ? 'kanban' : 'dashboard'));
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -113,18 +114,43 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
       const found = projects.find((p) => p.id === projectId);
       if (found) {
         setActiveProject(found);
-        if (activeTab === 'dashboard') {
+        try {
+          localStorage.setItem('researchos_last_active_project_id', found.id);
+        } catch {}
+        if (!initialTab && activeTab === 'dashboard') {
           setActiveTab('kanban');
         }
       }
     } else if (!projectId) {
+      // If user navigated directly to /dashboard?tab=kanban or ?tab=calendar and projects are available
+      if ((initialTab === 'kanban' || initialTab === 'calendar') && projects.length > 0) {
+        const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
+        const target = (lastId && projects.find((p) => p.id === lastId)) || projects[0];
+        if (target) {
+          try {
+            localStorage.setItem('researchos_last_active_project_id', target.id);
+          } catch {}
+          setActiveProject(target);
+          setActiveTab(initialTab);
+          onNavigate(`/projects/${target.id}?tab=${initialTab}`);
+          return;
+        }
+      }
       setActiveProject(null);
-      setActiveTab('dashboard');
+      if (!initialTab) {
+        setActiveTab('dashboard');
+      }
       setTasks([]);
       setMilestones([]);
       setMembers([]);
     }
-  }, [projectId, projects]);
+  }, [projectId, projects, initialTab]);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   useEffect(() => {
     if (activeProject) {
@@ -138,12 +164,35 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
       onNavigate('/dashboard');
       return;
     }
+
+    if ((tab === 'kanban' || tab === 'calendar') && !activeProject) {
+      // If currently on dashboard without active project, auto-open last or first project
+      const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
+      const target = (lastId && projects.find((p) => p.id === lastId)) || projects[0];
+      if (target) {
+        try {
+          localStorage.setItem('researchos_last_active_project_id', target.id);
+        } catch {}
+        setActiveProject(target);
+        setActiveTab(tab);
+        onNavigate(`/projects/${target.id}?tab=${tab}`);
+        return;
+      }
+    }
+
     setActiveTab(tab);
+    if (activeProject && (tab === 'kanban' || tab === 'calendar')) {
+      window.history.replaceState({}, '', `/projects/${activeProject.id}?tab=${tab}`);
+    }
   };
 
   // Select a project and enter its dedicated workspace URL (/projects/:projectId)
   const handleSelectProject = (project: Project) => {
-    onNavigate(`/projects/${project.id}`);
+    try {
+      localStorage.setItem('researchos_last_active_project_id', project.id);
+    } catch {}
+    const tabToUse = activeTab !== 'dashboard' ? activeTab : 'kanban';
+    onNavigate(`/projects/${project.id}?tab=${tabToUse}`);
   };
 
   // Task Status Transition Handler
@@ -152,27 +201,37 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token || !activeProject) return;
 
-      const endpoint =
-        newStatus === 'InProgress'
-          ? `/tasks/${taskId}/start`
-          : newStatus === 'Submitted'
-          ? `/tasks/${taskId}/submit`
-          : `/tasks/${taskId}`;
-
-      const method = newStatus === 'InProgress' || newStatus === 'Submitted' ? 'POST' : 'PATCH';
-      const body = newStatus === 'InProgress' || newStatus === 'Submitted' ? undefined : JSON.stringify({ status: newStatus, revisionNote: note });
-
-      const res = await fetch(endpoint, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body,
-      });
+      let res: Response;
+      if (newStatus === 'InProgress') {
+        res = await fetch(`/tasks/${taskId}/start`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } else if (newStatus === 'Submitted') {
+        res = await fetch(`/tasks/${taskId}/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ progressNote: note }),
+        });
+      } else {
+        res = await fetch(`/tasks/${taskId}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        });
+      }
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || 'Failed to update task status');
       }
 
@@ -181,6 +240,29 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
     } catch (err: any) {
       alert(err.message || 'Error updating status');
     }
+  };
+
+  // Submit Task with file attachments
+  const handleSubmitTask = async (taskId: string, progressNote: string, files: SubmissionFile[]) => {
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
+    if (!token || !activeProject) return;
+
+    const res = await fetch(`/tasks/${taskId}/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ progressNote: progressNote || undefined, submissionFiles: files }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to submit task');
+    }
+
+    await fetchProjectData(activeProject.id);
+    await fetchProjects();
   };
 
   // Supervisor Review Actions
@@ -212,11 +294,15 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ action: 'RequestRevision', note }),
+      body: JSON.stringify({ action: 'RequestRevision', revisionNote: note, note }),
     });
 
-    if (!res.ok) throw new Error('Failed to request revision');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to request revision');
+    }
     await fetchProjectData(activeProject.id);
+    await fetchProjects();
   };
 
   // Approve Proposal
@@ -590,10 +676,44 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
         isChatOpen,
       }}
     >
-      {/* Dashboard Home vs Project Workspace */}
-      {activeProject ? renderProjectWorkspace() : renderDashboardHome()}
+      {/* Dashboard Home vs Project Workspace vs Empty Tab State */}
+      {activeProject ? (
+        renderProjectWorkspace()
+      ) : activeTab === 'kanban' || activeTab === 'calendar' ? (
+        <div className="py-24 max-w-lg mx-auto text-center space-y-4">
+          <div className="w-16 h-16 rounded-3xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400 mx-auto shadow-2xl">
+            {activeTab === 'calendar' ? <Calendar className="w-8 h-8" /> : <FolderKanban className="w-8 h-8" />}
+          </div>
+          <h2 className="text-xl font-bold text-white tracking-tight">
+            {activeTab === 'calendar' ? 'No Active Milestone Roadmap' : 'No Active Research Workspace'}
+          </h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            {activeTab === 'calendar'
+              ? 'Milestone timelines and calendars are linked to research projects. Create your personal workspace or join an existing project to begin tracking milestones.'
+              : 'Workspace Kanban boards require an active research project. Create your personal workspace or join an existing lab project to start organizing tasks.'}
+          </p>
+          <div className="flex items-center justify-center space-x-3 pt-2">
+            <button
+              onClick={() => setIsJoinProjectModalOpen(true)}
+              className="px-5 py-2.5 rounded-2xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-white text-xs font-bold transition-all flex items-center space-x-2"
+            >
+              <Key className="w-4 h-4 text-cyan-400" />
+              <span>Join with Invite Code</span>
+            </button>
+            <button
+              onClick={() => setIsNewProjectModalOpen(true)}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold shadow-lg shadow-violet-600/30 transition-all hover:scale-105 flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Personal Workspace</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        renderDashboardHome()
+      )}
 
-      {/* Task Detail Modal */}
+      {/* Task Detail Modal — handles inline review actions for supervisors */}
       <TaskDetailModal
         task={selectedTask}
         project={activeProject!}
@@ -607,9 +727,12 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
         }}
         onStatusChange={handleTaskStatusChange}
         onReviewTask={(t) => setReviewingTask(t)}
+        onApprove={handleApproveTask}
+        onRequestRevision={handleRequestRevision}
+        onSubmitTask={handleSubmitTask}
       />
 
-      {/* Supervisor Review Modal */}
+      {/* Supervisor Review Modal — fallback for quick review from Kanban cards */}
       <SupervisorReviewModal
         task={reviewingTask}
         isOpen={!!reviewingTask}

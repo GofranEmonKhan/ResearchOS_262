@@ -21,6 +21,7 @@ import { manuscriptRouter } from './routes/manuscript.routes.js';
 import { forumRouter } from './routes/forum.routes.js';
 import { directMessageRouter } from './routes/directMessage.routes.js';
 import { communityRouter } from './routes/community.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 
 const app: Express = express();
 const port = process.env.PORT || 3001;
@@ -87,6 +88,9 @@ app.use('/', manuscriptRouter);
 app.use('/forum', forumRouter);
 app.use('/messages', directMessageRouter);
 app.use('/', communityRouter);
+
+// Spec 08 API Route Mounts (AI Research Assistant)
+app.use('/ai', aiRoutes);
 
 
 // 404 Handler

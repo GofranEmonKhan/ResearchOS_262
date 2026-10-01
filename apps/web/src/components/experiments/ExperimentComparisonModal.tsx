@@ -22,12 +22,14 @@ import {
   ExperimentPurpose,
 } from '@researchos/shared-types';
 import { api } from '../../lib/api.js';
+import { ExperimentGraphicalVisualizer } from './ExperimentGraphicalVisualizer.js';
 
 interface ExperimentComparisonModalProps {
   isOpen: boolean;
   onClose: () => void;
   experimentIds: string[];
   onSelectExperiment?: (experiment: Experiment) => void;
+  onNavigateToManuscript?: () => void;
 }
 
 const PURPOSE_STYLES: Record<ExperimentPurpose, { label: string; badge: string }> = {
@@ -71,10 +73,14 @@ export const ExperimentComparisonModal: React.FC<ExperimentComparisonModalProps>
   onClose,
   experimentIds,
   onSelectExperiment,
+  onNavigateToManuscript,
 }) => {
   const [data, setData] = useState<ExperimentComparisonResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // View mode switcher: Matrix Table vs Graphical Visualizer
+  const [activeView, setActiveView] = useState<'matrix' | 'visualizer'>('matrix');
 
   // Filters & State
   const [diffsOnly, setDiffsOnly] = useState<boolean>(false);
@@ -259,55 +265,86 @@ export const ExperimentComparisonModal: React.FC<ExperimentComparisonModalProps>
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* Diff Filter Toggle */}
-            <button
-              onClick={() => setDiffsOnly(!diffsOnly)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-                diffsOnly
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                  : 'bg-surface-3 hover:bg-surface-4 text-slate-300 border-white/10'
-              }`}
-              title="Show only parameters that differ across compared runs"
-            >
-              <Filter className="w-3.5 h-3.5" />
-              <span>Diffs Only</span>
-              {data && (
-                <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/30 text-amber-200 font-mono">
-                  {data.summary.differingParametersCount}
-                </span>
-              )}
-            </button>
+            {/* View Mode Switcher */}
+            <div className="flex items-center p-1 bg-black/40 border border-white/10 rounded-xl text-xs font-semibold mr-1">
+              <button
+                onClick={() => setActiveView('matrix')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                  activeView === 'matrix'
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Matrix Table</span>
+              </button>
+              <button
+                onClick={() => setActiveView('visualizer')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                  activeView === 'visualizer'
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <BarChart2 className="w-3.5 h-3.5" />
+                <span>Graphical Visualizer</span>
+              </button>
+            </div>
 
-            {/* Copy Markdown */}
-            <button
-              onClick={handleCopyMarkdown}
-              disabled={!data || isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-surface-3 hover:bg-surface-4 border border-white/10 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
-              title="Copy comparison table as Markdown"
-            >
-              {copiedMarkdown ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Markdown</span>
-                </>
-              )}
-            </button>
+            {/* Matrix Only Controls */}
+            {activeView === 'matrix' && (
+              <>
+                {/* Diff Filter Toggle */}
+                <button
+                  onClick={() => setDiffsOnly(!diffsOnly)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                    diffsOnly
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                      : 'bg-surface-3 hover:bg-surface-4 text-slate-300 border-white/10'
+                  }`}
+                  title="Show only parameters that differ across compared runs"
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Diffs Only</span>
+                  {data && (
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/30 text-amber-200 font-mono">
+                      {data.summary.differingParametersCount}
+                    </span>
+                  )}
+                </button>
 
-            {/* Export CSV */}
-            <button
-              onClick={handleExportCsv}
-              disabled={!data || isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-surface-3 hover:bg-surface-4 border border-white/10 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
-              title="Download CSV spreadsheet"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-400" />
-              <span>CSV</span>
-            </button>
+                {/* Copy Markdown */}
+                <button
+                  onClick={handleCopyMarkdown}
+                  disabled={!data || isLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-surface-3 hover:bg-surface-4 border border-white/10 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
+                  title="Copy comparison table as Markdown"
+                >
+                  {copiedMarkdown ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-400">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Markdown</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Export CSV */}
+                <button
+                  onClick={handleExportCsv}
+                  disabled={!data || isLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-surface-3 hover:bg-surface-4 border border-white/10 text-slate-300 hover:text-white transition-colors disabled:opacity-50"
+                  title="Download CSV spreadsheet"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-400" />
+                  <span>CSV</span>
+                </button>
+              </>
+            )}
 
             {/* Close Button */}
             <button
@@ -344,7 +381,15 @@ export const ExperimentComparisonModal: React.FC<ExperimentComparisonModalProps>
             </div>
           )}
 
-          {data && !isLoading && (
+          {data && !isLoading && activeView === 'visualizer' && (
+            <ExperimentGraphicalVisualizer
+              experiments={data.experiments}
+              metricMatrix={data.metricMatrix}
+              onNavigateToManuscript={onNavigateToManuscript}
+            />
+          )}
+
+          {data && !isLoading && activeView === 'matrix' && (
             <>
               {/* Summary Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

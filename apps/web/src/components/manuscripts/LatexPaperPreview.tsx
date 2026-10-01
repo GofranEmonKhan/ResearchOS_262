@@ -856,15 +856,23 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
                         Editing Active Section
                       </span>
                     )}
-                    <h2
-                      className={`text-base sm:text-lg font-bold font-serif uppercase tracking-wider mb-3.5 pb-1 border-b ${
-                        paperTheme === 'dark'
-                          ? 'text-white border-slate-800'
-                          : 'text-slate-900 border-slate-200'
-                      }`}
-                    >
-                      {section.title}
-                    </h2>
+                    <div className="flex items-center justify-between mb-3.5 pb-1 border-b border-slate-800 flex-wrap gap-2">
+                      <h2
+                        className={`text-base sm:text-lg font-bold font-serif uppercase tracking-wider ${
+                          paperTheme === 'dark'
+                            ? 'text-white'
+                            : 'text-slate-900'
+                        }`}
+                      >
+                        {section.title}
+                      </h2>
+                      {section.isAiAssisted && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 font-medium">
+                          <Sparkles className="w-2.5 h-2.5 text-violet-400" />
+                          <span>AI-assisted content — reviewed by author</span>
+                        </span>
+                      )}
+                    </div>
                     {renderSectionBody(content)}
                   </div>
                 );
@@ -874,15 +882,23 @@ export const LatexPaperPreview: React.FC<LatexPaperPreviewProps> = ({
             <div>
               {activeSection ? (
                 <div>
-                  <h2
-                    className={`text-lg sm:text-xl font-bold font-serif uppercase tracking-wider mb-4 pb-1 border-b ${
-                      paperTheme === 'dark'
-                        ? 'text-white border-slate-800'
-                        : 'text-slate-900 border-slate-200'
-                    }`}
-                  >
-                    {activeSection.title}
-                  </h2>
+                  <div className="flex items-center justify-between mb-4 pb-1 border-b border-slate-800 flex-wrap gap-2">
+                    <h2
+                      className={`text-lg sm:text-xl font-bold font-serif uppercase tracking-wider ${
+                        paperTheme === 'dark'
+                          ? 'text-white'
+                          : 'text-slate-900'
+                      }`}
+                    >
+                      {activeSection.title}
+                    </h2>
+                    {activeSection.isAiAssisted && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 font-medium">
+                        <Sparkles className="w-2.5 h-2.5 text-violet-400" />
+                        <span>AI-assisted content — reviewed by author</span>
+                      </span>
+                    )}
+                  </div>
                   {renderSectionBody(activeSectionContent)}
                 </div>
               ) : (

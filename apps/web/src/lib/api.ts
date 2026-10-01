@@ -1,5 +1,5 @@
 import { supabase } from '../supabase.js';
-import { 
+import type { 
   Profile, 
   UpdateProfileDto, 
   SubmitSupervisorVerificationDto, 
@@ -63,9 +63,43 @@ import {
   ReviewAssignment,
   ReviewComment,
   WhyDidICiteThisContext,
+  AiUsageSummary,
+  SummarizeResponse,
+  SummarizeMode,
+  SidebarSuggestionsResponse,
+  AiSuggestionListResponse,
+  AiSuggestionListParams,
+  AcceptSuggestionResponse,
+  RejectSuggestionResponse,
+  SemanticSearchResponse,
+  WritingAssistResponse,
+  WritingAssistAction,
+  ExperimentInsightResponse,
+  ProgressReport,
+  AiProviderConfig,
+  UpdateAiProviderConfigRequest,
+  AiQuota,
+  BlockedPromptRule,
+  CreateBlockedPromptRuleRequest,
+  AdminAiUsageAnalytics,
+  LiteratureDiscoveryResponse,
+  ImportDiscoveredPaperDto,
+  ImportDiscoveredPaperResponse,
+  DirectMessage,
+  DirectMessageThread,
 } from '@researchos/shared-types';
 
 export type {
+  DiscoveredPaper,
+  LiteratureDiscoveryRequest,
+  LiteratureDiscoveryResponse,
+  ImportDiscoveredPaperDto,
+  ImportDiscoveredPaperResponse,
+} from '@researchos/shared-types';
+
+export type {
+  Paper,
+  PaperSidebarFields,
   Manuscript,
   ManuscriptAuthor,
   ManuscriptSection,
@@ -99,6 +133,24 @@ export type {
   ReviewComment,
   ReviewCommentSeverity,
   ReviewCommentStatus,
+  AiUsageSummary,
+  SummarizeResponse,
+  SummarizeMode,
+  SidebarSuggestionsResponse,
+  AiSuggestion,
+  AiSuggestionListResponse,
+  AiSuggestionListParams,
+  AcceptSuggestionResponse,
+  RejectSuggestionResponse,
+  SemanticSearchResponse,
+  WritingAssistResponse,
+  WritingAssistAction,
+  ExperimentInsightResponse,
+  ProgressReport,
+  AdminAiUsageAnalytics,
+  AiProviderConfig,
+  AiQuota,
+  BlockedPromptRule,
 } from '@researchos/shared-types';
 
 export const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {}) as any;
@@ -727,5 +779,172 @@ export const api = {
 
   async getManuscriptRevisionLogs(id: string): Promise<ManuscriptRevisionLog[]> {
     return fetchApi<ManuscriptRevisionLog[]>(`/manuscripts/${id}/logs`);
+  },
+
+  // --- AI Research Assistant (Module 08) ---
+
+  async getAiUsage(): Promise<AiUsageSummary> {
+    return fetchApi<AiUsageSummary>('/ai/usage');
+  },
+
+  async summarizePaper(paperId: string, mode: SummarizeMode = 'short'): Promise<SummarizeResponse> {
+    return fetchApi<SummarizeResponse>(`/ai/papers/${paperId}/summarize`, {
+      method: 'POST',
+      body: JSON.stringify({ mode }),
+    });
+  },
+
+  async generateSidebarSuggestions(paperId: string): Promise<SidebarSuggestionsResponse> {
+    return fetchApi<SidebarSuggestionsResponse>(`/ai/papers/${paperId}/sidebar-suggestions`, {
+      method: 'POST',
+    });
+  },
+
+  async getAiSuggestions(params: AiSuggestionListParams = {}): Promise<AiSuggestionListResponse> {
+    const q = new URLSearchParams();
+    if (params.targetType) q.set('targetType', params.targetType);
+    if (params.targetId) q.set('targetId', params.targetId);
+    if (params.status) q.set('status', params.status);
+    if (params.page) q.set('page', String(params.page));
+    if (params.limit) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return fetchApi<AiSuggestionListResponse>(`/ai/suggestions${qs ? `?${qs}` : ''}`);
+  },
+
+  async acceptAiSuggestion(id: string): Promise<AcceptSuggestionResponse> {
+    return fetchApi<AcceptSuggestionResponse>(`/ai/suggestions/${id}/accept`, {
+      method: 'POST',
+    });
+  },
+
+  async rejectAiSuggestion(id: string): Promise<RejectSuggestionResponse> {
+    return fetchApi<RejectSuggestionResponse>(`/ai/suggestions/${id}/reject`, {
+      method: 'POST',
+    });
+  },
+
+  async searchSemantic(query: string, topK: number = 10, scope?: { projects?: string[] }): Promise<SemanticSearchResponse> {
+    return fetchApi<SemanticSearchResponse>('/ai/search', {
+      method: 'POST',
+      body: JSON.stringify({ query, topK, scope }),
+    });
+  },
+
+  async discoverLiterature(topic: string, limit: number = 10, yearRange?: { from?: number; to?: number }): Promise<LiteratureDiscoveryResponse> {
+    return fetchApi<LiteratureDiscoveryResponse>('/ai/discover', {
+      method: 'POST',
+      body: JSON.stringify({ topic, limit, yearRange }),
+    });
+  },
+
+  async importDiscoveredPaper(dto: ImportDiscoveredPaperDto): Promise<ImportDiscoveredPaperResponse> {
+    return fetchApi<ImportDiscoveredPaperResponse>('/ai/discover/import', {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+
+  async retriggerEmbedding(paperId: string): Promise<{ message: string; chunksEmbedded: number }> {
+    return fetchApi<{ message: string; chunksEmbedded: number }>(`/ai/papers/${paperId}/embed`, {
+      method: 'POST',
+    });
+  },
+
+  async writingAssist(manuscriptId: string, dto: { action: WritingAssistAction; selectedText?: string; sectionType?: string; sectionId?: string }): Promise<WritingAssistResponse> {
+    return fetchApi<WritingAssistResponse>(`/ai/manuscripts/${manuscriptId}/writing-assist`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async getExperimentInsight(experimentId: string): Promise<ExperimentInsightResponse> {
+    return fetchApi<ExperimentInsightResponse>(`/ai/experiments/${experimentId}/insight`, {
+      method: 'POST',
+    });
+  },
+
+  async generateProgressReport(projectId: string, dto: { studentId: string; periodStart: string; periodEnd: string; regenerate?: boolean }): Promise<ProgressReport> {
+    return fetchApi<ProgressReport>(`/ai/projects/${projectId}/progress-report`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  // --- Admin AI Governance (Spec 08) ---
+  async getAdminAiConfig(): Promise<AiProviderConfig> {
+    return fetchApi<AiProviderConfig>('/admin/ai/config');
+  },
+
+  async updateAdminAiConfig(dto: UpdateAiProviderConfigRequest): Promise<AiProviderConfig> {
+    return fetchApi<AiProviderConfig>('/admin/ai/config', {
+      method: 'PATCH',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async getAdminAiQuotas(): Promise<AiQuota[]> {
+    return fetchApi<AiQuota[]>('/admin/ai/quotas');
+  },
+
+  async updateAdminAiQuota(role: string, monthlyTokenLimit: number): Promise<AiQuota> {
+    return fetchApi<AiQuota>(`/admin/ai/quotas/${role}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ monthlyTokenLimit }),
+    });
+  },
+
+  async getAdminAiBlockedRules(): Promise<BlockedPromptRule[]> {
+    return fetchApi<BlockedPromptRule[]>('/admin/ai/blocked-rules');
+  },
+
+  async createAdminAiBlockedRule(dto: CreateBlockedPromptRuleRequest): Promise<BlockedPromptRule> {
+    return fetchApi<BlockedPromptRule>('/admin/ai/blocked-rules', {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+  },
+
+  async deleteAdminAiBlockedRule(id: string): Promise<{ message: string }> {
+    return fetchApi<{ message: string }>(`/admin/ai/blocked-rules/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async getAdminAiUsageAnalytics(): Promise<AdminAiUsageAnalytics> {
+    return fetchApi<AdminAiUsageAnalytics>('/admin/ai/usage');
+  },
+
+  // --- Direct Messages & Scholar Search (Spec 06) ---
+  async listDirectMessageThreads(): Promise<{ threads: DirectMessageThread[] }> {
+    return fetchApi<{ threads: DirectMessageThread[] }>('/messages/threads');
+  },
+
+  async getDirectMessageConversation(partnerId: string, page = 1, limit = 50): Promise<DirectMessage[]> {
+    return fetchApi<DirectMessage[]>(`/messages/threads/${partnerId}?page=${page}&limit=${limit}`);
+  },
+
+  async sendDirectMessage(recipientId: string, body: string, attachmentIds?: string[]): Promise<DirectMessage> {
+    return fetchApi<DirectMessage>('/messages/send', {
+      method: 'POST',
+      body: JSON.stringify({ recipientId, body, attachmentIds }),
+    });
+  },
+
+  async blockUser(targetUserId: string): Promise<{ success: boolean; message: string }> {
+    return fetchApi<{ success: boolean; message: string }>(`/messages/blocks/${targetUserId}`, {
+      method: 'POST',
+    });
+  },
+
+  async unblockUser(targetUserId: string): Promise<{ success: boolean; message: string }> {
+    return fetchApi<{ success: boolean; message: string }>(`/messages/blocks/${targetUserId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async searchScholars(query: string): Promise<Profile[]> {
+    if (!query.trim()) return [];
+    return fetchApi<Profile[]>(`/profiles/search?q=${encodeURIComponent(query.trim())}`);
   },
 };

@@ -121,6 +121,18 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
   return (
     <WorkspaceLayout
       activeTab="manuscripts"
+      onTabChange={(tab) => {
+        if (tab === 'dashboard') {
+          onNavigate('/dashboard');
+        } else if (tab === 'kanban' || tab === 'calendar') {
+          const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
+          if (lastId) {
+            onNavigate(`/projects/${lastId}?tab=${tab}`);
+          } else {
+            onNavigate(`/dashboard?tab=${tab}`);
+          }
+        }
+      }}
       onNavigate={onNavigate}
       headerProps={{
         userId: user?.id,

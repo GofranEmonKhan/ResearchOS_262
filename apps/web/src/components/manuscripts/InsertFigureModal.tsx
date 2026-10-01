@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Upload,
@@ -9,7 +9,14 @@ import {
   Code,
   AlertCircle,
   FileCode,
+  Trash2,
+  FlaskConical,
 } from 'lucide-react';
+import {
+  getSavedExperimentFigures,
+  deleteSavedExperimentFigure,
+} from '../../lib/figureStorage';
+import { SavedExperimentFigure } from '@researchos/shared-types';
 
 export interface FigureAssetPayload {
   path: string;
@@ -44,7 +51,7 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
   onClose,
   onInsertFigure,
 }) => {
-  const [sourceType, setSourceType] = useState<'upload' | 'url' | 'presets'>('upload');
+  const [sourceType, setSourceType] = useState<'upload' | 'url' | 'presets' | 'experiments'>('upload');
   const [imageUrl, setImageUrl] = useState('');
   const [fileName, setFileName] = useState('');
   const [figurePath, setFigurePath] = useState('figures/overview_diagram.png');
@@ -54,8 +61,15 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
   const [syntaxFormat, setSyntaxFormat] = useState<'latex' | 'markdown'>('latex');
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [savedFigures, setSavedFigures] = useState<SavedExperimentFigure[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSavedFigures(getSavedExperimentFigures());
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -173,6 +187,25 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
     onClose();
   };
 
+  const handleSelectSavedFigure = (fig: SavedExperimentFigure) => {
+    setImageUrl(fig.dataUrl);
+    setFileName(fig.title);
+    setFigurePath(fig.suggestedPath || fig.relativePath || sanitizeFigurePath(fig.title));
+    setCaption(fig.caption || fig.suggestedCaption || `Figure: Benchmark comparison for ${fig.title}.`);
+    setLabel(fig.label || fig.suggestedLabel || `fig:${fig.id.slice(0, 8)}`);
+  };
+
+  const handleDeleteSavedFigure = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteSavedExperimentFigure(id);
+    const updated = getSavedExperimentFigures();
+    setSavedFigures(updated);
+    if (savedFigures.find((f) => f.id === id)?.dataUrl === imageUrl) {
+      setImageUrl('');
+      setFileName('');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 select-none">
       <div className="bg-[#0A0E1A] border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -203,10 +236,10 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
         </div>
 
         {/* Source Navigation Tabs */}
-        <div className="px-6 pt-3 border-b border-slate-800/80 bg-[#080C16] flex items-center gap-2 shrink-0">
+        <div className="px-6 pt-3 border-b border-slate-800/80 bg-[#080C16] flex items-center gap-2 shrink-0 overflow-x-auto">
           <button
             onClick={() => { setSourceType('upload'); setUploadError(null); }}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
               sourceType === 'upload'
                 ? 'border-amber-500 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -218,7 +251,7 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
 
           <button
             onClick={() => { setSourceType('url'); setUploadError(null); }}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
               sourceType === 'url'
                 ? 'border-amber-500 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -230,7 +263,7 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
 
           <button
             onClick={() => { setSourceType('presets'); setUploadError(null); }}
-            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
               sourceType === 'presets'
                 ? 'border-amber-500 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -238,6 +271,27 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Scientific Presets</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSourceType('experiments');
+              setUploadError(null);
+              setSavedFigures(getSavedExperimentFigures());
+            }}
+            className={`pb-2.5 px-3 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap ${
+              sourceType === 'experiments'
+                ? 'border-cyan-500 text-cyan-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <FlaskConical className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Saved Experiment Figures</span>
+            {savedFigures.length > 0 && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono">
+                {savedFigures.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -345,6 +399,100 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
                   <span className="text-[10px] font-mono text-amber-400">{preset.path}</span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* TAB 4: Saved Experiment Figures */}
+          {sourceType === 'experiments' && (
+            <div className="space-y-3">
+              {savedFigures.length === 0 ? (
+                <div className="text-center py-8 px-4 rounded-xl border border-dashed border-slate-800 bg-slate-900/30">
+                  <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mx-auto flex items-center justify-center mb-3">
+                    <FlaskConical className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-200">No Saved Experiment Figures Yet</h4>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                    Generate and save publication-ready comparison charts directly from the{' '}
+                    <span className="text-cyan-400 font-medium">Experiment Tracker</span> (select runs → Compare → Visual Chart Compare → Save to Paper Figures).
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {savedFigures.map((fig) => {
+                    const isSelected = imageUrl === fig.dataUrl || fileName === fig.title;
+                    return (
+                      <div
+                        key={fig.id}
+                        onClick={() => handleSelectSavedFigure(fig)}
+                        className={`group p-3 rounded-xl border transition-all cursor-pointer text-left flex flex-col justify-between ${
+                          isSelected
+                            ? 'border-cyan-500 bg-cyan-500/10 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500/50'
+                            : 'border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-900/90'
+                        }`}
+                      >
+                        <div>
+                          {/* Image preview */}
+                          <div className="h-24 w-full rounded-lg overflow-hidden mb-2 bg-[#060911] border border-slate-800 p-1 flex items-center justify-center">
+                            <img
+                              src={fig.dataUrl}
+                              alt={fig.title}
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          </div>
+
+                          <div className="flex items-start justify-between gap-1.5 mb-1">
+                            <h4 className="text-xs font-bold text-slate-200 line-clamp-1 group-hover:text-cyan-300 transition-colors">
+                              {fig.title}
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteSavedFigure(fig.id, e)}
+                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition-all cursor-pointer shrink-0"
+                              title="Delete saved figure"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <p className="text-[11px] text-slate-400 line-clamp-2 mb-2 leading-relaxed">
+                            {fig.caption || fig.suggestedCaption}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1.5 pt-2 border-t border-slate-800/60">
+                          {/* Metrics & Experiments Tags */}
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                              {fig.chartType.replace('_', ' ')}
+                            </span>
+                            {fig.metrics?.slice(0, 2).map((m: string) => (
+                              <span key={m} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                                {m}
+                              </span>
+                            ))}
+                            {fig.metrics && fig.metrics.length > 2 && (
+                              <span className="text-[9px] font-mono text-slate-500">
+                                +{fig.metrics.length - 2}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px] font-mono">
+                            <span className="text-amber-400/90 truncate max-w-[130px]">
+                              {fig.suggestedPath || fig.relativePath || sanitizeFigurePath(fig.title)}
+                            </span>
+                            {isSelected && (
+                              <span className="text-cyan-400 font-sans font-semibold flex items-center gap-0.5">
+                                <Check className="w-3 h-3" /> Selected
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

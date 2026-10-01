@@ -30,6 +30,7 @@ export function mapDbTaskToTask(row: any): Task {
     status: row.status as TaskStatus,
     progressNote: row.progress_note || null,
     revisionNote: row.revision_note || null,
+    submissionFiles: Array.isArray(row.submission_files) ? row.submission_files : [],
     isProposed: Boolean(row.is_proposed),
     proposedBy: row.proposed_by || null,
     createdAt: row.created_at,
@@ -354,6 +355,10 @@ export async function submitTask(
 
   if (dto.progressNote) {
     updates.progress_note = dto.progressNote.trim();
+  }
+
+  if (Array.isArray(dto.submissionFiles) && dto.submissionFiles.length > 0) {
+    updates.submission_files = JSON.stringify(dto.submissionFiles);
   }
 
   const { data: updated, error } = await supabaseAdmin

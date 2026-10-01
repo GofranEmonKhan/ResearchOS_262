@@ -30,9 +30,12 @@ Embedding {
   sourceId   uuid
   ownerId    FK→User
   chunkIndex int
-  vector     vector(N)
+  vector     vector(768)   -- fixed to 768 dimensions (Gemini text-embedding-004)
+  createdAt  datetime
 }
 ```
+
+> **Resolution (Limitation 1 — vector dimension):** Dimension is fixed at **768** to match the Gemini `text-embedding-004` model, which is the active free-tier provider. If the provider is later changed to OpenAI (`text-embedding-3-small` = 1536-dim), a new migration must alter the column. Do not change this value without a matching migration.
 
 Semantic search uses a Postgres function such as `match_embeddings` through Express.
 
@@ -41,7 +44,8 @@ Semantic search uses a Postgres function such as `match_embeddings` through Expr
 ```text
 AiSuggestion {
   id             uuid PK
-  targetType     enum(PaperSidebarFields)
+  userId         FK→User         -- owner; derived from JWT, never client-supplied
+  targetType     enum(PaperSidebarFields, ManuscriptSection)
   targetId       uuid
   fieldName      string
   suggestedValue string
@@ -50,7 +54,11 @@ AiSuggestion {
 }
 ```
 
-Nothing writes to the source sidebar field until an authorized human accepts the suggestion.
+Nothing writes to the source field until an authorized human accepts the suggestion.
+
+> **Resolution (Contradiction 1 — targetType):** `targetType` now includes `ManuscriptSection` to support writing-assistance suggestions (paraphrase, grammar, outline) that target `ManuscriptSection.content`, in addition to `PaperSidebarFields`. Both paths require human acceptance before any field mutation.
+>
+> **Resolution (Contradiction 2 — userId missing):** `userId` is a non-nullable FK to `profiles`. It is always set server-side from the verified JWT. The `GET /ai/suggestions` ownership filter uses this column. Clients cannot supply or override it.
 
 ### AiUsageLog
 
@@ -71,14 +79,17 @@ AiUsageLog {
 AiProviderConfig {
   id        uuid PK
   provider  enum(OpenAI, Gemini)
-  apiKeyRef string
+  apiKeyRef string   -- name of the server env var holding the key, e.g. "GEMINI_API_KEY"
   model     string
+  isActive  boolean  -- only one row may have isActive=true at any time
   updatedBy FK→User
   updatedAt datetime
 }
 ```
 
 Admin-only.
+
+> **Resolution (Limitation 4 — apiKeyRef storage):** `apiKeyRef` stores the **name** of a server-side environment variable (e.g. `"GEMINI_API_KEY"`), not the raw API key. The Express backend resolves the actual key at call time via `process.env[apiKeyRef]`. The raw key is never written to the database. Admins set the env var name in the Admin console; the key itself is set in the server `.env` file.
 
 ### AiQuota
 
@@ -96,11 +107,14 @@ Admin-only.
 ```text
 BlockedPromptRule {
   id        uuid PK
-  pattern   string
+  pattern   string   -- plain string; evaluated as case-insensitive substring match
   reason    string
   createdBy FK→User
+  createdAt datetime
 }
 ```
+
+> **Resolution (Limitation 3 — pattern type):** Patterns are plain strings matched via case-insensitive substring search (`prompt.toLowerCase().includes(pattern.toLowerCase())`). Regex is out of scope for v1 to avoid ReDoS risk. If regex support is added later, a `patternType` column must be added with explicit safety controls.
 
 Admin-only.
 
@@ -150,20 +164,24 @@ Never implement semantic search by querying all embeddings and filtering at the 
 ## PDF / embedding pipeline
 
 ```text
-PDF
+PDF upload completes (Paper + FileAsset created)
  ↓
-Text extraction
+Express fires async background call (fire-and-forget)
  ↓
-Chunking
+Text extraction (pdf-parse)
  ↓
-Embedding model
+Chunking (paragraph-aware, ~1000 chars, 100-char overlap)
  ↓
-Embedding rows
+Embedding model (Gemini text-embedding-004 → 768-dim)
  ↓
-pgvector
+Embedding rows (owner_id = uploader's userId)
+ ↓
+pgvector (match_embeddings Postgres function)
 ```
 
-Store source ownership/context so retrieval can be filtered correctly.
+Store `owner_id` on every `Embedding` row so retrieval can always be filtered to the requesting user's authorized scope.
+
+> **Resolution (Limitation 2 — async embedding):** The embedding pipeline runs **asynchronously** after the paper upload response is returned to the client. The upload endpoint returns `201 Created` immediately; embedding failures are logged server-side and do not fail the upload. A manual re-trigger endpoint `POST /ai/papers/:paperId/embed` is available. BullMQ/Redis is deferred unless synchronous embedding proves too slow at scale (see `build-plan.md`).
 
 ## AI features
 

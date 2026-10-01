@@ -660,24 +660,33 @@ Embedding {
   sourceId    uuid
   ownerId     FK→User
   chunkIndex  int
-  vector      vector(N)
+  vector      vector(768)   -- fixed to 768 dimensions (Gemini text-embedding-004)
+  createdAt   datetime
 }
 Owner/access-scope: ownerId. Semantic search runs as a Postgres function (cosine distance via `<=>`),
 called through `supabase.rpc('match_embeddings', {...})` from Express.
+Vector dimension is 768 for Gemini text-embedding-004 (free tier, active provider).
+A migration is required if the provider changes to OpenAI (1536-dim).
 ```
 
 ### AiSuggestion
 ```
 AiSuggestion {
   id              uuid PK
-  targetType      enum(PaperSidebarFields)
+  userId          FK→User          -- owner; always set server-side from JWT, never client-supplied
+  targetType      enum(PaperSidebarFields, ManuscriptSection)
   targetId        uuid
   fieldName       string
   suggestedValue  string
   status          enum(Pending, Accepted, Rejected)
   createdAt       datetime
 }
-Owner/access-scope: targetId → Paper.uploaderId; nothing writes to PaperSidebarFields until status=Accepted.
+Owner/access-scope: userId. Nothing writes to the target field until status=Accepted.
+- PaperSidebarFields: writes to paper_sidebar_fields column.
+- ManuscriptSection: writes to manuscript_sections.content; also sets is_ai_assisted=true.
+Contradiction fixes applied:
+  (1) targetType extended to include ManuscriptSection (writing-assistance suggestions).
+  (2) userId column added — required for GET /ai/suggestions ownership filter.
 ```
 
 ### AiUsageLog
@@ -687,11 +696,29 @@ AiUsageLog { id uuid PK, userId FK→User, feature string, tokensUsed int, costU
 
 ### AiProviderConfig / AiQuota / BlockedPromptRule
 ```
-AiProviderConfig { id uuid PK, provider enum(OpenAI, Gemini), apiKeyRef string, model string, updatedBy FK→User, updatedAt datetime }
-AiQuota          { role enum(Admin,Supervisor,Researcher) PK, monthlyTokenLimit int }
-BlockedPromptRule{ id uuid PK, pattern string, reason string, createdBy FK→User }
+AiProviderConfig {
+  id         uuid PK
+  provider   enum(OpenAI, Gemini)
+  apiKeyRef  string    -- name of server env var (e.g. "GEMINI_API_KEY"), NOT the raw key
+  model      string
+  isActive   boolean   -- partial unique index ensures only one row is active at a time
+  updatedBy  FK→User
+  updatedAt  datetime
+}
+AiQuota { role enum(Admin, Supervisor, Researcher) PK, monthlyTokenLimit int }
+BlockedPromptRule {
+  id         uuid PK
+  pattern    string    -- plain string; matched via case-insensitive substring (no regex, ReDoS risk)
+  reason     string
+  createdBy  FK→User
+  createdAt  datetime
+}
 ```
-Owner/access-scope: Admin-only, all three — none of the three need an ownerId/projectId; "Admin-only" is their entire access path.
+Owner/access-scope: Admin-only, all three.
+Limitation fixes applied:
+  (4) apiKeyRef stores env var name, not the raw key. Backend reads process.env[apiKeyRef] at call time.
+  (3) BlockedPromptRule.pattern is a substring match. Regex deferred to v2.
+  isActive added to AiProviderConfig to enforce single-active-provider constraint.
 
 ### ProgressReport
 ```

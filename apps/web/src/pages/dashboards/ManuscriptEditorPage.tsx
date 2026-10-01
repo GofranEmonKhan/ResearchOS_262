@@ -33,6 +33,9 @@ import {
   Check,
   Image as ImageIcon,
   HelpCircle,
+  Bot,
+  Wand2,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { api } from '../../lib/api.js';
@@ -44,6 +47,7 @@ import {
   ManuscriptChecklistItem,
   ReviewComment,
   ManuscriptStatus,
+  WritingAssistAction,
 } from '@researchos/shared-types';
 import { CitationSearchModal } from '../../components/manuscripts/CitationSearchModal.js';
 import { WhyDidICiteThisModal } from '../../components/manuscripts/WhyDidICiteThisModal.js';
@@ -56,6 +60,7 @@ import { ConfirmDeleteDialog } from '../../components/common/ConfirmDeleteDialog
 import { LatexPaperPreview } from '../../components/manuscripts/LatexPaperPreview.js';
 import { InsertFigureModal } from '../../components/manuscripts/InsertFigureModal.js';
 import { ManuscriptGuidelinesModal } from '../../components/manuscripts/ManuscriptGuidelinesModal.js';
+import { AiWritingAssistModal } from '../../components/ai/index.js';
 
 interface ManuscriptEditorPageProps {
   manuscriptId: string;
@@ -180,6 +185,16 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
 
   // Selected Text Snippet for Review Anchor
   const [selectedSnippet, setSelectedSnippet] = useState<string | null>(null);
+
+  // AI Writing Assist State
+  const [isCallingAiAssist, setIsCallingAiAssist] = useState(false);
+  const [aiAssistModalData, setAiAssistModalData] = useState<{
+    isOpen: boolean;
+    action: WritingAssistAction;
+    originalText?: string;
+    suggestedText: string;
+    suggestionId: string;
+  } | null>(null);
 
   // Manuscript Figure Assets Store: maps clean paths ('figures/plot.png') to image data
   const [figureAssets, setFigureAssets] = useState<Record<string, string>>({});
@@ -477,6 +492,71 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
       handleEditorChange(updatedContent);
     }
   }, [activeContent, manuscriptId, handleEditorChange]);
+
+  // AI Writing Assist Actions (Paraphrase, Fix Grammar, Section Outline)
+  const handleTriggerWritingAssist = async (action: WritingAssistAction) => {
+    if (!activeSectionId || !manuscriptId) return;
+    const activeSec = sections.find((s) => s.id === activeSectionId);
+
+    const textToProcess = selectedSnippet || (action === 'outline' ? undefined : activeContent);
+    if ((action === 'paraphrase' || action === 'grammar') && (!textToProcess || textToProcess.trim().length === 0)) {
+      alert(`Please select or highlight text in the editor to ${action === 'paraphrase' ? 'paraphrase' : 'fix grammar'}.`);
+      return;
+    }
+
+    setIsCallingAiAssist(true);
+    try {
+      const res = await api.writingAssist(manuscriptId, {
+        action,
+        selectedText: textToProcess,
+        sectionType: activeSec?.sectionType,
+        sectionId: activeSectionId,
+      });
+
+      setAiAssistModalData({
+        isOpen: true,
+        action,
+        originalText: textToProcess,
+        suggestedText: res.suggestion.suggestedValue,
+        suggestionId: res.suggestion.id,
+      });
+    } catch (err: any) {
+      alert(err.message || 'AI writing assistance failed');
+    } finally {
+      setIsCallingAiAssist(false);
+    }
+  };
+
+  const handleApplyAiSuggestion = async (suggestedText: string, suggestionId: string) => {
+    try {
+      // 1. Accept server-side: marks suggestion Accepted and updates manuscript_sections.is_ai_assisted = true
+      await api.acceptAiSuggestion(suggestionId);
+
+      // 2. Update local editor content
+      if (aiAssistModalData?.originalText && activeContent.includes(aiAssistModalData.originalText)) {
+        // Replace selected snippet in active buffer
+        const updated = activeContent.replace(aiAssistModalData.originalText, suggestedText);
+        handleEditorChange(updated);
+      } else if (aiAssistModalData?.action === 'outline') {
+        // Append outline to section
+        const updated = activeContent ? `${activeContent}\n\n${suggestedText}` : suggestedText;
+        handleEditorChange(updated);
+      } else {
+        // Fallback: replace section content
+        handleEditorChange(suggestedText);
+      }
+
+      // 3. Update section locally to display AI-assisted badge
+      setSections((prev) =>
+        prev.map((s) => (s.id === activeSectionId ? { ...s, isAiAssisted: true } : s))
+      );
+
+      // Clear selection
+      setSelectedSnippet(null);
+    } catch (err: any) {
+      alert(err.message || 'Failed to apply AI suggestion');
+    }
+  };
 
   // Section Management: Create Section
   const handleAddSection = async () => {
@@ -909,6 +989,11 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                         }`}>
                           {sec.title}
                         </span>
+                        {sec.isAiAssisted && (
+                          <span title="AI-assisted section — reviewed by author">
+                            <Bot className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+                          </span>
+                        )}
                       </button>
 
                       <div className="flex items-center gap-1 shrink-0 relative">
@@ -1111,6 +1196,45 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                     <span className="hidden sm:inline">Guide</span>
                   </button>
 
+                  {/* AI Writing Assist Tools */}
+                  {(userAccess.isAuthor || userAccess.isSupervisor) && (
+                    <div className="flex items-center gap-1 ml-1">
+                      <div className="flex items-center rounded-lg bg-violet-950/40 border border-violet-800/50 p-0.5 shadow-sm">
+                        <button
+                          type="button"
+                          disabled={isCallingAiAssist}
+                          onClick={() => handleTriggerWritingAssist('paraphrase')}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-violet-300 hover:text-white hover:bg-violet-800/60 disabled:opacity-50 transition-colors"
+                          title="Paraphrase active section or selected text with AI"
+                        >
+                          <Wand2 className="w-3 h-3 text-violet-400" />
+                          <span>Paraphrase</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isCallingAiAssist}
+                          onClick={() => handleTriggerWritingAssist('grammar')}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-violet-300 hover:text-white hover:bg-violet-800/60 disabled:opacity-50 transition-colors"
+                          title="Fix grammar & academic tone with AI"
+                        >
+                          <span>Grammar</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isCallingAiAssist}
+                          onClick={() => handleTriggerWritingAssist('outline')}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-violet-300 hover:text-white hover:bg-violet-800/60 disabled:opacity-50 transition-colors"
+                          title="Suggest section outline & structure with AI"
+                        >
+                          <span>Outline</span>
+                        </button>
+                      </div>
+                      {isCallingAiAssist && (
+                        <Loader2 className="w-3.5 h-3.5 text-violet-400 animate-spin ml-1" />
+                      )}
+                    </div>
+                  )}
+
                   {/* View Mode Switcher */}
                   <div className="flex items-center rounded-lg bg-slate-900 border border-slate-800 p-0.5 ml-2">
                     <button
@@ -1199,18 +1323,55 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                       <span>{(activeContent.trim() ? activeContent.trim().split(/\s+/).length : 0).toLocaleString()} section words</span>
                     </div>
 
-                    {/* Quick helper for selected snippet review anchoring */}
+                    {/* Floating / Contextual selection toolbar for AI and Review comments */}
                     {selectedSnippet && (
-                      <div className="mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
-                        <span className="text-xs text-amber-300 italic truncate mr-2">
-                          Selected snippet: "{selectedSnippet}"
-                        </span>
-                        <button
-                          onClick={() => setRightTab('reviews')}
-                          className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold transition-colors shrink-0"
-                        >
-                          Anchor Review Comment
-                        </button>
+                      <div className="mt-2 p-2.5 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-xl flex flex-wrap items-center justify-between gap-2 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-[11px] font-semibold text-slate-400 shrink-0">Selected:</span>
+                          <span className="text-xs text-slate-200 italic font-mono truncate bg-slate-950/70 px-2 py-0.5 rounded border border-slate-800">
+                            "{selectedSnippet}"
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {(userAccess.isAuthor || userAccess.isSupervisor) && (
+                            <>
+                              <button
+                                type="button"
+                                disabled={isCallingAiAssist}
+                                onClick={() => handleTriggerWritingAssist('paraphrase')}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-violet-600/30 hover:bg-violet-600/50 text-violet-200 border border-violet-500/40 text-xs font-medium transition-all cursor-pointer"
+                                title="Paraphrase selected text with AI"
+                              >
+                                <Wand2 className="w-3 h-3 text-violet-400" />
+                                <span>Paraphrase</span>
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isCallingAiAssist}
+                                onClick={() => handleTriggerWritingAssist('grammar')}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-violet-600/30 hover:bg-violet-600/50 text-violet-200 border border-violet-500/40 text-xs font-medium transition-all cursor-pointer"
+                                title="Fix grammar on selected text with AI"
+                              >
+                                <span>Fix Grammar</span>
+                              </button>
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setRightTab('reviews')}
+                            className="px-2.5 py-1 rounded-lg bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 border border-amber-500/40 text-xs font-medium transition-colors cursor-pointer"
+                          >
+                            Anchor Review
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSnippet(null)}
+                            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Clear selection"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1559,6 +1720,19 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
         primaryActionText="Acknowledge"
         onClose={() => setErrorNotice(null)}
       />
+
+      {/* AI Writing Assist Diff & Preview Modal */}
+      {aiAssistModalData && (
+        <AiWritingAssistModal
+          isOpen={aiAssistModalData.isOpen}
+          onClose={() => setAiAssistModalData(null)}
+          action={aiAssistModalData.action}
+          originalText={aiAssistModalData.originalText}
+          suggestedText={aiAssistModalData.suggestedText}
+          suggestionId={aiAssistModalData.suggestionId}
+          onApply={handleApplyAiSuggestion}
+        />
+      )}
     </div>
   );
 };

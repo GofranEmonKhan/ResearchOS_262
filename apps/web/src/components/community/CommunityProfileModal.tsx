@@ -214,7 +214,7 @@ export const CommunityProfileModal: React.FC<CommunityProfileModalProps> = ({
                   <button
                     onClick={() => {
                       onClose();
-                      onStartDM(profile.userId);
+                      onStartDM(profile?.userId || userId);
                     }}
                     className="relative group overflow-hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-violet-600 via-fuchsia-500 to-amber-400 hover:from-violet-500 hover:via-fuchsia-400 hover:to-amber-300 border border-white/25 hover:border-white/50 shadow-lg shadow-fuchsia-500/25 hover:shadow-xl hover:shadow-fuchsia-500/40 transition-all duration-300 hover:scale-[1.03] active:scale-95 shrink-0"
                   >

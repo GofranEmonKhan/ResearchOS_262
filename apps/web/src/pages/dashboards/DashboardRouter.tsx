@@ -14,12 +14,23 @@ interface DashboardRouterProps {
 export const DashboardRouter: React.FC<DashboardRouterProps> = ({ onNavigate, currentRoute }) => {
   const { user, profile, loading } = useAuth();
 
-  // Extract projectId if navigating to /projects/:projectId or /dashboard/projects/:projectId
+  // Extract projectId and tab if navigating with query params, e.g. /projects/:projectId?tab=calendar or /dashboard?tab=kanban
   let targetProjectId: string | undefined;
-  if (currentRoute?.startsWith('/projects/')) {
-    targetProjectId = currentRoute.replace('/projects/', '').split('/')[0];
-  } else if (currentRoute?.startsWith('/dashboard/projects/')) {
-    targetProjectId = currentRoute.replace('/dashboard/projects/', '').split('/')[0];
+  let targetTab: 'dashboard' | 'kanban' | 'calendar' | undefined;
+
+  const [routePath, queryString] = (currentRoute || '').split('?');
+  if (queryString) {
+    const params = new URLSearchParams(queryString);
+    const tabParam = params.get('tab');
+    if (tabParam === 'dashboard' || tabParam === 'kanban' || tabParam === 'calendar') {
+      targetTab = tabParam;
+    }
+  }
+
+  if (routePath.startsWith('/projects/')) {
+    targetProjectId = routePath.replace('/projects/', '').split('/')[0];
+  } else if (routePath.startsWith('/dashboard/projects/')) {
+    targetProjectId = routePath.replace('/dashboard/projects/', '').split('/')[0];
   }
 
   if (loading) {
@@ -82,9 +93,9 @@ export const DashboardRouter: React.FC<DashboardRouterProps> = ({ onNavigate, cu
     case 'Admin':
       return <AdminConsolePage onNavigate={onNavigate} />;
     case 'Supervisor':
-      return <SupervisorDashboardPage onNavigate={onNavigate} projectId={targetProjectId} />;
+      return <SupervisorDashboardPage onNavigate={onNavigate} projectId={targetProjectId} initialTab={targetTab} />;
     case 'Researcher':
     default:
-      return <ResearcherWorkspacePage onNavigate={onNavigate} projectId={targetProjectId} />;
+      return <ResearcherWorkspacePage onNavigate={onNavigate} projectId={targetProjectId} initialTab={targetTab} />;
   }
 };

@@ -20,6 +20,11 @@ import {
   X,
   Eye,
 } from 'lucide-react';
+import {
+  AiUsageIndicator,
+  AiSummarizePanel,
+  AiSuggestionsPanel,
+} from '../ai/index.js';
 
 interface SmartResearchSidebarProps {
   paper: Paper;
@@ -27,7 +32,8 @@ interface SmartResearchSidebarProps {
   onClose?: () => void;
 }
 
-type SidebarTab = 'analysis' | 'notes' | 'citations' | 'discussion';
+type SidebarTab = 'analysis' | 'ai' | 'notes' | 'citations' | 'discussion';
+type AiSubTab = 'synthesis' | 'suggestions';
 
 export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
   paper,
@@ -35,6 +41,8 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<SidebarTab>('analysis');
+  const [aiSubTab, setAiSubTab] = useState<AiSubTab>('synthesis');
+  const [aiRefreshTrigger, setAiRefreshTrigger] = useState(0);
 
   // Sidebar Fields State
   const [sidebarData, setSidebarData] = useState<PaperSidebarFields | null>(null);
@@ -245,6 +253,17 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
           Analysis
         </button>
         <button
+          onClick={() => setActiveTab('ai')}
+          className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
+            activeTab === 'ai'
+              ? 'bg-violet-600 text-white shadow'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-3 h-3 text-violet-300" />
+          <span>AI Assist</span>
+        </button>
+        <button
           onClick={() => setActiveTab('notes')}
           className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
             activeTab === 'notes'
@@ -299,19 +318,33 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
                   <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                     Structured Synthesis
                   </span>
-                  <button
-                    type="button"
-                    onClick={handleSaveAnalysis}
-                    disabled={isSavingAnalysis}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all disabled:opacity-50"
-                  >
-                    {isSavingAnalysis ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Check className="w-3 h-3" />
-                    )}
-                    <span>Save Analysis</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('ai');
+                        setAiSubTab('suggestions');
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 transition-all"
+                      title="Review AI suggestions"
+                    >
+                      <Sparkles className="w-3 h-3 text-violet-400" />
+                      <span>AI Suggest</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveAnalysis}
+                      disabled={isSavingAnalysis}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all disabled:opacity-50"
+                    >
+                      {isSavingAnalysis ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Check className="w-3 h-3" />
+                      )}
+                      <span>Save Analysis</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Field 1: Research Gap */}
@@ -654,6 +687,62 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
                     )}
                   </button>
                 </form>
+              </div>
+            )}
+
+            {/* TAB 5: AI RESEARCH ASSISTANT */}
+            {activeTab === 'ai' && (
+              <div className="space-y-4">
+                {/* AI Quota Meter */}
+                <AiUsageIndicator
+                  variant="compact"
+                  refreshTrigger={aiRefreshTrigger}
+                />
+
+                {/* AI Sub-Tab Selector */}
+                <div className="flex items-center p-1 bg-surface-2/80 rounded-xl border border-white/[0.06] gap-1 text-[11px] font-medium">
+                  <button
+                    onClick={() => setAiSubTab('synthesis')}
+                    className={`flex-1 py-1.5 rounded-lg transition-all ${
+                      aiSubTab === 'synthesis'
+                        ? 'bg-violet-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Synthesis
+                  </button>
+                  <button
+                    onClick={() => setAiSubTab('suggestions')}
+                    className={`flex-1 py-1.5 rounded-lg transition-all ${
+                      aiSubTab === 'suggestions'
+                        ? 'bg-violet-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Field Suggestions
+                  </button>
+                </div>
+
+                {/* Sub-tab 1: Paper Summarization */}
+                {aiSubTab === 'synthesis' && (
+                  <AiSummarizePanel
+                    paperId={paper.id}
+                    onSummaryGenerated={() => setAiRefreshTrigger((prev) => prev + 1)}
+                  />
+                )}
+
+                {/* Sub-tab 2: Sidebar Field Suggestions */}
+                {aiSubTab === 'suggestions' && (
+                  <AiSuggestionsPanel
+                    paperId={paper.id}
+                    currentSidebarFields={sidebarData}
+                    onFieldUpdated={() => {
+                      loadSidebar();
+                      setAiRefreshTrigger((prev) => prev + 1);
+                    }}
+                    isReadOnly={!isUploader}
+                  />
+                )}
               </div>
             )}
           </>

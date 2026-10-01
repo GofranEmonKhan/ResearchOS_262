@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { UserAvatar } from '../common/UserAvatar.js';
+import { AiUsageIndicator, AiCoPilotModal } from '../ai/index.js';
 
 export interface AppSidebarProps {
   activeTab?: string;
@@ -45,6 +46,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 }) => {
   const { profile, signOut } = useAuth();
   const [internalHovered, setInternalHovered] = useState(false);
+  const [isAiCoPilotOpen, setIsAiCoPilotOpen] = useState(false);
 
   const isExpanded = controlledHovered !== undefined ? controlledHovered : internalHovered;
 
@@ -142,7 +144,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   };
 
   return (
-    <aside
+    <>
+      <aside
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={`fixed top-16 left-0 h-[calc(100vh-4rem)] z-40 bg-[#0A0914]/95 backdrop-blur-2xl border-r border-white/10 flex flex-col justify-between transition-all duration-300 ease-in-out select-none shadow-2xl shadow-black/80 ${
@@ -160,6 +163,24 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <button
               key={item.id}
               onClick={() => {
+                if (item.id === 'ai-assistant') {
+                  setIsAiCoPilotOpen(true);
+                  return;
+                }
+                // Handle kanban & calendar tabs
+                if (item.id === 'kanban' || item.id === 'calendar') {
+                  if (onTabChange) {
+                    onTabChange(item.id);
+                  } else if (onNavigate) {
+                    const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
+                    if (lastId) {
+                      onNavigate(`/projects/${lastId}?tab=${item.id}`);
+                    } else {
+                      onNavigate(`/dashboard?tab=${item.id}`);
+                    }
+                  }
+                  return;
+                }
                 // If item navigates (like Dashboard), call onNavigate
                 if (item.isNavigate && item.route && onNavigate) {
                   onNavigate(item.route);
@@ -217,6 +238,17 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
       {/* Bottom Profile & Actions */}
       <div className="p-3 border-t border-white/10 bg-white/[0.01]">
+        {/* AI Quota Meter */}
+        <div className="mb-2">
+          {isExpanded ? (
+            <AiUsageIndicator variant="compact" />
+          ) : (
+            <div className="flex justify-center">
+              <AiUsageIndicator variant="icon" />
+            </div>
+          )}
+        </div>
+
         {/* User Card */}
         <div
           onClick={() => onNavigate?.('/profile')}
@@ -266,5 +298,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         </button>
       </div>
     </aside>
+
+    {/* Research AI Co-Pilot Modal */}
+    <AiCoPilotModal
+      isOpen={isAiCoPilotOpen}
+      onClose={() => setIsAiCoPilotOpen(false)}
+      onNavigate={onNavigate}
+    />
+  </>
   );
 };

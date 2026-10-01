@@ -545,4 +545,22 @@ describe('Spec 05 — Manuscript Writing & Peer Review UI Component Tests', () =
       'Preview should display clean relative asset path badge'
     );
   });
+
+  it('16. InsertFigureModal renders "Saved Experiment Figures" tab for research paper insertion', () => {
+    const html = renderToString(
+      <InsertFigureModal
+        isOpen={true}
+        onClose={() => {}}
+        onInsertFigure={() => {}}
+      />
+    );
+
+    assert.ok(html.includes('Saved Experiment Figures'), 'Renders Saved Experiment Figures tab button');
+    assert.ok(html.includes('Upload File'), 'Renders Upload File tab');
+    assert.ok(html.includes('Image URL'), 'Renders Image URL tab');
+    assert.ok(html.includes('Scientific Presets'), 'Renders Scientific Presets tab');
+    assert.ok(html.includes('LaTeX Figure Relative Path'), 'Renders clean relative LaTeX figure input');
+    assert.ok(html.includes('\\begin{figure}'), 'Renders LaTeX figure environment preview');
+  });
 });
+

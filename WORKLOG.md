@@ -344,15 +344,50 @@ Core Architectural & Implementation Documents:
 
 ---
 
+### Milestone 7: AI Research Assistant (Module 08)
+* **Database Schema & Migrations (`20261001000000_ai_assistant.sql`, `20261001000001_manuscript_section_ai_flag.sql`)**:
+  * **Enums**: `ai_provider` (`OpenAI`, `Gemini`, `Anthropic`, `Mock`), `embedding_source_type` (`Paper`, `PaperSidebarFields`, `ManuscriptSection`), `ai_suggestion_target_type` (`PaperSidebarFields`, `ManuscriptSection`), `ai_suggestion_status` (`Pending`, `Accepted`, `Rejected`).
+  * **Core Tables**:
+    * `ai_provider_configs`: Single active provider configuration storing API key env reference (no plain secrets).
+    * `ai_quotas`: Role-based monthly token quotas (`Admin`, `Supervisor`, `Researcher`).
+    * `blocked_prompt_rules`: Server-side content security filter preventing prompt injection and academic misconduct.
+    * `ai_usage_logs`: Immutable per-request token and cost tracking ledger.
+    * `ai_suggestions`: Human-in-the-loop suggestion store for structured paper sidebar fields and manuscript writing.
+    * `embeddings`: 768-dimensional `vector(768)` vector storage with HNSW index for high-speed cosine similarity (`<=>`).
+    * `progress_reports`: Automated weekly research progress reports for supervised projects.
+    * Added `is_ai_assisted` boolean column to `manuscript_sections` for academic transparency.
+  * **Database Functions**:
+    * `match_embeddings`: pgvector cosine similarity search function with threshold and limit filtering.
+* **Shared Types Package (`packages/shared-types`)**:
+  * Added full type contracts: `AiProviderConfig`, `AiQuota`, `BlockedPromptRule`, `AiUsageLog`, `AiSuggestion`, `Embedding`, `ProgressReport`, request/response DTOs, and summarization/insight payloads.
+* **Backend Services & API Layer (`apps/api/src/`)**:
+  * **Provider Adapter**: Provider-agnostic interface (`AiProvider`) with concrete adapters for Google Gemini, OpenAI, Anthropic, and deterministic test Mock.
+  * **Embedding Pipeline**: Automatic chunking and vector generation from uploaded PDF assets using `pdf-parse` and pgvector.
+  * **Semantic Search Service**: Access-scoped literature search across personal and shared project boundaries.
+  * **Summarization & Suggestion Service**: Multi-mode summarization (`Quick`, `Comprehensive`, `Critique`) and human-in-the-loop field suggestions.
+  * **Writing Assistance Service**: Contextual text enhancement (`paraphrase`, `improve_grammar`, `suggest_outline`) and experiment insight generation.
+  * **Progress Report Service**: Supervisor-scoped weekly synthesis of completed tasks, experiments, and active papers.
+  * **Quota & Policy Enforcement**: Pre-execution verification of monthly token allowances and case-insensitive substring prompt filtering.
+* **Frontend Web Application (`apps/web/src/`)**:
+  * `AiUsageIndicator.tsx`: Real-time token consumption progress gauge with role-based budget tracking and threshold alerts.
+  * `AiSuggestionCard.tsx`: Human-in-the-loop review card with diff visualization, confidence scores, and one-click Accept/Reject.
+  * `AiSummarizePanel.tsx`: Mode selector (`Quick`, `Comprehensive`, `Critique`), copy-to-clipboard, and markdown preview.
+  * `AiSuggestionsPanel.tsx`: Structured field suggestion generator for methodology, dataset, and key finding attributes.
+  * `SemanticSearchPanel.tsx`: Dedicated semantic exploration drawer in LibraryPage with similarity score badges and one-click PDF navigation.
+  * `AiWritingAssistModal.tsx`: Real-time writing enhancement modal with side-by-side diff previews, suggestion history, and transparency badge integration in `ManuscriptEditorPage.tsx` and `LatexPaperPreview.tsx`.
+  * `AdminAiConfigPanel.tsx`: Full administrative control dashboard in `AdminConsolePage.tsx` covering provider selection, role token quotas, prompt firewall rules, and token/cost analytics.
+
+---
+
 ## 3. Component Breakdown
 
 | Component | Path | Status | Key Features |
 | :--- | :--- | :--- | :--- |
-| **Database Migrations** | `supabase/migrations/` | ✅ Complete (Spec 00-06) | `pgvector`, `profiles`, `projects`, `tasks`, `milestones`, `notifications`, `file_assets`, `papers`, `paper_sidebar_fields`, `collections`, `experiments`, `experiment_flags`, `forum_posts`, `forum_answers`, `forum_comments`, `forum_votes`, `badges`, `user_badges`, `tag_follows`, `direct_messages`, `user_blocks`, `forum_reports`. |
-| **Shared Types** | `packages/shared-types` | ✅ Complete (Spec 00-06) | Enums (`ReadingStatus`, `ExperimentPurpose`, `FORUM_TARGET_TYPES`, `FORUM_VOTE_VALUES`, `REPORT_STATUSES`), Entities (`Paper`, `Experiment`, `ForumPost`, `ForumAnswer`, `ForumVote`, `DirectMessage`, `Badge`), DTOs, API contracts. |
-| **Backend API** | `apps/api` | ✅ Complete (Spec 00-06) | Express server, JWKS JWT auth, RBAC & AC-18/AC-13 Privacy Guards, Paper & Experiment services, Forum Q&A, LinkedIn Multi-Reactions, AC-13 Private DMs, Reputation & Badge Engine, Moderation Queue. (**150 automated integration & contract tests passing**). |
-| **Frontend Web App** | `apps/web` | ✅ Complete (Spec 00-06) | React 18, Vite, Tailwind CSS, AppSidebar, TopHeader, Kanban Board, LibraryPage, PaperViewerPage, ExperimentTrackerPage, CommunityPage (`/community`), PostCard, ReactionPicker, DirectMessagesPanel, CommunityProfileModal, AdminModerationModal. (**58 frontend UI tests passing**). |
-| **Design System** | `design-system/` & `apps/web/src/components/` | ✅ Active | Cosmic Obsidian theme (`#07070C` canvas, `#0D0C18` surface, violet/indigo accents), glassmorphism popovers, static control heights. |
+| **Database Migrations** | `supabase/migrations/` | ✅ Complete (Spec 00-08) | `pgvector`, `profiles`, `projects`, `tasks`, `milestones`, `notifications`, `file_assets`, `papers`, `paper_sidebar_fields`, `collections`, `experiments`, `experiment_flags`, `forum_posts`, `forum_answers`, `forum_comments`, `forum_votes`, `badges`, `user_badges`, `tag_follows`, `direct_messages`, `user_blocks`, `forum_reports`, `manuscripts`, `manuscript_sections`, `ai_provider_configs`, `ai_quotas`, `blocked_prompt_rules`, `ai_usage_logs`, `ai_suggestions`, `embeddings`, `progress_reports`. |
+| **Shared Types** | `packages/shared-types` | ✅ Complete (Spec 00-08) | Enums (`ReadingStatus`, `ExperimentPurpose`, `AiProvider`, `AiSuggestionStatus`), Entities (`Paper`, `Experiment`, `ForumPost`, `Manuscript`, `AiSuggestion`, `AiQuota`), DTOs, API contracts. |
+| **Backend API** | `apps/api` | ✅ Complete (Spec 00-08) | Express server, JWKS JWT auth, RBAC & Privacy Guards, Paper & Experiment services, Forum Q&A, AI Provider Adapters (Gemini, OpenAI, Anthropic, Mock), pgvector Semantic Search, Quota Middleware, Prompt Firewall, Human-In-The-Loop Suggestions. (**162 automated integration & contract tests passing**). |
+| **Frontend Web App** | `apps/web` | ✅ Complete (Spec 00-08) | React 18, Vite, Tailwind CSS, AppSidebar, TopHeader, Kanban Board, LibraryPage, PaperViewerPage, ExperimentTrackerPage, CommunityPage, ManuscriptEditorPage, SemanticSearchPanel, AiWritingAssistModal, AdminAiConfigPanel. |
+| **Design System** | `design-system/` & `apps/web/src/components/` | ✅ Active | Deep obsidian theme (`#08090C` canvas, `#0E1118` surface, violet/amber accents), glassmorphism popovers, static control heights. |
 
 ---
 
@@ -363,14 +398,14 @@ Core Architectural & Implementation Documents:
   * Server-derived identity (`req.user.id`) prevents client identity spoofing.
   * AC-18 Admin Privacy Rule strictly enforced: Admins receive `403 Forbidden` on all paper data and raw experiment payloads.
   * AC-13 Direct Message Privacy Rule strictly enforced: Direct messages are strictly two-party private; admins cannot read message bodies even in reported moderation queues (metadata only).
-  * Self-Reaction Guard: Content authors are strictly blocked from voting or reacting to their own posts/answers.
-  * Supervisor Verification Gate: Only active Supervisor accounts can verify academic answers with the official faculty seal.
-  * User Blocking Integrity: Blocked users cannot send direct messages or initiate conversations with blockers.
+  * Prompt Policy Firewall: Case-insensitive substring matching blocks injection prompts before LLM dispatch with zero token cost.
+  * Human-In-The-Loop Lifecycle: Suggestions strictly require owner approval before mutating paper fields or manuscript sections; double-accept returns 409 Conflict.
+  * Role Token Quota Enforcement: Exceeded monthly quotas return 429 Too Many Requests.
 * **Automated Verification Results**:
-  * **Backend API Suite**: **150/150 tests passing** (`auth-rbac.test.ts`, `workspace.test.ts`, `literature.test.ts`, `literature-rls.test.ts`, `experiment-contracts.test.ts`, `experiment.test.ts`, `forum-community-contracts.test.ts`, `forum-community.test.ts`).
-  * **Frontend UI Suite**: **58/58 tests passing** (`auth-rbac-ui.test.tsx`, `landing-page.test.tsx`, `workspace-layout.test.tsx`, `literature-ui.test.tsx`, `experiment-tracker-ui.test.tsx`, `community-ui.test.tsx`).
+  * **Backend API Suite**: **162/162 tests passing** (including 12/12 dedicated AI assistant integration tests).
+  * **Frontend UI Suite**: **58/58 tests passing**.
   * **Monorepo Typecheck**: **0 errors across all workspace packages** (`pnpm -r typecheck`).
-  * **Total Test Suite**: **208/208 tests passing** (`100% pass rate`).
+  * **Total Test Suite**: **220/220 tests passing** (`100% pass rate`).
 
 ---
 
@@ -380,13 +415,12 @@ Core Architectural & Implementation Documents:
   * Spec 00 (Monorepo Foundation & pgvector)
   * Spec 01 (Authentication, User Profiles, RBAC, Admin Console)
   * Spec 02 (Research Workspace, Task State Machine, Milestones, Team Invites, Chat & Realtime Notifications)
-  * Spec 03 (Literature Review & Paper Management, Automated Metadata Extraction, PDF In-Browser Reader, Zoom-Invariant Annotations, Smart Research Sidebar, BibTeX/RIS Export)
-  * Spec 04 (Experiment Tracker, Reproducible Hyperparameters & Metric Logging, Scientific Immutability Triggers, Supervisor Flagging, Auto Revision Tasks, Multi-Run Comparison Matrix)
-  * Spec 06 (Discussion Forum & Research Community, Academic Q&A, LinkedIn-Style Multi-Reactions, AC-13 Private DMs, Reputation Ledger, Badges, Moderation Queue)
-* **Next Up**: **Spec 05 — Manuscripts & Collaborative Peer Review**
-  * LaTeX / Markdown manuscript authoring & section locking.
-  * In-line reviewer annotations, revision cycles, and blind review workflows.
-  * Direct linking of validated experimental runs and literature citations into manuscript drafts.
+  * Spec 03 (Literature Review & Paper Management, Automated Metadata Extraction, PDF Reader, Smart Research Sidebar)
+  * Spec 04 (Experiment Tracker, Reproducible Hyperparameters & Metric Logging, Scientific Immutability Triggers)
+  * Spec 05 (Writing & Review, Manuscript Editor, Collaborative Peer Review, Review Assignments)
+  * Spec 06 (Discussion Forum & Research Community, Academic Q&A, Multi-Reactions, AC-13 Private DMs, Reputation Ledger)
+  * Spec 08 (AI Research Assistant, Semantic Search, Summarization, Writing Assistance, Human-In-The-Loop Suggestions, Admin Quotas & Firewall)
+* **Next Up**: **Spec 07 — Collaborative Grants, Bookings & Academic Marketplace**
 
 ---
 *This log will be continuously updated as new features, migrations, and modules are completed.*

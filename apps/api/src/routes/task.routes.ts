@@ -152,12 +152,32 @@ router.patch('/tasks/:taskId/status', authenticate, async (req: Request<{ taskId
 });
 
 /**
+ * POST /tasks/:taskId/start
+ * Convenience endpoint: Start working on a task (moves to InProgress status).
+ */
+router.post('/tasks/:taskId/start', authenticate, async (req: Request<{ taskId: string }>, res: Response) => {
+  try {
+    const task = await setTaskStatus(req.user!.id, req.params.taskId, 'InProgress');
+    return res.json(task);
+  } catch (err: any) {
+    if (err.message?.includes('Forbidden')) {
+      return res.status(403).json({ error: err.message });
+    }
+    if (err.message?.includes('locked')) {
+      return res.status(400).json({ error: err.message });
+    }
+    console.error('Error starting task:', err);
+    return res.status(500).json({ error: err.message || 'Failed to start task' });
+  }
+});
+
+/**
  * POST /tasks/:taskId/submit
  * Submit task for review (moves to Submitted status).
  */
 router.post('/tasks/:taskId/submit', authenticate, async (req: Request<{ taskId: string }, {}, SubmitTaskDto>, res: Response) => {
   try {
-    const task = await submitTask(req.user!.id, req.params.taskId, req.body);
+    const task = await submitTask(req.user!.id, req.params.taskId, req.body || {});
     return res.json(task);
   } catch (err: any) {
     if (err.message?.includes('Forbidden')) {
@@ -176,15 +196,16 @@ router.post('/tasks/:taskId/submit', authenticate, async (req: Request<{ taskId:
 router.post(
   '/tasks/:taskId/review',
   authenticate,
-  async (req: Request<{ taskId: string }, {}, { action: 'Approve' | 'RequestRevision'; revisionNote?: string }>, res: Response) => {
+  async (req: Request<{ taskId: string }, {}, { action: 'Approve' | 'RequestRevision'; revisionNote?: string; note?: string }>, res: Response) => {
     try {
-      const { action, revisionNote } = req.body;
+      const { action } = req.body;
+      const revisionNote = req.body.revisionNote || req.body.note || '';
       if (!action || !['Approve', 'RequestRevision'].includes(action)) {
         return res.status(400).json({ error: 'Action must be "Approve" or "RequestRevision"' });
       }
 
       const task = await reviewTask(req.user!.id, req.params.taskId, action, {
-        revisionNote: revisionNote || '',
+        revisionNote,
       });
 
       return res.json(task);

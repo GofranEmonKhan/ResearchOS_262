@@ -254,6 +254,14 @@ export interface Milestone {
   approvedTasksCount?: number;
 }
 
+export interface SubmissionFile {
+  name: string;        // Original filename
+  url: string;         // Supabase Storage path (used with getPublicUrl / createSignedUrl)
+  size: number;        // bytes
+  type: string;        // MIME type
+  uploadedAt: string;  // ISO timestamp
+}
+
 export interface Task {
   id: string;
   projectId: string;
@@ -267,6 +275,7 @@ export interface Task {
   status: TaskStatus;
   progressNote?: string | null;
   revisionNote?: string | null;
+  submissionFiles?: SubmissionFile[];
   isProposed: boolean;
   proposedBy?: string | null;
   createdAt: string;
@@ -411,6 +420,7 @@ export interface UpdateTaskDto {
 
 export interface SubmitTaskDto {
   progressNote?: string;
+  submissionFiles?: SubmissionFile[];
 }
 
 export interface RequestTaskRevisionDto {
@@ -900,6 +910,23 @@ export interface ExperimentComparisonResponse {
   };
 }
 
+export interface SavedExperimentFigure {
+  id: string;
+  title: string;
+  experimentIds: string[];
+  experimentNames: string[];
+  metrics: string[];
+  dataUrl: string;
+  suggestedCaption: string;
+  suggestedLabel: string;
+  relativePath: string;
+  chartType: 'grouped-bar' | 'radar' | 'metric-delta' | 'delta';
+  createdAt: string;
+  caption?: string;
+  label?: string;
+  suggestedPath?: string;
+}
+
 // ==========================================
 // 8. Discussion Forum & Community (Spec 06)
 // ==========================================
@@ -1125,7 +1152,7 @@ export interface DirectMessageThread {
     reputationPoints: number;
     isFacultyVerified?: boolean;
   };
-  lastMessage: DirectMessage;
+  lastMessage?: DirectMessage | null;
   unreadCount: number;
   isBlocked: boolean;
   hasBlockedYou: boolean;
@@ -1382,6 +1409,7 @@ export interface ManuscriptSection {
   contentMarkdown: string;
   contentLatex: string;
   wordCount: number;
+  isAiAssisted?: boolean;
   updatedBy?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1696,6 +1724,316 @@ export interface ManuscriptListResponse {
   totalPages: number;
 }
 
+// ==========================================
+// 8. AI Research Assistant (Spec 08)
+// ==========================================
 
+// --- Enums ---
 
+export type EmbeddingSourceType = 'Paper' | 'PaperSidebarFields' | 'ManuscriptSection';
+
+export const EMBEDDING_SOURCE_TYPES: Record<EmbeddingSourceType, EmbeddingSourceType> = {
+  Paper: 'Paper',
+  PaperSidebarFields: 'PaperSidebarFields',
+  ManuscriptSection: 'ManuscriptSection',
+};
+
+export type AiSuggestionStatus = 'Pending' | 'Accepted' | 'Rejected';
+
+export const AI_SUGGESTION_STATUSES: Record<AiSuggestionStatus, AiSuggestionStatus> = {
+  Pending: 'Pending',
+  Accepted: 'Accepted',
+  Rejected: 'Rejected',
+};
+
+export type AiSuggestionTargetType = 'PaperSidebarFields' | 'ManuscriptSection';
+
+export const AI_SUGGESTION_TARGET_TYPES: Record<AiSuggestionTargetType, AiSuggestionTargetType> = {
+  PaperSidebarFields: 'PaperSidebarFields',
+  ManuscriptSection: 'ManuscriptSection',
+};
+
+export type AiProviderEnum = 'OpenAI' | 'Gemini';
+
+export const AI_PROVIDERS: Record<AiProviderEnum, AiProviderEnum> = {
+  OpenAI: 'OpenAI',
+  Gemini: 'Gemini',
+};
+
+export type SummarizeMode = 'short' | 'detailed' | 'method-focused';
+
+export type WritingAssistAction = 'paraphrase' | 'grammar' | 'outline';
+
+// --- Entities ---
+
+export interface Embedding {
+  id: string;
+  sourceType: EmbeddingSourceType;
+  sourceId: string;
+  ownerId: string;
+  chunkIndex: number;
+  /** vector field is not returned to clients — backend-only */
+  createdAt: string;
+}
+
+export interface AiSuggestion {
+  id: string;
+  /** Always server-derived from JWT. Never trusted from client. */
+  userId: string;
+  targetType: AiSuggestionTargetType;
+  targetId: string;
+  fieldName: string;
+  suggestedValue: string;
+  status: AiSuggestionStatus;
+  createdAt: string;
+}
+
+export interface AiUsageLog {
+  id: string;
+  userId: string;
+  feature: string;
+  tokensUsed: number;
+  costUsd?: number;
+  createdAt: string;
+}
+
+export interface AiProviderConfig {
+  id: string;
+  provider: AiProviderEnum;
+  /**
+   * Name of the server-side environment variable holding the actual API key.
+   * e.g. "GEMINI_API_KEY". The raw key is NEVER stored here.
+   */
+  apiKeyRef: string;
+  model: string;
+  isActive: boolean;
+  updatedBy?: string;
+  updatedAt: string;
+}
+
+export interface AiQuota {
+  role: UserRole;
+  monthlyTokenLimit: number;
+  updatedAt: string;
+}
+
+export interface BlockedPromptRule {
+  id: string;
+  /** Plain string — matched via case-insensitive substring. No regex. */
+  pattern: string;
+  reason: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface ProgressReport {
+  id: string;
+  projectId: string;
+  studentId: string;
+  generatedBy: string;
+  periodStart: string;  // ISO date string YYYY-MM-DD
+  periodEnd: string;    // ISO date string YYYY-MM-DD
+  content: string;
+  createdAt: string;
+}
+
+// --- Request DTOs ---
+
+export interface SummarizeRequest {
+  mode: SummarizeMode;
+}
+
+export interface SemanticSearchRequest {
+  query: string;
+  topK?: number;
+  /** Optional project scope filter. Server validates/derives actual authorized projects. */
+  scope?: {
+    projects?: string[];
+  };
+}
+
+export interface WritingAssistRequest {
+  action: WritingAssistAction;
+  /** Required for paraphrase and grammar actions */
+  selectedText?: string;
+  /** Required for outline action */
+  sectionType?: string;
+  /** Optional section ID being edited */
+  sectionId?: string;
+}
+
+export interface CreateBlockedPromptRuleRequest {
+  pattern: string;
+  reason: string;
+}
+
+export interface UpdateAiQuotaRequest {
+  monthlyTokenLimit: number;
+}
+
+export interface UpdateAiProviderConfigRequest {
+  provider?: AiProviderEnum;
+  apiKeyRef?: string;
+  model?: string;
+  isActive?: boolean;
+}
+
+export interface GenerateProgressReportRequest {
+  studentId: string;
+  periodStart: string;  // YYYY-MM-DD
+  periodEnd: string;    // YYYY-MM-DD
+  regenerate?: boolean;
+}
+
+// --- Response DTOs ---
+
+export interface SemanticSearchResult {
+  sourceType: EmbeddingSourceType;
+  sourceId: string;
+  similarity: number;
+  /** Resolved title from the source entity */
+  title?: string;
+  /** Relevant text snippet from the matched chunk */
+  snippet?: string;
+}
+
+export interface SemanticSearchResponse {
+  data: SemanticSearchResult[];
+  query: string;
+  total: number;
+}
+
+export interface SummarizeResponse {
+  paperId: string;
+  mode: SummarizeMode;
+  summary: string;
+  tokensUsed: number;
+}
+
+export interface SidebarSuggestionsResponse {
+  paperId: string;
+  suggestions: AiSuggestion[];
+}
+
+export interface WritingAssistResponse {
+  manuscriptId: string;
+  sectionId: string;
+  suggestion: AiSuggestion;
+}
+
+export interface ExperimentInsightResponse {
+  experimentId: string;
+  insight: string;
+  tokensUsed: number;
+}
+
+export interface AiUsageSummary {
+  tokensUsedThisMonth: number;
+  monthlyLimit: number;
+  percentUsed: number;
+  recentLogs: AiUsageLog[];
+}
+
+export interface AdminAiUsageAnalytics {
+  totalTokensThisMonth: number;
+  totalCostUsdThisMonth: number;
+  byRole: Array<{
+    role: UserRole;
+    tokensUsed: number;
+    costUsd: number;
+  }>;
+  topUsers: Array<{
+    userId: string;
+    fullName: string;
+    tokensUsed: number;
+    costUsd: number;
+  }>;
+}
+
+export interface AcceptSuggestionResponse {
+  suggestionId: string;
+  status: 'Accepted';
+  targetType: AiSuggestionTargetType;
+  targetId: string;
+  fieldName: string;
+  appliedValue: string;
+}
+
+export interface RejectSuggestionResponse {
+  suggestionId: string;
+  status: 'Rejected';
+}
+
+export interface AiSuggestionListParams {
+  targetType?: AiSuggestionTargetType;
+  targetId?: string;
+  status?: AiSuggestionStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface AiSuggestionListResponse {
+  suggestions: AiSuggestion[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// --- AI Literature Discovery (Perplexity / Consensus Model) ---
+
+export interface DiscoveredPaper {
+  id: string;              // OpenAlex work ID or normalized DOI
+  title: string;
+  authors: string[];
+  year: number | null;
+  venue: string | null;
+  doi: string | null;
+  abstract: string | null;
+  tldr: string | null;     // AI 1-line key takeaway
+  citationCount: number;
+  isOpenAccess: boolean;
+  pdfUrl?: string | null;
+  landingPageUrl?: string | null;
+  isImported?: boolean;
+}
+
+export interface LiteratureDiscoveryRequest {
+  topic: string;
+  limit?: number;          // 5 to 15 (default 10)
+  yearRange?: {
+    from?: number;
+    to?: number;
+  };
+}
+
+export interface LiteratureDiscoveryResponse {
+  topic: string;
+  synthesis: {
+    summary: string;
+    consensus: string;
+    keyThemes: Array<{
+      title: string;
+      description: string;
+      paperIndices: number[]; // 1-based references [1], [2] matching papers list
+    }>;
+    researchGaps: string[];
+  };
+  papers: DiscoveredPaper[];
+}
+
+export interface ImportDiscoveredPaperDto {
+  projectId: string;
+  title: string;
+  authors: string[];
+  year?: number | null;
+  venue?: string | null;
+  doi?: string | null;
+  abstract?: string | null;
+  pdfUrl?: string | null;
+}
+
+export interface ImportDiscoveredPaperResponse {
+  paperId: string;
+  message: string;
+}
 

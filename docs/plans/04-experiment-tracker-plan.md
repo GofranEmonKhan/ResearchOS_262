@@ -981,6 +981,44 @@ Query: GET /api/v1/experiments/compare?ids=id1,id2,id3
 
 ---
 
+---
+
+## Phase 4.16: Graphical Comparison Visualizer, Chart Export & Manuscript Figure Integration (Planned)
+
+**Goal:** Provide scholars with high-impact graphical visual comparison charts (grouped bar charts, metric radar trajectories, and benchmark comparison curves) across 2–5 experiments in `ExperimentComparisonModal`. Support direct high-res PNG/SVG export, and enable "Save to Paper Figures". Link saved experiment figures directly into the manuscript writing editor's `InsertFigureModal` under a dedicated "Saved Experiment Figures" tab.
+
+### Key Implementation Specifications:
+
+1. **Interactive Comparison Chart Canvas (`ExperimentComparisonModal.tsx`)**:
+   - Tab switcher between **Matrix Table View** and **Graphical Visualizer View**.
+   - Multiple visualization modes:
+     - **Grouped Bar Charts**: Displays comparative metrics (Accuracy, F1, Loss, Latency, Throughput, user-defined) side-by-side per experiment with distinctive color accents.
+     - **Radar / Relative Benchmark Curves**: Shows normalized delta performance vs baseline for multi-dimensional evaluation.
+   - Interactive SVG/Canvas rendering with dark mode glassmorphic styling, hover tooltips, and benchmark leader badges.
+
+2. **Figure Export & Persistence Engine**:
+   - **Export Image Button**: Downloads rendered comparison chart as high-resolution PNG / SVG.
+   - **Export LaTeX Table**: One-click copy of styled `\begin{table}...\end{table}` code.
+   - **"Save to Paper Figures" Workflow**:
+     - Exports the rendered canvas to a clean PNG data URL.
+     - Saves to project/user figure asset registry with auto-generated metadata (experiment run names, metric snapshots, date, and suggested caption).
+     - Persists with clean relative path: `figures/exp_comparison_<timestamp>.png`.
+
+3. **Cross-Module Manuscript Editor Integration (`InsertFigureModal.tsx`)**:
+   - In `InsertFigureModal.tsx` (which contains `[ Upload File ]` `[ Image URL ]` `[ Scientific Presets ]`), add a 4th tab: **`[ 🔬 Saved Experiment Figures ]`**.
+   - Shows a visual gallery of all saved experiment comparison figures with run names, metrics summary, and generation timestamp.
+   - Clicking a figure automatically populates:
+     - LaTeX Figure Relative Path: `figures/exp_comparison_<id>.png`
+     - Pre-filled scientific figure caption: *"Figure: Comparative performance evaluation across [Runs] evaluating [Metrics] (Spec 04 Experiment Tracker)."*
+     - Reference Label: `\label{fig:exp_benchmark_<id>}`
+     - Ready-to-insert LaTeX `\begin{figure}[h]...\end{figure}` or Markdown snippet.
+
+4. **Testing & Verification**:
+   - Add unit tests verifying graphical visualizer rendering, chart type switching, and export triggers.
+   - Add unit tests verifying `InsertFigureModal` renders "Saved Experiment Figures" tab and handles single-click selection and snippet generation.
+
+---
+
 ## 18. Execution Progress & Activity Log
 
 ### Phase Completion Summary Matrix
@@ -1002,6 +1040,7 @@ Query: GET /api/v1/experiments/compare?ids=id1,id2,id3
 | **Phase 4.13** | Frontend Supervisor Flagging Workflow | ✅ Completed | `apps/web/src/components/experiments/SupervisorFlagModal.tsx` | Supervisor review dialog with issue categories, guidance note, and automated workspace revision task creation. |
 | **Phase 4.14** | Automated Test Suite & Acceptance Criteria Verification | ✅ Completed | `apps/api/src/tests/experiment.test.ts`, `apps/web/src/tests/experiment-tracker-ui.test.tsx` | **17/17 API tests passing**, **8/8 UI tests passing**, AC-1 through AC-12 verified. Total monorepo tests: **168/168 passing (100%)**. |
 | **Phase 4.15** | Documentation, WORKLOG & Milestone Completion | ✅ Completed | `WORKLOG.md`, `walkthrough.md`, `docs/plans/04-experiment-tracker-plan.md` | Milestone 5 logged in `WORKLOG.md`, `pnpm -r typecheck` passed with 0 errors across all packages. |
+| **Phase 4.16** | Graphical Comparison Visualizer, Chart Export & Manuscript Figure Integration | 📝 In Planning | `ExperimentComparisonModal.tsx`, `InsertFigureModal.tsx`, `docs/specs/04-experiment-tracker.md` | Multi-metric grouped bar/radar charts, SVG/PNG chart export, "Save to Paper Figures" workflow, and Manuscript InsertFigureModal integration. |
 
 ### Verification Metrics & Test Suite Health
 

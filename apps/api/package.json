@@ -12,9 +12,11 @@
     "seed:blogs": "tsx src/scripts/seedBlogs.ts",
     "seed:genomics": "tsx src/scripts/seedGenomicsManuscript.ts",
     "lint": "echo \"@researchos/api: lint passed\"",
-    "test": "tsx --test --test-concurrency=1 src/tests/auth-rbac.test.ts src/tests/workspace.test.ts src/tests/literature.test.ts src/tests/literature-rls.test.ts src/tests/experiment-contracts.test.ts src/tests/experiment.test.ts src/tests/forum-community-contracts.test.ts src/tests/forum-community.test.ts src/tests/manuscript.test.ts"
+    "test": "tsx --test --test-concurrency=1 src/tests/auth-rbac.test.ts src/tests/workspace.test.ts src/tests/literature.test.ts src/tests/literature-rls.test.ts src/tests/experiment-contracts.test.ts src/tests/experiment.test.ts src/tests/forum-community-contracts.test.ts src/tests/forum-community.test.ts src/tests/manuscript.test.ts src/tests/ai-assistant.test.ts",
+    "test:ai": "tsx --test src/tests/ai-assistant.test.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@researchos/shared-types": "workspace:*",
     "@supabase/supabase-js": "^2.49.1",
     "cors": "^2.8.5",

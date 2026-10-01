@@ -133,6 +133,24 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
 
     setIsOpen(false);
 
+    // Direct Message notification
+    if (notification.type === 'DirectMessageReceived') {
+      const senderId = notification.payload?.senderId as string | undefined;
+      if (onNavigate) {
+        onNavigate(senderId ? `/community?tab=dms&partner=${senderId}` : '/community?tab=dms');
+      }
+      return;
+    }
+
+    // Forum post/answer notification
+    if (notification.type === 'ForumReply') {
+      const postId = notification.payload?.postId as string | undefined;
+      if (onNavigate) {
+        onNavigate(postId ? `/community?post=${postId}` : '/community');
+      }
+      return;
+    }
+
     // If notification has an associated project or route, navigate to it
     const projectId = notification.payload?.projectId as string | undefined;
     if (projectId && onNavigate) {
@@ -157,6 +175,12 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
+      case 'DirectMessageReceived':
+        return (
+          <div className="p-2 rounded-xl bg-gradient-to-br from-violet-600/25 to-indigo-600/25 border border-violet-500/40 text-violet-300 shrink-0 shadow-sm shadow-violet-600/20">
+            <MessageSquare className="w-4 h-4 text-violet-300" />
+          </div>
+        );
       case 'TaskAssigned':
         return (
           <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-cyan-400 shrink-0">
@@ -207,6 +231,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
   const getNotificationTitle = (n: Notification) => {
     if (n.payload?.title) return String(n.payload.title);
     switch (n.type) {
+      case 'DirectMessageReceived':
+        return n.payload?.senderName ? `Direct Message from ${n.payload.senderName}` : 'New Direct Message';
       case 'TaskAssigned':
         return 'New Task Assigned';
       case 'TaskApproved':
@@ -223,6 +249,9 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
   };
 
   const getNotificationDescription = (n: Notification) => {
+    if (n.type === 'DirectMessageReceived') {
+      return n.payload?.snippet ? `"${n.payload.snippet}"` : 'Sent you a private academic message.';
+    }
     if (n.payload?.revisionNote) return String(n.payload.revisionNote);
     if (n.payload?.message) return String(n.payload.message);
     if (n.payload?.description) return String(n.payload.description);

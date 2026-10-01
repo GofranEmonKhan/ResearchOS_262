@@ -114,8 +114,8 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
   return (
     <aside className="w-64 shrink-0 flex flex-col gap-6 select-none">
       {/* Quick Filters */}
-      <div className="space-y-1">
-        <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="space-y-1.5">
+        <div className="px-3 pb-2 text-xs font-bold uppercase tracking-wider text-slate-300">
           Library Views
         </div>
 
@@ -125,17 +125,23 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
             onToggleRequired(false);
             onSelectCollection(null);
           }}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
             selectedCollectionId === null && !isRequiredFilter
-              ? 'bg-violet-600/20 text-violet-200 border border-violet-500/30 shadow-sm'
-              : 'text-slate-300 hover:text-white hover:bg-white/[0.04] border border-transparent'
+              ? 'bg-violet-600/25 text-white border border-violet-500/40 shadow-sm font-semibold'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent'
           }`}
         >
           <div className="flex items-center gap-2.5">
             <BookOpen className="w-4 h-4 text-violet-400" />
             <span>All Papers</span>
           </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400">
+          <span
+            className={`text-xs font-semibold font-mono px-2.5 py-0.5 rounded-full border ${
+              selectedCollectionId === null && !isRequiredFilter
+                ? 'bg-violet-500/30 text-violet-200 border-violet-500/40'
+                : 'bg-white/10 text-slate-200 border-white/10'
+            }`}
+          >
             {totalPapersCount}
           </span>
         </button>
@@ -146,17 +152,17 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
             onToggleRequired(!isRequiredFilter);
             onSelectCollection(null);
           }}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
             isRequiredFilter
-              ? 'bg-amber-500/20 text-amber-200 border border-amber-500/30 shadow-sm'
-              : 'text-slate-300 hover:text-white hover:bg-white/[0.04] border border-transparent'
+              ? 'bg-amber-500/25 text-amber-100 border border-amber-500/40 shadow-sm font-semibold'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent'
           }`}
         >
           <div className="flex items-center gap-2.5">
             <Bookmark className="w-4 h-4 text-amber-400" />
             <span>Required Reading</span>
           </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+          <span className="text-xs font-semibold font-mono px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/30">
             {requiredCount}
           </span>
         </button>
@@ -165,7 +171,7 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
       {/* Collections Section */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-3">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
             Collections
           </span>
           <button
@@ -173,7 +179,7 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
               setIsCreating(true);
               setEditingCollection(null);
             }}
-            className="p-1 rounded-lg hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
             title="Create Collection"
           >
             <Plus className="w-4 h-4" />
@@ -248,9 +254,9 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
         )}
 
         {/* Collections List */}
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           {collections.length === 0 && !isCreating && (
-            <div className="px-3 py-4 text-center text-xs text-slate-500">
+            <div className="px-3.5 py-4 text-center text-xs text-slate-400 bg-white/[0.02] rounded-xl border border-dashed border-white/10 font-medium">
               No collections yet. Click + to organize papers.
             </div>
           )}
@@ -267,7 +273,7 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                   className="p-3 mx-1 rounded-xl bg-surface-2 border border-violet-500/30 shadow-xl space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-200">Edit Collection</span>
+                    <span className="text-xs font-semibold text-slate-200">Edit Collection</span>
                     <button
                       type="button"
                       onClick={() => setEditingCollection(null)}
@@ -320,10 +326,10 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
             return (
               <div
                 key={col.id}
-                className={`group relative flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                className={`group relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   isSelected
-                    ? 'bg-violet-600/20 text-white border border-violet-500/30 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-white/[0.04] border border-transparent'
+                    ? 'bg-violet-600/25 text-white border border-violet-500/40 shadow-sm font-semibold'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.06] border border-transparent'
                 }`}
               >
                 <button
@@ -340,8 +346,8 @@ export const CollectionSidebar: React.FC<CollectionSidebarProps> = ({
                   <span className="truncate">{col.name}</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400">
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-semibold font-mono px-2 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/10">
                     {col.paperCount || 0}
                   </span>
 

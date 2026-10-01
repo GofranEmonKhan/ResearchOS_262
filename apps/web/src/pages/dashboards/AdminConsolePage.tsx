@@ -15,9 +15,11 @@ import {
   Building2, 
   UserX,
   RefreshCw,
-  LogOut
+  LogOut,
+  Sparkles,
 } from 'lucide-react';
 import { SupervisorVerificationRequest, UserRole } from '@researchos/shared-types';
+import { AdminAiConfigPanel } from '../../components/ai/index.js';
 
 interface AdminConsolePageProps {
   onNavigate: (route: string) => void;
@@ -30,6 +32,9 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
   const [isLoadingQueue, setIsLoadingQueue] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Platform Navigation Tab: 'governance' | 'ai-settings'
+  const [mainTab, setMainTab] = useState<'governance' | 'ai-settings'>('governance');
 
   // Target User Management form state
   const [targetUserId, setTargetUserId] = useState('');
@@ -176,8 +181,39 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
           </div>
         )}
 
-        {/* Admin Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Platform Navigation Tabs */}
+        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+          <button
+            type="button"
+            onClick={() => setMainTab('governance')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              mainTab === 'governance'
+                ? 'bg-slate-800 text-white border border-slate-700 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4 text-rose-400" />
+            <span>Platform Governance & Users</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMainTab('ai-settings')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              mainTab === 'ai-settings'
+                ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25 border border-violet-500'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-violet-300" />
+            <span>AI Platform Configuration</span>
+          </button>
+        </div>
+
+        {mainTab === 'governance' && (
+          <div className="space-y-8 animate-in fade-in duration-150">
+            {/* Admin Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="p-5 rounded-2xl bg-[#0E1118] border border-slate-800">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
@@ -402,7 +438,13 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
             </div>
           </div>
         </div>
-      </main>
+      </div>
+    )}
+
+    {mainTab === 'ai-settings' && (
+      <AdminAiConfigPanel onNotify={(type, text) => setStatusMessage({ type, text })} />
+    )}
+  </main>
     </div>
   );
 };

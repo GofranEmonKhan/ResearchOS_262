@@ -155,6 +155,33 @@ A Supervisor flag may raise a revision Task.
 
 Response should include any generated revision task id when the implementation creates one.
 
+## Graphical Visualization & Manuscript Figure Integration
+
+### 1. Graphical Comparison Visualizer
+- **Multi-Metric Comparison**:
+  - Interactive multi-metric visual comparison across 2–5 selected experiments.
+  - Visualization Modes:
+    - **Grouped Bar Charts**: Displays comparative metrics (e.g. Accuracy, F1, Loss, Latency, Throughput) side-by-side per experiment run with distinct color legends.
+    - **Benchmark Radar / Metric Trajectories**: Normalizes heterogeneous metrics to display comprehensive performance signatures against baseline.
+  - Responsive visual canvas rendering with theme-aware styling, custom tooltips, metric highlights, and winning benchmark callouts.
+
+### 2. Chart Export & Figure Persistence
+- **Direct Image Export**:
+  - Export rendered comparison graphs directly as high-resolution PNG / SVG images.
+  - Export aligned benchmark tables as clean LaTeX code (`\begin{table}...\end{table}`) and Markdown.
+- **"Save to Paper Figures" Workflow**:
+  - One-click action to save the generated comparison chart into the project's/user's figure assets registry.
+  - Automatically captures experiment names, metric values, timestamp, and generates a structured caption and LaTeX label (e.g., `fig:exp_comparison_matrix`).
+
+### 3. Cross-Module Manuscript Integration (Spec 05 Linkage)
+- In the Manuscript Editor's **Insert Figure** modal (`InsertFigureModal`), introduce a dedicated **"Saved Experiment Figures"** tab right after *Scientific Presets*.
+- Allows scholars to browse all saved experimental comparison charts, plots, and diagrams.
+- Clicking any saved experiment figure immediately populates:
+  - Clean Overleaf-compatible LaTeX relative path (e.g., `figures/exp_benchmark_comparison.png`).
+  - Pre-generated scientific figure caption with referenced experiment runs and metrics.
+  - Reference label (`\label{fig:exp_...}`).
+  - Standard `\begin{figure}[h]...\includegraphics{...}\caption{...}\label{...}\end{figure}` LaTeX snippet or Markdown `![caption](path)`.
+
 ## Role behavior
 
 ### Researcher
@@ -164,11 +191,13 @@ Response should include any generated revision task id when the implementation c
 - Records config, metrics, outputs, observations.
 - Marks an experiment Final/Reported, after which it is locked.
 - Can fully use experiment comparison for experiments they can access.
+- Can generate comparison charts, export them, and save them for manuscript writing.
 
 ### Supervisor
 
 - Read-only across supervised-project experiments.
 - Can compare experiments and comment.
+- Can view graphical comparisons and export comparison figures.
 - Can flag an experiment as Needs Rerun or Not Reproducible.
 - A flag may create a revision task for the researcher.
 
@@ -188,6 +217,11 @@ Response should include any generated revision task id when the implementation c
 - [ ] Supervisor can compare 2–5 experiments, but the endpoint rejects fewer than 2 or more than 5.
 - [ ] Comparison returns aligned parameter/config differences and user-defined metrics.
 - [ ] Visual comparison is based on stored metrics, not client-supplied unauthorized data.
+- [ ] Graphical visualizer renders responsive grouped bar charts and comparison curves for 2–5 experiments.
+- [ ] Users can export comparison charts as high-resolution PNG / SVG and copy LaTeX table code.
+- [ ] Users can save comparison graphs directly into Saved Experiment Figures for paper writing.
+- [ ] Manuscript `InsertFigureModal` provides a "Saved Experiment Figures" tab displaying all saved charts.
+- [ ] Inserting a saved experiment figure generates valid Overleaf-compatible LaTeX and Markdown snippets with clean relative paths and labels.
 - [ ] A Supervisor can create `NeedsRerun` and `NotReproducible` flags only for supervised projects.
 - [ ] A flag may create or raise a revision task without granting the Supervisor edit access to the experiment.
 - [ ] Task-experiment linking respects both Task and Experiment access rules.

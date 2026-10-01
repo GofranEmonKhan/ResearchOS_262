@@ -24,7 +24,11 @@ import {
   Loader2,
   X,
   FileQuestion,
+  Sparkles,
+  Compass,
 } from 'lucide-react';
+import { SemanticSearchPanel, LiteratureDiscoveryView } from '../../components/ai/index.js';
+
 
 interface LibraryPageProps {
   onNavigate: (route: string) => void;
@@ -33,8 +37,8 @@ interface LibraryPageProps {
 export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
   const { user } = useAuth();
 
-  // Active Library View: 'personal' vs 'project'
-  const [activeLibraryTab, setActiveLibraryTab] = useState<'personal' | 'project'>('personal');
+  // Active Library View: 'personal' vs 'project' vs 'ai-search' vs 'ai-discovery'
+  const [activeLibraryTab, setActiveLibraryTab] = useState<'personal' | 'project' | 'ai-search' | 'ai-discovery'>('personal');
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
 
@@ -187,8 +191,15 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
     <WorkspaceLayout
       activeTab="literature"
       onTabChange={(tab) => {
-        if (tab === 'dashboard' || tab === 'kanban' || tab === 'calendar') {
+        if (tab === 'dashboard') {
           onNavigate('/dashboard');
+        } else if (tab === 'kanban' || tab === 'calendar') {
+          const lastId = typeof window !== 'undefined' ? localStorage.getItem('researchos_last_active_project_id') : null;
+          if (lastId) {
+            onNavigate(`/projects/${lastId}?tab=${tab}`);
+          } else {
+            onNavigate(`/dashboard?tab=${tab}`);
+          }
         }
       }}
       onNavigate={onNavigate}
@@ -197,47 +208,47 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
         {/* Page Title & Top Actions */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-white flex items-center gap-2.5">
-              <BookOpen className="w-5 h-5 text-violet-400" />
+            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+              <BookOpen className="w-6 h-6 text-violet-400" />
               <span>Literature Discovery & Library</span>
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-sm text-slate-300 mt-1">
               Curate, review, and annotate scholarly publications with automated metadata extraction
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             {/* Export Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsExportOpen(!isExportOpen)}
                 disabled={isExporting || papers.length === 0}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-surface-2 hover:bg-surface-3 border border-white/10 text-slate-200 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-surface-2 hover:bg-surface-3 border border-white/15 text-slate-100 hover:text-white transition-all shadow-sm disabled:opacity-50"
               >
                 {isExporting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
                 ) : (
-                  <Download className="w-3.5 h-3.5 text-slate-400" />
+                  <Download className="w-4 h-4 text-slate-300" />
                 )}
                 <span>Export Citations</span>
-                <ChevronDown className="w-3 h-3 text-slate-500" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
               {isExportOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl bg-surface-2 border border-white/10 shadow-2xl z-30 py-1 text-xs">
+                <div className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-2 border border-white/15 shadow-2xl z-30 py-1.5 text-xs">
                   <button
                     onClick={() => handleExport('bibtex')}
-                    className="w-full text-left px-3.5 py-2 hover:bg-white/[0.06] text-slate-200 flex items-center justify-between"
+                    className="w-full text-left px-4 py-2 hover:bg-white/[0.08] text-slate-100 font-medium flex items-center justify-between transition-colors"
                   >
                     <span>BibTeX (.bib)</span>
-                    <span className="text-[10px] text-slate-500 font-mono">LaTeX</span>
+                    <span className="text-xs text-slate-400 font-mono px-1.5 py-0.5 rounded bg-white/5">LaTeX</span>
                   </button>
                   <button
                     onClick={() => handleExport('ris')}
-                    className="w-full text-left px-3.5 py-2 hover:bg-white/[0.06] text-slate-200 flex items-center justify-between"
+                    className="w-full text-left px-4 py-2 hover:bg-white/[0.08] text-slate-100 font-medium flex items-center justify-between transition-colors"
                   >
                     <span>RIS (.ris)</span>
-                    <span className="text-[10px] text-slate-500 font-mono">EndNote</span>
+                    <span className="text-xs text-slate-400 font-mono px-1.5 py-0.5 rounded bg-white/5">EndNote</span>
                   </button>
                 </div>
               )}
@@ -246,7 +257,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
             {/* Add Paper Button */}
             <button
               onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/25 transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               <span>Add Paper</span>
@@ -255,19 +266,19 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* Library Scope Selector & Filters Bar */}
-        <div className="p-4 rounded-2xl bg-surface-1/90 border border-white/[0.08] shadow-md space-y-3">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div className="p-4 rounded-2xl bg-surface-1/95 border border-white/10 shadow-lg space-y-3.5 backdrop-blur-sm">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5">
             {/* Library Mode Tabs */}
-            <div className="flex items-center p-1 rounded-xl bg-surface-2 border border-white/[0.06]">
+            <div className="flex items-center p-1 rounded-xl bg-surface-2/90 border border-white/10 overflow-x-auto">
               <button
                 onClick={() => {
                   setActiveLibraryTab('personal');
                   setSelectedCollectionId(null);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
                   activeLibraryTab === 'personal'
-                    ? 'bg-violet-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
                 }`}
               >
                 My Library
@@ -277,24 +288,52 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
                   setActiveLibraryTab('project');
                   setSelectedCollectionId(null);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
                   activeLibraryTab === 'project'
-                    ? 'bg-violet-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
                 }`}
               >
                 Project Library
+              </button>
+              <button
+                onClick={() => {
+                  setActiveLibraryTab('ai-search');
+                  setSelectedCollectionId(null);
+                }}
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeLibraryTab === 'ai-search'
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-violet-300" />
+                <span>AI Semantic Search</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveLibraryTab('ai-discovery');
+                  setSelectedCollectionId(null);
+                }}
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeLibraryTab === 'ai-discovery'
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
+                    : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+                }`}
+              >
+                <Compass className="w-4 h-4 text-violet-300" />
+                <span>AI Literature Discovery</span>
               </button>
             </div>
 
             {/* If in project mode: project dropdown */}
             {activeLibraryTab === 'project' && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Project:</span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Project:</span>
                 <select
                   value={selectedProjectId}
                   onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="px-3 py-1.5 rounded-xl bg-surface-2 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500"
+                  className="px-3.5 py-2 rounded-xl bg-surface-2 border border-white/15 text-sm font-medium text-white focus:outline-none focus:border-violet-500"
                 >
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -305,139 +344,155 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
               </div>
             )}
 
-            {/* Search Input */}
-            <div className="relative w-full md:w-72">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search title, authors, venue..."
-                className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Secondary Filters: Reading Status & Year */}
-          <div className="flex items-center gap-2.5 flex-wrap pt-2 border-t border-white/[0.04] text-xs">
-            <span className="text-[11px] text-slate-400 flex items-center gap-1">
-              <Filter className="w-3 h-3 text-slate-500" />
-              Filter:
-            </span>
-
-            {/* Reading Status Pill Selector */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ReadingStatus | '')}
-              className="px-2.5 py-1 rounded-lg bg-surface-2 border border-white/10 text-xs text-slate-300 focus:outline-none focus:border-violet-500"
-            >
-              <option value="">All Reading Statuses</option>
-              {(Object.keys(READING_STATUSES) as ReadingStatus[]).map((st) => (
-                <option key={st} value={st}>
-                  {st === 'DeeplyAnalysed' ? 'Deeply Analysed' : st}
-                </option>
-              ))}
-            </select>
-
-            {/* Year Input */}
-            <input
-              type="number"
-              min="1900"
-              max="2100"
-              placeholder="Filter by Year"
-              value={yearFilter}
-              onChange={(e) => setYearFilter(e.target.value)}
-              className="w-28 px-2.5 py-1 rounded-lg bg-surface-2 border border-white/10 text-xs text-slate-300 placeholder-slate-500 focus:outline-none focus:border-violet-500 font-mono"
-            />
-
-            {(statusFilter || yearFilter || debouncedSearch) && (
-              <button
-                onClick={() => {
-                  setStatusFilter('');
-                  setYearFilter('');
-                  setSearchQuery('');
-                }}
-                className="text-[11px] text-violet-400 hover:text-violet-300 underline ml-2"
-              >
-                Reset filters
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Two-Pane Body */}
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-          {/* Left Pane: Collection Sidebar */}
-          <CollectionSidebar
-            collections={collections}
-            selectedCollectionId={selectedCollectionId}
-            isRequiredFilter={isRequiredFilter}
-            totalPapersCount={totalPapers}
-            requiredCount={requiredCount}
-            onSelectCollection={(colId) => setSelectedCollectionId(colId)}
-            onToggleRequired={(req) => setIsRequiredFilter(req)}
-            onRefreshCollections={loadProjectsAndCollections}
-          />
-
-          {/* Right Pane: Paper Grid */}
-          <div className="flex-1 min-w-0 w-full space-y-4">
-            {isLoading ? (
-              <div className="py-20 flex flex-col items-center justify-center text-slate-400 space-y-3">
-                <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
-                <p className="text-xs">Loading scholarly publications...</p>
-              </div>
-            ) : papers.length === 0 ? (
-              <div className="py-20 flex flex-col items-center justify-center p-8 rounded-2xl bg-surface-1/50 border border-white/[0.06] text-center space-y-3">
-                <div className="w-14 h-14 rounded-2xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
-                  <FileQuestion className="w-7 h-7" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-sm font-semibold text-white">No papers found</h3>
-                  <p className="text-xs text-slate-400 max-w-sm">
-                    {debouncedSearch || statusFilter || isRequiredFilter || selectedCollectionId
-                      ? 'No publications match your active filter criteria. Try clearing filters.'
-                      : 'Your library is empty. Upload your first research paper to begin reviewing.'}
-                  </p>
-                </div>
-                {!debouncedSearch && !statusFilter && !selectedCollectionId && (
+            {/* Search Input (Standard library search) */}
+            {activeLibraryTab !== 'ai-search' && activeLibraryTab !== 'ai-discovery' && (
+              <div className="relative w-full lg:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search title, authors, venue..."
+                  className="w-full pl-10 pr-8 py-2 rounded-xl bg-surface-2/95 border border-white/15 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 transition-all"
+                />
+                {searchQuery && (
                   <button
-                    onClick={() => setIsUploadModalOpen(true)}
-                    className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/25 transition-all"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded-full hover:bg-white/10"
                   >
-                    Upload Paper PDF
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                {papers.map((paper) => (
-                  <PaperCard
-                    key={paper.id}
-                    paper={paper}
-                    currentUserId={user?.id}
-                    collections={collections}
-                    onOpenViewer={handleOpenViewer}
-                    onEditMetadata={(p) => setEditingPaper(p)}
-                    onShareToProject={(p) => setSharingPaper(p)}
-                    onDeletePaper={handleDeletePaper}
-                    onPaperUpdated={() => {
-                      fetchPapers();
-                      loadProjectsAndCollections();
-                    }}
-                  />
-                ))}
-              </div>
             )}
           </div>
+
+          {/* Secondary Filters: Reading Status & Year (Hidden in AI search/discovery) */}
+          {activeLibraryTab !== 'ai-search' && activeLibraryTab !== 'ai-discovery' && (
+            <div className="flex items-center gap-3 flex-wrap pt-2.5 border-t border-white/[0.08] text-xs">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-violet-400" />
+                Filter:
+              </span>
+
+              {/* Reading Status Pill Selector */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as ReadingStatus | '')}
+                className="px-3 py-1.5 rounded-xl bg-surface-2 border border-white/15 text-xs font-medium text-slate-200 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30"
+              >
+                <option value="">All Reading Statuses</option>
+                {(Object.keys(READING_STATUSES) as ReadingStatus[]).map((st) => (
+                  <option key={st} value={st}>
+                    {st === 'DeeplyAnalysed' ? 'Deeply Analysed' : st}
+                  </option>
+                ))}
+              </select>
+
+              {/* Year Input */}
+              <input
+                type="number"
+                min="1900"
+                max="2100"
+                placeholder="Filter by Year"
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+                className="w-36 px-3 py-1.5 rounded-xl bg-surface-2 border border-white/15 text-xs font-medium text-slate-200 placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 font-mono"
+              />
+
+              {(statusFilter || yearFilter || debouncedSearch) && (
+                <button
+                  onClick={() => {
+                    setStatusFilter('');
+                    setYearFilter('');
+                    setSearchQuery('');
+                  }}
+                  className="text-xs font-semibold text-violet-400 hover:text-violet-300 underline ml-2 transition-colors"
+                >
+                  Reset filters
+                </button>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Content Body: AI Discovery vs AI Semantic Search vs Standard Two-Pane Library */}
+        {activeLibraryTab === 'ai-discovery' ? (
+          <LiteratureDiscoveryView
+            projects={projects}
+            onOpenPaper={handleOpenViewer}
+          />
+        ) : activeLibraryTab === 'ai-search' ? (
+          <SemanticSearchPanel
+            projects={projects}
+            onOpenPaper={handleOpenViewer}
+          />
+        ) : (
+          <div className="flex flex-col md:flex-row gap-6 items-start">
+            {/* Left Pane: Collection Sidebar */}
+            <CollectionSidebar
+              collections={collections}
+              selectedCollectionId={selectedCollectionId}
+              isRequiredFilter={isRequiredFilter}
+              totalPapersCount={totalPapers}
+              requiredCount={requiredCount}
+              onSelectCollection={(colId) => setSelectedCollectionId(colId)}
+              onToggleRequired={(req) => setIsRequiredFilter(req)}
+              onRefreshCollections={loadProjectsAndCollections}
+            />
+
+            {/* Right Pane: Paper Grid */}
+            <div className="flex-1 min-w-0 w-full space-y-4">
+              {isLoading ? (
+                <div className="py-20 flex flex-col items-center justify-center text-slate-400 space-y-3">
+                  <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+                  <p className="text-xs">Loading scholarly publications...</p>
+                </div>
+              ) : papers.length === 0 ? (
+                <div className="py-20 flex flex-col items-center justify-center p-8 rounded-2xl bg-surface-1/50 border border-white/[0.06] text-center space-y-3">
+                  <div className="w-14 h-14 rounded-2xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+                    <FileQuestion className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-white">No papers found</h3>
+                    <p className="text-xs text-slate-400 max-w-sm">
+                      {debouncedSearch || statusFilter || isRequiredFilter || selectedCollectionId
+                        ? 'No publications match your active filter criteria. Try clearing filters.'
+                        : 'Your library is empty. Upload your first research paper to begin reviewing.'}
+                    </p>
+                  </div>
+                  {!debouncedSearch && !statusFilter && !selectedCollectionId && (
+                    <button
+                      onClick={() => setIsUploadModalOpen(true)}
+                      className="mt-2 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/25 transition-all"
+                    >
+                      Upload Paper PDF
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {papers.map((paper) => (
+                    <PaperCard
+                      key={paper.id}
+                      paper={paper}
+                      currentUserId={user?.id}
+                      collections={collections}
+                      onOpenViewer={handleOpenViewer}
+                      onEditMetadata={(p) => setEditingPaper(p)}
+                      onShareToProject={(p) => setSharingPaper(p)}
+                      onDeletePaper={handleDeletePaper}
+                      onPaperUpdated={() => {
+                        fetchPapers();
+                        loadProjectsAndCollections();
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
