@@ -196,7 +196,7 @@ describe('Spec 02 — Workspace Layout & Navigation UI Tests', () => {
     assert.ok(html.includes('Proposed'), 'Renders proposal badge');
   });
 
-  it('8. WorkspaceCalendar displays scheduled deadlines', () => {
+  it('8. WorkspaceCalendar displays scheduled deadlines, views, and deadline overview sidebar', () => {
     const mockTasks = [
       {
         id: 'task-1',
@@ -211,17 +211,34 @@ describe('Spec 02 — Workspace Layout & Navigation UI Tests', () => {
       },
     ];
 
+    const mockMilestones = [
+      {
+        id: 'ms-1',
+        projectId: mockProject.id,
+        name: 'Phase 1: Dataset Collection',
+        weightPct: 30,
+        status: 'InProgress',
+        targetDate: '2026-09-30',
+        isLocked: false,
+        isProposed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+
     const html = renderToString(
       <WorkspaceCalendar
         tasks={mockTasks as any}
-        milestones={[]}
+        milestones={mockMilestones as any}
         onTaskClick={() => {}}
       />
     );
 
-    assert.ok(html.includes('Workspace Schedule &amp; Deadlines') || html.includes('Workspace Schedule & Deadlines'), 'Renders calendar header');
-    assert.ok(html.includes('Submit NeurIPS paper draft'), 'Renders task title');
-    assert.ok(html.includes('Scheduled Deadlines'), 'Renders scheduled count section');
+    assert.ok(html.includes('Deadline Overview'), 'Renders Deadline Overview sidebar heading');
+    assert.ok(html.includes('Submit NeurIPS paper draft'), 'Renders task title in calendar or sidebar');
+    assert.ok(html.includes('Phase 1: Dataset Collection'), 'Renders milestone title');
+    assert.ok(html.includes('Month') && html.includes('Week') && html.includes('List'), 'Renders view switchers');
+    assert.ok(html.includes('Due Today') && html.includes('Overdue') && html.includes('Due Soon'), 'Renders urgency filter pills');
   });
 
   it('9. SupervisorReviewModal displays deliverable approval and revision request controls', () => {
