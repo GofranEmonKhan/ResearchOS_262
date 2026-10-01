@@ -113,7 +113,17 @@ export type NotificationType =
   | 'ReviewCommentAdded'
   | 'CommentFixed'
   | 'CommentResolved'
-  | 'ManuscriptStatusChanged';
+  | 'ManuscriptStatusChanged'
+  | 'BookingAccepted'
+  | 'BookingRejected'
+  | 'PaymentEscrowed'
+  | 'AccessReleased'
+  | 'BookingCompleted'
+  | 'DisputeRaised'
+  | 'DisputeResolved'
+  | 'ListingApproved'
+  | 'ListingRejected'
+  | 'InquiryReceived';
 
 export const NOTIFICATION_TYPES: Record<NotificationType, NotificationType> = {
   TaskAssigned: 'TaskAssigned',
@@ -135,6 +145,16 @@ export const NOTIFICATION_TYPES: Record<NotificationType, NotificationType> = {
   CommentFixed: 'CommentFixed',
   CommentResolved: 'CommentResolved',
   ManuscriptStatusChanged: 'ManuscriptStatusChanged',
+  BookingAccepted: 'BookingAccepted',
+  BookingRejected: 'BookingRejected',
+  PaymentEscrowed: 'PaymentEscrowed',
+  AccessReleased: 'AccessReleased',
+  BookingCompleted: 'BookingCompleted',
+  DisputeRaised: 'DisputeRaised',
+  DisputeResolved: 'DisputeResolved',
+  ListingApproved: 'ListingApproved',
+  ListingRejected: 'ListingRejected',
+  InquiryReceived: 'InquiryReceived',
 };
 
 export type NotificationChannel = 'InApp' | 'Email';
@@ -2036,4 +2056,310 @@ export interface ImportDiscoveredPaperResponse {
   paperId: string;
   message: string;
 }
+
+// ==========================================
+// 8. Academic Marketplace & Compute Resource Sharing (Spec 07)
+// ==========================================
+
+export type ListingType = 'Hardware' | 'Dataset';
+
+export const LISTING_TYPES: Record<ListingType, ListingType> = {
+  Hardware: 'Hardware',
+  Dataset: 'Dataset',
+};
+
+export type HardwareAccessMethod = 'SSH' | 'RemoteDesktop';
+
+export const HARDWARE_ACCESS_METHODS: Record<HardwareAccessMethod, HardwareAccessMethod> = {
+  SSH: 'SSH',
+  RemoteDesktop: 'RemoteDesktop',
+};
+
+export type ListingApprovalStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export const LISTING_APPROVAL_STATUSES: Record<ListingApprovalStatus, ListingApprovalStatus> = {
+  Pending: 'Pending',
+  Approved: 'Approved',
+  Rejected: 'Rejected',
+};
+
+export type BookingStatus =
+  | 'Requested'
+  | 'Accepted'
+  | 'Rejected'
+  | 'PaymentEscrowed'
+  | 'AccessReleased'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Disputed';
+
+export const BOOKING_STATUSES: Record<BookingStatus, BookingStatus> = {
+  Requested: 'Requested',
+  Accepted: 'Accepted',
+  Rejected: 'Rejected',
+  PaymentEscrowed: 'PaymentEscrowed',
+  AccessReleased: 'AccessReleased',
+  Completed: 'Completed',
+  Cancelled: 'Cancelled',
+  Disputed: 'Disputed',
+};
+
+export type TransactionStatus = 'Held' | 'Released' | 'Refunded' | 'Failed';
+
+export const TRANSACTION_STATUSES: Record<TransactionStatus, TransactionStatus> = {
+  Held: 'Held',
+  Released: 'Released',
+  Refunded: 'Refunded',
+  Failed: 'Failed',
+};
+
+export type DisputeStatus = 'Open' | 'UnderReview' | 'Resolved' | 'Rejected';
+
+export const DISPUTE_STATUSES: Record<DisputeStatus, DisputeStatus> = {
+  Open: 'Open',
+  UnderReview: 'UnderReview',
+  Resolved: 'Resolved',
+  Rejected: 'Rejected',
+};
+
+export type DisputeResolutionAction = 'RefundRequester' | 'ReleaseToProvider' | 'DismissDispute';
+
+export const DISPUTE_RESOLUTION_ACTIONS: Record<DisputeResolutionAction, DisputeResolutionAction> = {
+  RefundRequester: 'RefundRequester',
+  ReleaseToProvider: 'ReleaseToProvider',
+  DismissDispute: 'DismissDispute',
+};
+
+// --- Marketplace Interfaces & DTOs ---
+
+export interface Listing {
+  id: string;
+  ownerId: string;
+  type: ListingType;
+  title: string;
+  description?: string | null;
+  // Hardware specific specifications
+  gpuCpuModel?: string | null;
+  vram?: string | null;
+  ram?: string | null;
+  storage?: string | null;
+  os?: string | null;
+  location?: string | null;
+  accessMethod?: HardwareAccessMethod | null;
+  hourlyPrice?: number | null;
+  dailyPrice?: number | null;
+  // Dataset specific specifications
+  domain?: string | null;
+  sizeBytes?: number | null;
+  format?: string | null;
+  license?: string | null;
+  samplePreviewFileId?: string | null;
+  datasetFileId?: string | null;
+  onlinePrice?: number | null;
+  // Institutional & pricing flags
+  isFree: boolean;
+  isInstitutional: boolean;
+  freeForInstitutionStudents: boolean;
+  institutionName?: string | null;
+  approvalStatus: ListingApprovalStatus;
+  rejectionReason?: string | null;
+  isDelisted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListingWithStats extends Listing {
+  ownerName: string;
+  ownerAvatarUrl?: string | null;
+  ownerAffiliation?: string | null;
+  ownerRating?: number | null;
+  reviewCount: number;
+  availableSlotCount?: number;
+  samplePreviewUrl?: string | null;
+}
+
+export interface CreateListingDTO {
+  type: ListingType;
+  title: string;
+  description?: string;
+  gpuCpuModel?: string;
+  vram?: string;
+  ram?: string;
+  storage?: string;
+  os?: string;
+  location?: string;
+  accessMethod?: HardwareAccessMethod;
+  hourlyPrice?: number;
+  dailyPrice?: number;
+  domain?: string;
+  sizeBytes?: number;
+  format?: string;
+  license?: string;
+  samplePreviewFileId?: string;
+  datasetFileId?: string;
+  onlinePrice?: number;
+  isFree?: boolean;
+  isInstitutional?: boolean;
+  freeForInstitutionStudents?: boolean;
+  institutionName?: string;
+}
+
+export interface UpdateListingDTO extends Partial<CreateListingDTO> {
+  isDelisted?: boolean;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  listingId: string;
+  startTime: string;
+  endTime: string;
+  isBooked: boolean;
+  createdAt: string;
+}
+
+export interface CreateSlotDTO {
+  startTime: string;
+  endTime: string;
+}
+
+export interface Booking {
+  id: string;
+  listingId: string;
+  requesterId: string;
+  slotId?: string | null;
+  status: BookingStatus;
+  totalPrice: number;
+  accessDetails?: string | null;
+  requesterNotes?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BookingWithDetails extends Booking {
+  listing: Listing;
+  requester?: {
+    id: string;
+    fullName: string;
+    avatarUrl?: string | null;
+    email?: string | null;
+    institution?: string | null;
+  } | null;
+  slot?: AvailabilitySlot | null;
+  transaction?: Transaction | null;
+  review?: ListingReview | null;
+  dispute?: Dispute | null;
+}
+
+export interface RequestBookingDTO {
+  slotId?: string;
+  requesterNotes?: string;
+}
+
+export interface PayBookingDTO {
+  cardToken?: string;
+  testScenario?: 'success' | 'decline' | 'insufficient_funds';
+}
+
+export interface ReleaseAccessDTO {
+  accessDetails: string;
+}
+
+export interface Transaction {
+  id: string;
+  bookingId: string;
+  amount: number;
+  commissionAmount: number;
+  gatewayRef: string;
+  status: TransactionStatus;
+  invoiceFileId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TransactionWithBooking extends Transaction {
+  bookingTitle: string;
+  listingType: ListingType;
+  requesterName: string;
+  providerName: string;
+}
+
+export interface ListingReview {
+  id: string;
+  bookingId: string;
+  listingId: string;
+  raterId: string;
+  raterName?: string;
+  raterAvatarUrl?: string | null;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+}
+
+export interface CreateListingReviewDTO {
+  rating: number;
+  comment?: string;
+}
+
+export interface Dispute {
+  id: string;
+  bookingId: string;
+  raisedBy: string;
+  raisedByName?: string;
+  reason: string;
+  status: DisputeStatus;
+  resolvedBy?: string | null;
+  resolutionNote?: string | null;
+  resolutionAction?: DisputeResolutionAction | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDisputeDTO {
+  reason: string;
+}
+
+export interface ResolveDisputeDTO {
+  action: DisputeResolutionAction;
+  resolutionNote: string;
+}
+
+export interface ListingInquiry {
+  id: string;
+  listingId: string;
+  senderId: string;
+  senderName?: string;
+  senderAvatarUrl?: string | null;
+  body: string;
+  createdAt: string;
+}
+
+export interface CreateListingInquiryDTO {
+  body: string;
+}
+
+export interface MarketplaceFilterParams {
+  type?: ListingType;
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  gpuModel?: string;
+  domain?: string;
+  isInstitutional?: boolean;
+  isFree?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export interface MarketplaceLedgerStats {
+  totalGrossVolume: number;
+  totalNetRevenue: number;
+  totalPlatformCommission: number;
+  totalEscrowHeld: number;
+  totalRefunded: number;
+  activeListingsCount: number;
+  pendingListingsCount: number;
+  openDisputesCount: number;
+}
+
 

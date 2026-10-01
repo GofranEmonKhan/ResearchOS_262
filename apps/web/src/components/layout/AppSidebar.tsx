@@ -126,6 +126,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       label: 'Equipment & Services',
       icon: Store,
       category: 'Ecosystem',
+      isNavigate: true,
+      route: '/marketplace',
     },
     {
       id: 'ai-assistant',

@@ -544,5 +544,155 @@ router.delete('/ai/blocked-rules/:id', async (req: Request<{ id: string }>, res:
   }
 });
 
+// ==========================================
+// Marketplace Governance & Moderation (Spec 07)
+// ==========================================
+
+import { MarketplaceService } from '../services/marketplace.service.js';
+import { EscrowService } from '../services/escrow.service.js';
+import { ResolveDisputeDTO } from '@researchos/shared-types';
+
+/**
+ * GET /admin/marketplace/listings/pending
+ * List all pending listings awaiting approval
+ */
+router.get('/marketplace/listings/pending', async (_req: Request, res: Response) => {
+  try {
+    const pending = await MarketplaceService.getPendingListings();
+    return res.json(pending);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/marketplace/listings/:id/approve
+ * Approve listing and make publicly active
+ */
+router.post('/marketplace/listings/:id/approve', async (req: Request, res: Response) => {
+  try {
+    const listingId = req.params.id as string;
+    const adminId = req.user!.id;
+
+    const approved = await MarketplaceService.approveListing(listingId, adminId);
+    await createAuditLog({
+      actorId: adminId,
+      action: 'approve_marketplace_listing',
+      targetType: 'Listing',
+      targetId: listingId,
+      ipAddress: req.ip,
+      metadata: { title: approved.title },
+    });
+
+    return res.json(approved);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/marketplace/listings/:id/reject
+ * Reject listing with explanation
+ */
+router.post('/marketplace/listings/:id/reject', async (req: Request, res: Response) => {
+  try {
+    const listingId = req.params.id as string;
+    const adminId = req.user!.id;
+    const { reason } = req.body;
+
+    const rejected = await MarketplaceService.rejectListing(listingId, reason);
+    await createAuditLog({
+      actorId: adminId,
+      action: 'reject_marketplace_listing',
+      targetType: 'Listing',
+      targetId: listingId,
+      ipAddress: req.ip,
+      metadata: { reason },
+    });
+
+    return res.json(rejected);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/marketplace/listings/:id/delist
+ * Delist violating listing
+ */
+router.post('/marketplace/listings/:id/delist', async (req: Request, res: Response) => {
+  try {
+    const listingId = req.params.id as string;
+    const adminId = req.user!.id;
+
+    const delisted = await MarketplaceService.delistListing(listingId);
+    await createAuditLog({
+      actorId: adminId,
+      action: 'delist_marketplace_listing',
+      targetType: 'Listing',
+      targetId: listingId,
+      ipAddress: req.ip,
+      metadata: { listingId },
+    });
+
+    return res.json(delisted);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /admin/marketplace/disputes
+ * View all open marketplace disputes
+ */
+router.get('/marketplace/disputes', async (_req: Request, res: Response) => {
+  try {
+    const ledger = await EscrowService.getAdminLedger();
+    return res.json(ledger.disputes);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/marketplace/disputes/:id/resolve
+ * Arbitrate and resolve marketplace dispute
+ */
+router.post('/marketplace/disputes/:id/resolve', async (req: Request, res: Response) => {
+  try {
+    const disputeId = req.params.id as string;
+    const adminId = req.user!.id;
+    const dto: ResolveDisputeDTO = req.body;
+
+    const resolved = await EscrowService.resolveDispute(disputeId, adminId, dto);
+    await createAuditLog({
+      actorId: adminId,
+      action: 'resolve_marketplace_dispute',
+      targetType: 'Dispute',
+      targetId: disputeId,
+      ipAddress: req.ip,
+      metadata: { action: dto.action, resolutionNote: dto.resolutionNote },
+    });
+
+    return res.json(resolved);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /admin/marketplace/ledger
+ * Platform financial ledger and key marketplace metrics
+ */
+router.get('/marketplace/ledger', async (_req: Request, res: Response) => {
+  try {
+    const ledger = await EscrowService.getAdminLedger();
+    return res.json(ledger);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
+
 

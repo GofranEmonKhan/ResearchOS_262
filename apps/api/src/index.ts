@@ -21,6 +21,7 @@ import { manuscriptRouter } from './routes/manuscript.routes.js';
 import { forumRouter } from './routes/forum.routes.js';
 import { directMessageRouter } from './routes/directMessage.routes.js';
 import { communityRouter } from './routes/community.routes.js';
+import { marketplaceRouter } from './routes/marketplace.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 
 const app: Express = express();
@@ -88,6 +89,9 @@ app.use('/', manuscriptRouter);
 app.use('/forum', forumRouter);
 app.use('/messages', directMessageRouter);
 app.use('/', communityRouter);
+
+// Spec 07 API Route Mounts (Academic Marketplace & Compute Sharing)
+app.use('/marketplace', marketplaceRouter);
 
 // Spec 08 API Route Mounts (AI Research Assistant)
 app.use('/ai', aiRoutes);

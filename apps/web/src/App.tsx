@@ -15,6 +15,10 @@ import { ExperimentTrackerPage } from './pages/dashboards/ExperimentTrackerPage.
 import { CommunityPage } from './pages/dashboards/CommunityPage.js';
 import { ManuscriptsPage } from './pages/dashboards/ManuscriptsPage.js';
 import { ManuscriptEditorPage } from './pages/dashboards/ManuscriptEditorPage.js';
+import { MarketplacePage } from './pages/dashboards/MarketplacePage.js';
+import { MarketplaceListingDetailPage } from './pages/dashboards/MarketplaceListingDetailPage.js';
+import { MarketplaceManagePage } from './pages/dashboards/MarketplaceManagePage.js';
+import { AdminMarketplaceGovernancePage } from './pages/dashboards/AdminMarketplaceGovernancePage.js';
 import { ExitWorkspaceModal } from './components/workspace/ExitWorkspaceModal.js';
 
 
@@ -157,6 +161,32 @@ function AppContent() {
       currentRoute.startsWith('/manuscripts')
     ) {
       return <ManuscriptsPage onNavigate={navigate} />;
+    }
+
+    // Admin Marketplace Governance Portal (Spec 07)
+    if (currentRoute === '/admin/marketplace' || currentRoute.startsWith('/admin/marketplace')) {
+      return <AdminMarketplaceGovernancePage onNavigate={navigate} />;
+    }
+
+    // Marketplace Management & Rentals Hub (Spec 07)
+    if (currentRoute === '/marketplace/manage' || currentRoute.startsWith('/marketplace/manage')) {
+      return <MarketplaceManagePage onNavigate={navigate} />;
+    }
+
+    // Individual Marketplace Listing Detail (Spec 07)
+    if (currentRoute.startsWith('/marketplace/')) {
+      const listingId = currentRoute.replace('/marketplace/', '').split('/')[0]?.split('?')[0];
+      if (listingId && listingId !== 'manage') {
+        return <MarketplaceListingDetailPage listingId={listingId} onNavigate={navigate} />;
+      }
+    }
+
+    // Academic Marketplace Catalog (Spec 07)
+    if (
+      currentRoute === '/marketplace' ||
+      currentRoute.startsWith('/marketplace')
+    ) {
+      return <MarketplacePage onNavigate={navigate} />;
     }
 
     // Dashboard & Project Workspace — any path starting with /projects, /dashboard, or /workspace

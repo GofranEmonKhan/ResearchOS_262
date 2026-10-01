@@ -20,7 +20,6 @@ import {
   Calendar,
   Users,
   CheckCircle2,
-  AlertTriangle,
   Clock,
   Plus,
   ArrowLeft,
@@ -32,7 +31,6 @@ import {
   BookOpen,
   Bookmark,
   Sparkles,
-  TrendingUp,
   Activity,
   Flame,
 } from 'lucide-react';
