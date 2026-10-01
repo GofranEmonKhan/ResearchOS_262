@@ -358,43 +358,101 @@ export const WorkspaceCalendar: React.FC<WorkspaceCalendarProps> = ({
                     <div
                       key={idx}
                       onClick={() => onAddTask?.(cell.dateString)}
-                      className={`min-h-[110px] p-2 flex flex-col justify-between transition-colors relative group cursor-pointer ${
+                      className={`min-h-[145px] sm:min-h-[160px] p-2 sm:p-2.5 flex flex-col justify-between transition-colors relative group cursor-pointer ${
                         cell.isCurrentMonth
                           ? cell.isWeekend
-                            ? 'bg-slate-950/40 hover:bg-slate-900/50'
+                            ? 'bg-[#060710]/90 hover:bg-slate-900/60'
                             : 'bg-transparent hover:bg-slate-900/40'
-                          : 'bg-slate-950/70 opacity-40 hover:opacity-75'
+                          : 'bg-slate-950/80 opacity-35 hover:opacity-60'
                       } ${
                         cell.isToday
-                          ? 'ring-1 ring-inset ring-violet-500/80 bg-violet-950/15'
+                          ? 'ring-2 ring-inset ring-violet-500/90 bg-violet-950/20 shadow-inner'
                           : ''
                       }`}
                     >
-                      {/* Date Number & Today Pill */}
-                      <div className="flex items-center justify-between mb-1">
-                        <span
-                          className={`text-xs font-bold rounded-md px-1.5 py-0.2 ${
-                            cell.isToday
-                              ? 'bg-violet-600 text-white font-mono shadow'
-                              : cell.isCurrentMonth
-                              ? 'text-slate-200'
-                              : 'text-slate-500 font-normal'
-                          }`}
-                        >
-                          {cell.dayNumber}
-                        </span>
-
-                        {cell.isToday && (
-                          <span className="text-[9px] font-extrabold uppercase px-1 py-0.2 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                            Today
+                      {/* Date Number & Today Pill / Add Button */}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`text-xs sm:text-sm font-extrabold rounded-md px-1.5 py-0.5 transition-all ${
+                              cell.isToday
+                                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-mono shadow-md shadow-violet-600/30'
+                                : cell.isCurrentMonth
+                                ? 'text-slate-100 group-hover:text-white'
+                                : 'text-slate-500 font-medium'
+                            }`}
+                          >
+                            {cell.dayNumber}
                           </span>
+
+                          {cell.isToday && (
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-violet-500/25 text-violet-200 border border-violet-500/40 tracking-wider">
+                              Today
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Quick Add Task Button on Hover */}
+                        {onAddTask && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAddTask(cell.dateString);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded-md bg-slate-800/90 hover:bg-violet-600 text-slate-400 hover:text-white transition-all shadow-sm"
+                            title={`Add task for ${cell.dateString}`}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
                         )}
                       </div>
 
                       {/* Cell Events List */}
-                      <div className="space-y-1 flex-1 overflow-y-auto max-h-[78px] no-scrollbar">
+                      <div className="space-y-1.5 flex-1 overflow-y-auto max-h-[115px] no-scrollbar">
                         {cell.events.slice(0, 3).map((item) => {
                           const isMilestone = item.type === 'milestone';
+
+                          if (isMilestone) {
+                            return (
+                              <div
+                                key={item.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleItemClick(item);
+                                }}
+                                className="p-1.5 sm:p-2 rounded-xl text-[10px] sm:text-[11px] font-bold transition-all border cursor-pointer bg-gradient-to-r from-purple-950/95 via-indigo-950/90 to-purple-950/80 border-purple-500/50 hover:border-purple-400 text-white shadow-md shadow-purple-950/40 space-y-1 hover:scale-[1.02]"
+                                title={`Milestone: ${item.title} (${item.status})`}
+                              >
+                                <div className="flex items-center justify-between gap-1 text-[9px] font-mono text-purple-300">
+                                  <span className="flex items-center gap-1 font-extrabold tracking-wider">
+                                    <Sparkles className="w-2.5 h-2.5 text-purple-400 shrink-0" />
+                                    MILESTONE
+                                  </span>
+                                  {item.weight !== undefined && (
+                                    <span className="bg-purple-900/70 px-1 py-0.2 rounded border border-purple-500/30 text-[8px]">
+                                      {item.weight}% wt
+                                    </span>
+                                  )}
+                                </div>
+                                <h5 className="font-extrabold text-white text-[11px] leading-snug line-clamp-2">
+                                  {item.title}
+                                </h5>
+                                {item.status === 'Completed' ? (
+                                  <span className="inline-flex items-center gap-1 text-[9px] text-emerald-300 font-semibold">
+                                    <Check className="w-2.5 h-2.5" /> Completed
+                                  </span>
+                                ) : (
+                                  <div className="w-full bg-slate-900/80 h-1 rounded-full overflow-hidden">
+                                    <div
+                                      className="bg-gradient-to-r from-purple-500 to-indigo-400 h-full rounded-full"
+                                      style={{ width: `${item.progress ?? 50}%` }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
 
                           return (
                             <div
@@ -403,31 +461,101 @@ export const WorkspaceCalendar: React.FC<WorkspaceCalendarProps> = ({
                                 e.stopPropagation();
                                 handleItemClick(item);
                               }}
-                              className={`p-1 rounded-md text-[10px] leading-tight font-medium transition-all truncate border cursor-pointer ${
-                                isMilestone
-                                  ? 'bg-purple-950/60 border-purple-500/40 text-purple-200 hover:border-purple-400 shadow-sm'
+                              className={`p-1.5 sm:p-2 rounded-xl text-[10px] sm:text-[11px] transition-all border cursor-pointer space-y-1 hover:scale-[1.02] shadow-sm ${
+                                item.urgency === 'due-today'
+                                  ? 'bg-gradient-to-br from-rose-950/90 to-slate-950/95 border-rose-500/90 text-white shadow-lg shadow-rose-950/60 ring-1 ring-rose-500/40 animate-pulse'
                                   : item.urgency === 'overdue'
-                                  ? 'bg-rose-950/60 border-rose-500/40 text-rose-200 hover:border-rose-400 shadow-sm'
-                                  : item.urgency === 'due-today'
-                                  ? 'bg-rose-900/60 border-rose-400 text-white font-bold shadow-md shadow-rose-950'
+                                  ? 'bg-rose-950/55 border-rose-500/50 text-rose-100 hover:border-rose-400 shadow-sm'
                                   : item.urgency === 'due-soon'
-                                  ? 'bg-amber-950/50 border-amber-500/40 text-amber-200 hover:border-amber-400'
+                                  ? 'bg-amber-950/55 border-amber-500/50 text-amber-100 hover:border-amber-400'
                                   : item.urgency === 'completed'
-                                  ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300 line-through opacity-80'
-                                  : 'bg-slate-900/90 border-slate-700/70 text-slate-200 hover:border-slate-500'
+                                  ? 'bg-emerald-950/35 border-emerald-500/35 text-emerald-200 opacity-80 hover:opacity-100'
+                                  : 'bg-slate-900/95 border-slate-700/80 text-slate-100 hover:border-slate-500 hover:bg-slate-850'
                               }`}
-                              title={`${item.title} (${item.status})`}
+                              title={`${item.title} (${item.status}) — Assignee: ${item.assigneeName || 'Unassigned'}`}
                             >
-                              <div className="flex items-center gap-1 truncate">
-                                <span>{isMilestone ? '◆' : '●'}</span>
-                                <span className="truncate">{item.title}</span>
+                              {/* Top Row: Urgency Tag / Priority Badge */}
+                              <div className="flex items-center justify-between gap-1 text-[9px]">
+                                <div className="flex items-center gap-1 font-bold truncate">
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                      item.urgency === 'due-today' || item.urgency === 'overdue'
+                                        ? 'bg-rose-400'
+                                        : item.urgency === 'due-soon'
+                                        ? 'bg-amber-400'
+                                        : item.urgency === 'completed'
+                                        ? 'bg-emerald-400'
+                                        : 'bg-indigo-400'
+                                    }`}
+                                  />
+                                  {item.priority && (
+                                    <span
+                                      className={`px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-wider ${
+                                        item.priority === 'High'
+                                          ? 'text-rose-300 bg-rose-500/20 border border-rose-500/30'
+                                          : item.priority === 'Medium'
+                                          ? 'text-amber-300 bg-amber-500/20 border border-amber-500/30'
+                                          : 'text-sky-300 bg-sky-500/20 border border-sky-500/30'
+                                      }`}
+                                    >
+                                      {item.priority}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {item.urgency === 'due-today' && (
+                                  <span className="text-[9px] font-extrabold text-rose-300 uppercase tracking-wider flex items-center gap-0.5">
+                                    <Flame className="w-2.5 h-2.5 text-rose-400" /> Today
+                                  </span>
+                                )}
+                                {item.urgency === 'overdue' && item.diffDays && (
+                                  <span className="text-[9px] font-bold text-rose-400">
+                                    {Math.abs(item.diffDays)}d late
+                                  </span>
+                                )}
+                                {item.urgency === 'due-soon' && item.diffDays && (
+                                  <span className="text-[9px] font-bold text-amber-300">
+                                    in {item.diffDays}d
+                                  </span>
+                                )}
+                                {item.urgency === 'completed' && (
+                                  <span className="text-[9px] font-bold text-emerald-400">
+                                    Done
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Task Heading / Title */}
+                              <h5 className="font-semibold text-slate-100 text-[11px] leading-snug line-clamp-2 tracking-tight">
+                                {item.title}
+                              </h5>
+
+                              {/* Bottom row: Assignee snippet + Status pill */}
+                              <div className="flex items-center justify-between gap-1 text-[9px] text-slate-400 pt-1 border-t border-white/5">
+                                {item.assigneeName ? (
+                                  <span className="truncate flex items-center gap-1 text-slate-300 font-medium">
+                                    <UserIcon className="w-2.5 h-2.5 shrink-0 text-slate-400" />
+                                    <span className="truncate">{item.assigneeName.split(' ')[0]}</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-500 text-[8px]">Unassigned</span>
+                                )}
+                                <span className="px-1 py-0.2 rounded bg-slate-800 text-slate-300 text-[8px] font-medium shrink-0">
+                                  {item.status === 'Approved'
+                                    ? 'Done'
+                                    : item.status === 'InProgress'
+                                    ? 'In Dev'
+                                    : item.status === 'Submitted'
+                                    ? 'Review'
+                                    : 'To Do'}
+                                </span>
                               </div>
                             </div>
                           );
                         })}
 
                         {cell.events.length > 3 && (
-                          <span className="text-[9px] font-mono text-slate-400 block text-right">
+                          <span className="text-[9px] font-mono font-bold text-violet-400 block text-right px-1">
                             +{cell.events.length - 3} more
                           </span>
                         )}
@@ -464,28 +592,67 @@ export const WorkspaceCalendar: React.FC<WorkspaceCalendarProps> = ({
                         </span>
                       </div>
 
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         {day.events.length === 0 ? (
-                          <span className="text-[10px] text-slate-600 italic block py-4 text-center">
-                            No activities
+                          <span className="text-[10px] text-slate-600 italic block py-6 text-center">
+                            No scheduled items
                           </span>
                         ) : (
                           day.events.map((item) => (
                             <div
                               key={item.id}
                               onClick={() => handleItemClick(item)}
-                              className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-violet-500/40 cursor-pointer text-xs space-y-1 transition-all"
+                              className={`p-2.5 rounded-xl border cursor-pointer text-xs space-y-1.5 transition-all hover:scale-[1.02] shadow-md ${
+                                item.type === 'milestone'
+                                  ? 'bg-purple-950/80 border-purple-500/50 hover:border-purple-400 text-white'
+                                  : item.urgency === 'due-today'
+                                  ? 'bg-rose-950/80 border-rose-500 text-white ring-1 ring-rose-500/50 animate-pulse'
+                                  : item.urgency === 'overdue'
+                                  ? 'bg-rose-950/50 border-rose-500/50 text-rose-100 hover:border-rose-400'
+                                  : item.urgency === 'due-soon'
+                                  ? 'bg-amber-950/50 border-amber-500/50 text-amber-100 hover:border-amber-400'
+                                  : 'bg-slate-900/90 border-slate-800 hover:border-slate-600 text-slate-200'
+                              }`}
                             >
-                              <div className="flex items-start justify-between gap-1">
-                                <span className="font-semibold text-slate-200 line-clamp-2">
-                                  {item.type === 'milestone' ? '◆ ' : '● '}{item.title}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between text-[10px]">
-                                {getUrgencyBadge(item.urgency, item.diffDays)}
-                                {item.progress !== undefined && (
-                                  <span className="font-mono text-slate-400">{item.progress}%</span>
+                              <div className="flex items-center justify-between gap-1 text-[9px]">
+                                {item.type === 'milestone' ? (
+                                  <span className="font-extrabold text-purple-300 flex items-center gap-1 uppercase tracking-wider">
+                                    <Sparkles className="w-2.5 h-2.5" /> Milestone
+                                  </span>
+                                ) : (
+                                  <div className="flex items-center gap-1">
+                                    {item.priority && (
+                                      <span className={`px-1 py-0.2 rounded font-bold uppercase ${
+                                        item.priority === 'High'
+                                          ? 'text-rose-300 bg-rose-500/20'
+                                          : item.priority === 'Medium'
+                                          ? 'text-amber-300 bg-amber-500/20'
+                                          : 'text-sky-300 bg-sky-500/20'
+                                      }`}>
+                                        {item.priority}
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
+                                {getUrgencyBadge(item.urgency, item.diffDays)}
+                              </div>
+
+                              <h5 className="font-bold text-white text-[11px] leading-snug line-clamp-2">
+                                {item.title}
+                              </h5>
+
+                              <div className="flex items-center justify-between text-[9px] text-slate-400 pt-1 border-t border-white/5">
+                                {item.assigneeName ? (
+                                  <span className="truncate flex items-center gap-1 text-slate-300 font-medium">
+                                    <UserIcon className="w-2.5 h-2.5 shrink-0 text-slate-400" />
+                                    <span className="truncate">{item.assigneeName.split(' ')[0]}</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-500">Unassigned</span>
+                                )}
+                                <span className="font-mono text-slate-300">
+                                  {item.progress !== undefined ? `${item.progress}%` : ''}
+                                </span>
                               </div>
                             </div>
                           ))
