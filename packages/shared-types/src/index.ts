@@ -262,6 +262,7 @@ export interface Milestone {
   id: string;
   projectId: string;
   name: string;
+  description: string;
   targetDate: string;
   weightPct: number;
   status: MilestoneStatus;
@@ -408,12 +409,14 @@ export interface AcceptInviteCodeDto {
 // Milestone DTOs
 export interface CreateMilestoneDto {
   name: string;
+  description?: string;
   targetDate: string;
   weightPct?: number;
 }
 
 export interface UpdateMilestoneDto {
   name?: string;
+  description?: string;
   targetDate?: string;
   weightPct?: number;
   status?: MilestoneStatus;

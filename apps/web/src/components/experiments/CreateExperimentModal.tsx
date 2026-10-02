@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import {
   ExperimentPurpose,
-  EXPERIMENT_PURPOSES,
   CreateExperimentDto,
   Project,
 } from '@researchos/shared-types';

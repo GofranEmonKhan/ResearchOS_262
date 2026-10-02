@@ -21,6 +21,7 @@ export const NewMilestoneModal: React.FC<NewMilestoneModalProps> = ({
   onMilestoneCreated,
 }) => {
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [weightPercent, setWeightPercent] = useState('20');
   const [targetDate, setTargetDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +55,7 @@ export const NewMilestoneModal: React.FC<NewMilestoneModalProps> = ({
         },
         body: JSON.stringify({
           name: title.trim(),
+          description: description.trim(),
           weightPct: parseInt(weightPercent, 10) || 10,
           targetDate: targetDate || undefined,
         }),
@@ -67,6 +69,7 @@ export const NewMilestoneModal: React.FC<NewMilestoneModalProps> = ({
       await onMilestoneCreated();
       onClose();
       setTitle('');
+      setDescription('');
     } catch (err: any) {
       setError(err.message || 'Failed to create milestone');
     } finally {
@@ -120,6 +123,20 @@ export const NewMilestoneModal: React.FC<NewMilestoneModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Phase 1: Benchmark Baseline Models"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300">Milestone Description & Scope</label>
+              <span className="text-[10px] text-slate-500">Optional</span>
+            </div>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Detail key deliverables, research methodology, validation criteria, and target outcomes for this phase..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none transition-colors"
             />
           </div>
 

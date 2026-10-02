@@ -128,16 +128,16 @@ BEGIN
   ON CONFLICT (project_id, user_id) DO NOTHING;
 
   -- 4. Milestones
-  INSERT INTO public.milestones (id, project_id, name, target_date, weight_pct, status, is_locked, is_proposed, created_at, updated_at) VALUES
-    (v_ms_g1, v_proj_genomics, 'Phase 1: Dataset Pipeline & Preprocessing', CURRENT_DATE - INTERVAL '5 days', 30, 'Completed', false, false, NOW(), NOW()),
-    (v_ms_g2, v_proj_genomics, 'Phase 2: Baseline Architecture Exploration', CURRENT_DATE + INTERVAL '20 days', 40, 'InProgress', false, false, NOW(), NOW()),
-    (v_ms_g3, v_proj_genomics, 'Phase 3: Benchmarking & Peer Manuscript Draft', CURRENT_DATE + INTERVAL '60 days', 30, 'Pending', false, false, NOW(), NOW())
+  INSERT INTO public.milestones (id, project_id, name, description, target_date, weight_pct, status, is_locked, is_proposed, created_at, updated_at) VALUES
+    (v_ms_g1, v_proj_genomics, 'Phase 1: Dataset Pipeline & Preprocessing', 'Establish reproducible data ingestion for 100k single-cell transcriptomic profiles, filter low-quality reads, and cache normalized Zarr count matrices.', CURRENT_DATE - INTERVAL '5 days', 30, 'Completed', false, false, NOW(), NOW()),
+    (v_ms_g2, v_proj_genomics, 'Phase 2: Baseline Architecture Exploration', 'Implement sparse multi-head attention masks and evaluate latent representation embeddings against ground-truth cell type markers.', CURRENT_DATE + INTERVAL '20 days', 40, 'InProgress', false, false, NOW(), NOW()),
+    (v_ms_g3, v_proj_genomics, 'Phase 3: Benchmarking & Peer Manuscript Draft', 'Synthesize ablation study results, compile cross-validation performance figures, and complete initial draft of peer-reviewed manuscript.', CURRENT_DATE + INTERVAL '60 days', 30, 'Pending', false, false, NOW(), NOW())
   ON CONFLICT (id) DO NOTHING;
 
   IF v_researcher_user != v_researcher_mit THEN
-    INSERT INTO public.milestones (id, project_id, name, target_date, weight_pct, status, is_locked, is_proposed, created_at, updated_at) VALUES
-      (v_ms_u1, v_proj_personal_user, 'Data Ingestion & Feature Normalization', CURRENT_DATE + INTERVAL '10 days', 50, 'InProgress', false, false, NOW(), NOW()),
-      (v_ms_u2, v_proj_personal_user, 'Cross-Validation & Binding Affinity Benchmarks', CURRENT_DATE + INTERVAL '35 days', 50, 'Pending', false, false, NOW(), NOW())
+    INSERT INTO public.milestones (id, project_id, name, description, target_date, weight_pct, status, is_locked, is_proposed, created_at, updated_at) VALUES
+      (v_ms_u1, v_proj_personal_user, 'Data Ingestion & Feature Normalization', 'Import ligand-receptor assay datasets and normalize biochemical features for model training.', CURRENT_DATE + INTERVAL '10 days', 50, 'InProgress', false, false, NOW(), NOW()),
+      (v_ms_u2, v_proj_personal_user, 'Cross-Validation & Binding Affinity Benchmarks', 'Execute 5-fold cross-validation on binding affinity prediction pipelines and log validation loss metrics.', CURRENT_DATE + INTERVAL '35 days', 50, 'Pending', false, false, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
   END IF;
 

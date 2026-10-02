@@ -869,6 +869,11 @@ export const WorkspaceCalendar: React.FC<WorkspaceCalendarProps> = ({
                           <span className="font-bold text-white truncate">◆ {m.name}</span>
                           <span className="text-[10px] font-mono text-purple-300">{progress}%</span>
                         </div>
+                        {m.description && (
+                          <p className="text-[11px] text-slate-300 line-clamp-2 leading-tight">
+                            {m.description}
+                          </p>
+                        )}
                         <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full"

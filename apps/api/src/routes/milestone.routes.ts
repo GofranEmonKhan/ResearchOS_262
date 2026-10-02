@@ -42,7 +42,7 @@ router.post(
   requireProjectMember('projectId'),
   async (req: Request<{ projectId: string }, {}, CreateMilestoneDto>, res: Response) => {
     try {
-      const { name, targetDate, weightPct } = req.body;
+      const { name, description, targetDate, weightPct } = req.body;
       if (!name || !name.trim()) {
         return res.status(400).json({ error: 'Milestone name is required' });
       }
@@ -52,6 +52,7 @@ router.post(
 
       const milestone = await createMilestone(req.user!.id, req.user!.role, req.params.projectId, {
         name,
+        description,
         targetDate,
         weightPct,
       });

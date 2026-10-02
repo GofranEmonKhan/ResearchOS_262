@@ -10,11 +10,9 @@ import {
   Terminal,
   FileCode,
   Layers,
-  FlaskConical,
 } from 'lucide-react';
 import {
   ExperimentPurpose,
-  EXPERIMENT_PURPOSES,
   CreateExperimentDto,
   Project,
   Experiment,

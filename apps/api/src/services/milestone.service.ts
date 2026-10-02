@@ -14,6 +14,7 @@ export function mapDbMilestoneToMilestone(row: any): Milestone {
     id: row.id,
     projectId: row.project_id,
     name: row.name || '',
+    description: row.description || '',
     targetDate: row.target_date,
     weightPct: row.weight_pct ?? 0,
     status: row.status as MilestoneStatus,
@@ -78,6 +79,7 @@ export async function createMilestone(
     .insert({
       project_id: projectId,
       name: dto.name.trim(),
+      description: dto.description?.trim() || '',
       target_date: dto.targetDate,
       weight_pct: dto.weightPct ?? 0,
       status: 'Pending',
@@ -133,6 +135,7 @@ export async function updateMilestone(
   };
 
   if (dto.name !== undefined) updates.name = dto.name.trim();
+  if (dto.description !== undefined) updates.description = dto.description.trim();
   if (dto.targetDate !== undefined) updates.target_date = dto.targetDate;
   if (dto.weightPct !== undefined) updates.weight_pct = dto.weightPct;
   if (dto.status !== undefined) updates.status = dto.status;

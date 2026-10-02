@@ -10,7 +10,6 @@ import {
   FileCode,
   CheckCircle2,
   ExternalLink,
-  Layers,
 } from 'lucide-react';
 import { Experiment, AlignedMetricRow } from '@researchos/shared-types';
 import { saveExperimentFigure, svgToPngDataUrl } from '../../lib/figureStorage.js';
@@ -390,7 +389,6 @@ ${metricRows.join('\n')}
               onChange={(val) => setBaselineExpId(val)}
               className="w-48 sm:w-56"
               buttonClassName="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white"
-              size="sm"
               placement="bottom"
             />
           </div>

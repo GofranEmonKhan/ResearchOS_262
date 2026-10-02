@@ -80,6 +80,7 @@ Milestone {
   id          uuid PK
   projectId   FK→Project
   name        string
+  description string
   targetDate  date
   weightPct   int
   status      enum(Pending, InProgress, Completed)

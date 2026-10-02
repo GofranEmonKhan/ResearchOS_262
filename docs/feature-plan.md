@@ -128,7 +128,7 @@ Project entity: title, abstract, domain tags, start/end date, status
 (Planning / Ongoing / Writing / Submitted / Completed), members list
 with per-project role.
 
-Milestone entity: name, target date, weight %, linked tasks, status.
+Milestone entity: name, description, target date, weight %, linked tasks, status.
 
 Task entity: title, description, assignee, due date, priority,
 deliverable notes/attachments (via progressNote & comment threads), status (To-Do → In Progress → Submitted → Under Review →

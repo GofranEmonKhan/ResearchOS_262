@@ -256,6 +256,7 @@ describe('Spec 02 — Research Workspace & Membership Test Suite', () => {
       },
       body: JSON.stringify({
         name: 'Phase 1: Dataset Preparation & Preprocessing',
+        description: 'Comprehensive single-cell data ingestion and quality control pipeline.',
         targetDate: '2026-09-30',
         weightPct: 50,
       }),
@@ -264,6 +265,7 @@ describe('Spec 02 — Research Workspace & Membership Test Suite', () => {
     assert.equal(res.status, 201);
     const data = await res.json() as any;
     assert.equal(data.name, 'Phase 1: Dataset Preparation & Preprocessing');
+    assert.equal(data.description, 'Comprehensive single-cell data ingestion and quality control pipeline.');
     assert.equal(data.isProposed, false);
     assert.equal(data.weightPct, 50);
     createdMilestoneId = data.id;
@@ -278,6 +280,7 @@ describe('Spec 02 — Research Workspace & Membership Test Suite', () => {
       },
       body: JSON.stringify({
         name: 'Phase 2: Ablation Experiments',
+        description: 'Ablation study over attention layers and feature dimension thresholds.',
         targetDate: '2026-10-31',
         weightPct: 50,
       }),
@@ -286,6 +289,7 @@ describe('Spec 02 — Research Workspace & Membership Test Suite', () => {
     assert.equal(res.status, 201);
     const data = await res.json() as any;
     assert.equal(data.isProposed, true);
+    assert.equal(data.description, 'Ablation study over attention layers and feature dimension thresholds.');
     assert.equal(data.proposedBy, researcherUserId);
     proposedMilestoneId = data.id;
   });

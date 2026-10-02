@@ -102,6 +102,11 @@ export const MilestoneTimeline: React.FC<MilestoneTimelineProps> = ({
                           </span>
                         )}
                       </div>
+                      {m.description && (
+                        <p className="text-xs text-slate-300 mt-1.5 leading-relaxed max-w-2xl">
+                          {m.description}
+                        </p>
+                      )}
                     </div>
                   </div>
 

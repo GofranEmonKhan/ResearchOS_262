@@ -154,6 +154,7 @@ describe('Spec 02 — Workspace Layout & Navigation UI Tests', () => {
         id: 'milestone-1',
         projectId: mockProject.id,
         name: 'Phase 1: Dataset Collection',
+        description: 'Collect raw single-cell profiles and normalize count matrices.',
         weightPct: 30,
         status: 'InProgress',
         targetDate: '2026-09-30',
@@ -166,6 +167,7 @@ describe('Spec 02 — Workspace Layout & Navigation UI Tests', () => {
         id: 'milestone-2',
         projectId: mockProject.id,
         name: 'Phase 2: Baseline Benchmark',
+        description: 'Evaluate baseline transformer architecture on test fold.',
         weightPct: 70,
         status: 'Pending',
         targetDate: '2026-11-15',
@@ -191,7 +193,9 @@ describe('Spec 02 — Workspace Layout & Navigation UI Tests', () => {
     );
 
     assert.ok(html.includes('Phase 1: Dataset Collection'), 'Renders active milestone title');
+    assert.ok(html.includes('Collect raw single-cell profiles'), 'Renders active milestone description');
     assert.ok(html.includes('Phase 2: Baseline Benchmark'), 'Renders proposed milestone title');
+    assert.ok(html.includes('Evaluate baseline transformer architecture'), 'Renders proposed milestone description');
     assert.ok(html.includes('weight') && html.includes('30'), 'Renders weight percentage');
     assert.ok(html.includes('Proposed'), 'Renders proposal badge');
   });

@@ -27,7 +27,6 @@ import {
   Lock,
   Clock,
   AlertTriangle,
-  ChevronDown,
   Loader2,
   X,
   ShieldAlert,
@@ -490,7 +489,6 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
                 onChange={(val) => setSelectedStatus(val as ExperimentStatus | 'ALL')}
                 className="w-36 sm:w-44"
                 buttonClassName="bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-semibold text-slate-200 py-1.5 px-2.5 rounded-xl"
-                size="sm"
                 placement="bottom"
               />
             </div>

@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   Eye,
   Pin,
-  Lock,
   GraduationCap,
   Sparkles,
   ArrowBigUp,
