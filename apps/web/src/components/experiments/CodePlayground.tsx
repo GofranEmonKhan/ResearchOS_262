@@ -28,6 +28,7 @@ import {
   Rocket,
   Database,
   Trash2,
+  X,
 } from 'lucide-react';
 import { Project, UserRole, Experiment } from '@researchos/shared-types';
 import { SaveRunAsExperimentModal } from './SaveRunAsExperimentModal';
@@ -217,6 +218,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
   const [copied, setCopied] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState<boolean>(false);
   const [runToSave, setRunToSave] = useState<RunRecord | null>(null);
 
   const editorRef = useRef<any>(null);
@@ -472,10 +474,13 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
   };
 
   const handleResetWorkspace = () => {
-    if (confirm('Reset this project workspace to default template files?')) {
-      const defaultWs = createDefaultWorkspace(currentProjectId);
-      updateAndSaveWorkspace(defaultWs);
-    }
+    setIsResetConfirmOpen(true);
+  };
+
+  const handleConfirmReset = () => {
+    const defaultWs = createDefaultWorkspace(currentProjectId);
+    updateAndSaveWorkspace(defaultWs);
+    setIsResetConfirmOpen(false);
   };
 
   const handleCopyCode = () => {
@@ -1205,6 +1210,64 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
             onExperimentSaved?.(savedExp);
           }}
         />
+      )}
+
+      {/* Reset Workspace Confirmation Dialog */}
+      {isResetConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150"
+          onClick={() => setIsResetConfirmOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-md bg-[#0D0C1B] border border-amber-500/30 rounded-2xl shadow-2xl p-6 space-y-4 overflow-hidden animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Ambient Glow */}
+            <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Header with Icon & Title */}
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 shrink-0">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-white tracking-tight">Reset Workspace</h3>
+                <p className="text-sm text-slate-200 mt-1.5 leading-relaxed">
+                  Are you sure you want to reset this project workspace? All modified code files and custom datasets will be restored to default template files.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsResetConfirmOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setIsResetConfirmOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmReset}
+                className="px-4.5 py-2.5 rounded-xl text-sm font-semibold bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-2 shadow-lg shadow-amber-600/30 transition-all active:scale-95"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Reset to Defaults</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
