@@ -89,16 +89,16 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
         aria-labelledby="version-history-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-800/90 bg-slate-900/60">
-          <div className="flex items-center space-x-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
+        <div className="flex items-center justify-between px-7 py-6 border-b border-slate-800/90 bg-slate-900/70">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
               <History className="w-5 h-5" />
             </div>
-            <div className="min-w-0">
-              <h2 id="version-history-title" className="text-base sm:text-lg font-bold text-white tracking-tight">
+            <div className="min-w-0 flex flex-col justify-center">
+              <h2 id="version-history-title" className="text-lg font-bold text-white tracking-tight leading-snug">
                 Snapshot Version History
               </h2>
-              <p className="text-xs text-slate-300 font-medium truncate">
+              <p className="text-xs text-slate-300 font-medium truncate mt-0.5">
                 Frozen milestones, peer review submissions & rollback points
               </p>
             </div>
@@ -113,7 +113,7 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-7 space-y-6">
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs sm:text-sm font-medium flex items-center gap-2.5 shadow-sm">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -123,7 +123,7 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
 
           {/* Create new snapshot */}
           {canEdit && (
-            <form onSubmit={handleCreateSnapshot} className="p-4 sm:p-5 rounded-2xl bg-slate-900/80 border border-slate-700/80 shadow-md space-y-3">
+            <form onSubmit={handleCreateSnapshot} className="p-5 rounded-2xl bg-slate-900/85 border border-slate-700/80 shadow-md space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-200 uppercase tracking-wider block">
                   Create Frozen Snapshot
@@ -138,14 +138,14 @@ export const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({
                   value={newVersionName}
                   onChange={(e) => setNewVersionName(e.target.value)}
                   placeholder="e.g. Pre-Review Submission Draft, Camera-Ready Revision 1..."
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950/90 border border-slate-700 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+                  className="h-11 flex-1 px-4 rounded-xl bg-slate-950 border border-slate-700 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
                 />
                 <button
                   type="submit"
                   disabled={creating || !newVersionName.trim()}
-                  className="inline-flex items-center justify-center gap-1.5 px-4.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.98] disabled:opacity-50 text-xs sm:text-sm font-semibold text-white shadow-md shadow-blue-600/30 transition-all shrink-0 cursor-pointer"
+                  className="h-11 inline-flex items-center justify-center gap-2 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.98] disabled:opacity-50 text-xs sm:text-sm font-bold text-white shadow-lg shadow-blue-600/30 border border-blue-400/40 transition-all shrink-0 cursor-pointer"
                 >
-                  {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  {creating ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Plus className="w-4 h-4 text-white stroke-[2.5]" />}
                   <span>Save Snapshot</span>
                 </button>
               </div>
