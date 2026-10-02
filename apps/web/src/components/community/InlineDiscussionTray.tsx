@@ -21,6 +21,7 @@ import { UserAvatar } from '../common/UserAvatar.js';
 import { ReactionPicker, REACTION_OPTIONS } from './ReactionPicker.js';
 import { ConfirmDeleteDialog } from '../common/ConfirmDeleteDialog.js';
 import { getAuthToken } from '../../lib/api.js';
+import { useAuth } from '../../context/AuthContext.js';
 
 interface InlineDiscussionTrayProps {
   postId: string;
@@ -45,6 +46,7 @@ export const InlineDiscussionTray: React.FC<InlineDiscussionTrayProps> = ({
   onOpenReactors,
   onReport: _onReport,
 }) => {
+  const { user: authUser, profile: authProfile } = useAuth();
   const [answers, setAnswers] = useState<ForumAnswer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newAnswerBody, setNewAnswerBody] = useState('');
@@ -406,7 +408,9 @@ export const InlineDiscussionTray: React.FC<InlineDiscussionTrayProps> = ({
       {/* ─── Inline Answer Composer ─── */}
       <form onSubmit={handleSubmitAnswer} className="flex gap-3 items-start">
         <UserAvatar
-          name={currentUserId ? 'You' : 'Scholar'}
+          name={authProfile?.fullName || authUser?.user_metadata?.full_name || 'Scholar'}
+          photoUrl={authProfile?.photoUrl || authUser?.user_metadata?.avatar_url}
+          role={authProfile?.role}
           size="sm"
           className="ring-1 ring-white/10 shrink-0 mt-1"
         />
@@ -773,7 +777,11 @@ export const InlineDiscussionTray: React.FC<InlineDiscussionTrayProps> = ({
                         <div key={comment.id} className="text-xs space-y-1 bg-white/[0.02] p-2.5 rounded-lg border border-white/5">
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                              <UserAvatar name={comment.author?.fullName || 'Scholar'} size="sm" />
+                              <UserAvatar
+                                name={comment.author?.fullName || 'Scholar'}
+                                photoUrl={comment.author?.photoUrl}
+                                size="xs"
+                              />
                               <span className="font-bold text-white text-[11px]">
                                 {comment.author?.fullName || 'Scholar'}
                               </span>

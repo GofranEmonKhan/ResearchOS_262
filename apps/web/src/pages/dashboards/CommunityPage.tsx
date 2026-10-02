@@ -426,7 +426,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
             <div className="flex items-center gap-2.5 w-full sm:w-auto">
               {/* Search Bar */}
               <div className="relative flex-1 sm:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
                   value={searchTerm}
@@ -436,13 +436,13 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                       ? 'Search research blogs...'
                       : 'Search scientific posts...'
                   }
-                  className="w-full pl-8.5 pr-8 py-2 bg-black/40 border border-white/10 hover:border-white/20 focus:border-indigo-500 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-9 pr-8 py-2 bg-black/40 border border-white/10 hover:border-white/20 focus:border-indigo-500 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
                 {searchTerm && (
                   <button
                     type="button"
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>

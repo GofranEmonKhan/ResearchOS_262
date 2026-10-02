@@ -226,52 +226,88 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
       )}
 
-      {/* Pinned, Solved & Scientific Blog Badge Bar */}
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Scientific Blog Badge */}
+      {/* Header: Author & Action Badges */}
+      <div className="flex items-start justify-between gap-3 mb-3.5">
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            if (post.authorId) onSelectAuthor?.(post.authorId);
+          }}
+          className="flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer min-w-0"
+        >
+          <UserAvatar
+            name={post.author?.fullName || 'Scholar'}
+            photoUrl={post.author?.photoUrl}
+            size="md"
+            className="ring-2 ring-indigo-500/20 shrink-0"
+          />
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-sm font-bold text-white hover:text-indigo-300 transition-colors truncate">
+                {post.author?.fullName || 'Anonymous Scholar'}
+              </span>
+
+              {post.author?.isFacultyVerified && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30 shrink-0">
+                  <GraduationCap className="w-3 h-3" />
+                  Faculty
+                </span>
+              )}
+
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                <Sparkles className="w-2.5 h-2.5" />
+                {post.author?.reputationPoints || 0}
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-400 truncate mt-0.5">
+              {post.author?.institution || 'Research Scholar'} •{' '}
+              {new Date(post.createdAt).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })}
+              {isPostEdited && (
+                <span className="ml-1.5 text-slate-500 font-mono italic">(edited)</span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Right Badges & Actions */}
+        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {isScientificBlog && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-pink-500/20 text-amber-300 border border-amber-500/30 shadow-sm shadow-amber-500/10">
-              <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gradient-to-r from-amber-500/20 via-purple-500/20 to-pink-500/20 text-amber-300 border border-amber-500/30">
+              <BookOpen className="w-3 h-3 text-amber-400" />
               Scientific Blog
             </span>
           )}
 
           {post.isPinned && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
               <Pin className="w-3 h-3 rotate-45" />
               Pinned
             </span>
           )}
 
-          {post.isLocked && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-              <Lock className="w-3 h-3" />
-              Locked
-            </span>
-          )}
-
           {post.hasAcceptedAnswer && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              <CheckCircle2 className="w-3 h-3" />
               Solved
             </span>
           )}
 
           {post.projectName && (
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-white/5 text-slate-400 border border-white/10">
+            <span className="hidden md:inline-flex px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/5 text-slate-400 border border-white/10">
               📁 {post.projectName}
             </span>
           )}
-        </div>
 
-        {/* Options & Deep Modal Quick Actions */}
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           {/* Deep Focus / Full Modal View Icon */}
           <button
             onClick={() => onOpenDetail(post.id)}
             title="Open Deep Focus Modal View"
-            className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-white/10 rounded-lg transition-colors ml-1"
           >
             <Maximize2 className="w-4 h-4" />
           </button>
@@ -341,61 +377,6 @@ export const PostCard: React.FC<PostCardProps> = ({
                 </button>
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      {/* Author Bar */}
-      <div className="flex items-center gap-3 mb-3">
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            if (post.authorId) onSelectAuthor?.(post.authorId);
-          }}
-          className="flex items-center gap-2.5 hover:opacity-85 transition-opacity cursor-pointer"
-        >
-          <UserAvatar
-            name={post.author?.fullName || 'Scholar'}
-            photoUrl={post.author?.photoUrl}
-            size="sm"
-          />
-
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-sm font-semibold text-slate-200 hover:text-indigo-300 transition-colors">
-                {post.author?.fullName || 'Anonymous Scholar'}
-              </span>
-
-              {post.author?.isFacultyVerified && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                  <GraduationCap className="w-3 h-3" />
-                  Faculty
-                </span>
-              )}
-
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                <Sparkles className="w-2.5 h-2.5" />
-                {post.author?.reputationPoints || 0}
-              </span>
-
-              {isScientificBlog && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  <BookOpen className="w-2.5 h-2.5 text-indigo-400" />
-                  Scientific Blog
-                </span>
-              )}
-            </div>
-
-            <p className="text-[11px] text-slate-400">
-              {post.author?.institution || 'Research Institute'} •{' '}
-              {new Date(post.createdAt).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-              })}
-              {isPostEdited && (
-                <span className="ml-1.5 text-slate-500 font-mono italic">(edited)</span>
-              )}
-            </p>
           </div>
         </div>
       </div>
