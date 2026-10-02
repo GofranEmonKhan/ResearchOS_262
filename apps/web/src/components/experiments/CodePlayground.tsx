@@ -1248,11 +1248,11 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/10">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.08]">
               <button
                 type="button"
                 onClick={() => setIsResetConfirmOpen(false)}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all active:scale-95"
               >
                 Cancel
               </button>
@@ -1260,9 +1260,9 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
               <button
                 type="button"
                 onClick={handleConfirmReset}
-                className="px-4.5 py-2.5 rounded-xl text-sm font-semibold bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-2 shadow-lg shadow-amber-600/30 transition-all active:scale-95"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 border border-amber-400/40 flex items-center gap-2 shadow-lg shadow-amber-600/30 hover:shadow-amber-500/40 transition-all active:scale-95 whitespace-nowrap"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5" />
                 <span>Reset to Defaults</span>
               </button>
             </div>
