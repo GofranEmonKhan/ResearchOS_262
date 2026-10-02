@@ -281,7 +281,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
         className={`relative p-2 rounded-xl border transition-all duration-200 select-none ${
           isOpen
             ? 'bg-gradient-to-r from-violet-950/70 to-indigo-950/70 border-violet-500/60 shadow-[0_0_16px_rgba(139,92,246,0.3)] ring-1 ring-violet-500/40 text-white'
-            : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/10 text-slate-400 hover:text-white'
+            : 'bg-white/[0.03] hover:bg-white/[0.08] border-white/10 text-slate-300 hover:text-white'
         }`}
         title="Notifications"
         aria-label="Notifications"
@@ -289,7 +289,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white shadow-lg shadow-violet-500/50 border border-black animate-pulse">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white shadow-lg shadow-violet-500/50 border border-black animate-pulse">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -306,10 +306,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
             <div className="flex items-center space-x-2">
               <div className="flex items-center space-x-1.5">
                 <Bell className="w-4 h-4 text-violet-400" />
-                <span className="text-xs font-semibold text-white">Notifications</span>
+                <span className="text-sm font-semibold text-white">Notifications</span>
               </div>
               {unreadCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-violet-500/20 text-violet-300 rounded-full border border-violet-500/30">
+                <span className="px-2 py-0.5 text-xs font-bold bg-violet-500/20 text-violet-200 rounded-full border border-violet-500/30">
                   {unreadCount} unread
                 </span>
               )}
@@ -319,7 +319,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="text-[11px] text-violet-400 hover:text-violet-300 font-medium flex items-center space-x-1 hover:underline transition-all"
+                className="text-xs text-violet-300 hover:text-white font-medium flex items-center space-x-1 hover:underline transition-all"
               >
                 <CheckCheck className="w-3.5 h-3.5 mr-0.5" />
                 <span>Mark all read</span>
@@ -332,10 +332,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
             <button
               type="button"
               onClick={() => setFilter('all')}
-              className={`px-2.5 py-1 text-[11px] font-medium rounded-lg transition-all ${
+              className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
                 filter === 'all'
-                  ? 'bg-violet-600/30 text-violet-200 border border-violet-500/40'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-violet-600/30 text-white border border-violet-500/40 font-semibold'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               All ({notifications.length})
@@ -343,10 +343,10 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
             <button
               type="button"
               onClick={() => setFilter('unread')}
-              className={`px-2.5 py-1 text-[11px] font-medium rounded-lg transition-all ${
+              className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
                 filter === 'unread'
-                  ? 'bg-violet-600/30 text-violet-200 border border-violet-500/40'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-violet-600/30 text-white border border-violet-500/40 font-semibold'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               Unread ({unreadCount})
@@ -358,13 +358,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
             {loading && notifications.length === 0 ? (
               <div className="py-12 px-4 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-violet-400 mx-auto mb-2" />
-                <p className="text-xs text-slate-400">Syncing live notifications...</p>
+                <p className="text-xs text-slate-300">Syncing live notifications...</p>
               </div>
             ) : displayedNotifications.length === 0 ? (
               <div className="py-12 px-4 text-center">
                 <Sparkles className="w-7 h-7 mx-auto text-violet-400/50 mb-2" />
-                <p className="text-xs text-slate-300 font-medium">All caught up!</p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-sm text-slate-200 font-medium">All caught up!</p>
+                <p className="text-xs text-slate-400 mt-0.5">
                   {filter === 'unread' ? 'No unread notifications' : 'No notifications in your inbox'}
                 </p>
               </div>
@@ -384,23 +384,23 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
                   <div className="flex-1 min-w-0 pr-2">
                     <div className="flex items-center justify-between gap-1">
                       <p
-                        className={`text-xs font-semibold truncate ${
-                          !n.isRead ? 'text-white font-medium' : 'text-slate-300'
+                        className={`text-sm font-semibold truncate ${
+                          !n.isRead ? 'text-white' : 'text-slate-200'
                         }`}
                       >
                         {getNotificationTitle(n)}
                       </p>
-                      <span className="text-[10px] text-slate-500 shrink-0">
+                      <span className="text-xs text-slate-400 shrink-0">
                         {formatRelativeTime(n.createdAt)}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
+                    <p className="text-xs text-slate-300 line-clamp-2 mt-0.5 leading-relaxed">
                       {getNotificationDescription(n)}
                     </p>
 
                     {Boolean(n.payload?.projectName) && (
-                      <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10 font-mono">
+                      <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded bg-white/5 text-slate-300 border border-white/10 font-mono">
                         {String(n.payload?.projectName)}
                       </span>
                     )}
@@ -415,20 +415,20 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userId, onNa
           </div>
 
           {/* Footer Bar */}
-          <div className="px-4 py-2.5 bg-black/40 border-t border-white/10 flex items-center justify-between text-[11px]">
+          <div className="px-4 py-2.5 bg-black/40 border-t border-white/10 flex items-center justify-between text-xs">
             <button
               type="button"
               onClick={() => {
                 setIsOpen(false);
                 onNavigate?.('/notifications');
               }}
-              className="text-violet-400 hover:text-violet-300 font-medium flex items-center space-x-1 transition-colors hover:underline"
+              className="text-violet-300 hover:text-white font-medium flex items-center space-x-1 transition-colors hover:underline"
             >
               <span>Open Notification Center</span>
-              <ExternalLink className="w-3 h-3 ml-0.5" />
+              <ExternalLink className="w-3.5 h-3.5 ml-0.5" />
             </button>
 
-            <span className="flex items-center space-x-1 text-[10px] text-emerald-400">
+            <span className="flex items-center space-x-1 text-xs text-emerald-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>Live Sync</span>
             </span>

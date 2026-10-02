@@ -221,19 +221,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   }`}
                 >
                   <span
-                    className={`text-xs font-semibold tracking-normal truncate ${
-                      isActive ? 'text-white font-bold' : 'text-slate-200 group-hover:text-white'
+                    className={`text-sm font-medium tracking-normal truncate ${
+                      isActive ? 'text-white font-semibold' : 'text-slate-200 group-hover:text-white'
                     }`}
                   >
                     {item.label}
                   </span>
                   {item.badge && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/10 border border-white/10 text-slate-300 group-hover:text-white">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-white/10 border border-white/15 text-slate-200 group-hover:text-white">
                       {item.badge}
                     </span>
                   )}
                   {item.glow && (
-                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-300 shadow-sm shadow-amber-500/20">
+                    <span className="text-xs font-bold uppercase px-2 py-0.5 rounded bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-300 shadow-sm shadow-amber-500/20">
                       PRO
                     </span>
                   )}
@@ -279,12 +279,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'
               }`}
             >
-              <span className="text-xs font-bold text-slate-100 truncate group-hover:text-violet-300 transition-colors">
+              <span className="text-sm font-semibold text-white truncate group-hover:text-violet-300 transition-colors">
                 {profile?.fullName || 'Research Scientist'}
               </span>
               <div className="flex items-center space-x-1.5 mt-0.5">
                 {getRoleIcon()}
-                <span className="text-[11px] font-medium text-slate-400 capitalize">
+                <span className="text-xs font-medium text-slate-300 capitalize">
                   {profile?.role || 'Member'}
                 </span>
               </div>
@@ -294,14 +294,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           {/* Sign Out Action */}
           <button
             onClick={handleSignOut}
-            className={`mt-2 w-full flex items-center rounded-xl p-2 text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer ${
+            className={`mt-2 w-full flex items-center rounded-xl p-2 text-slate-300 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer ${
               isExpanded ? 'space-x-2.5 px-3' : 'justify-center'
             }`}
             title="Sign Out"
           >
-            <LogOut className="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-rose-400" />
+            <LogOut className="w-4 h-4 shrink-0 text-slate-400 group-hover:text-rose-400" />
             <span
-              className={`text-xs font-semibold transition-opacity duration-200 overflow-hidden whitespace-nowrap ${
+              className={`text-sm font-medium transition-opacity duration-200 overflow-hidden whitespace-nowrap ${
                 isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'
               }`}
             >

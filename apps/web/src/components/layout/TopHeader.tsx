@@ -126,16 +126,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   e.preventDefault();
                   setIsProjectSwitcherOpen((prev) => !prev);
                 }}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all duration-200 select-none ${
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 select-none ${
                   isProjectSwitcherOpen
                     ? 'bg-gradient-to-r from-violet-950/70 to-indigo-950/70 border-violet-500/60 shadow-[0_0_16px_rgba(139,92,246,0.3)] ring-1 ring-violet-500/40 text-white'
                     : 'bg-white/5 hover:bg-white/[0.08] border-white/10 hover:border-violet-500/30 text-slate-200'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5 text-violet-400" />
+                <Layers className="w-4 h-4 text-violet-400" />
                 <span className="max-w-[160px] truncate">{activeProject.title}</span>
                 <ChevronDown 
-                  className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ease-out ${
+                  className={`w-4 h-4 shrink-0 transition-transform duration-200 ease-out ${
                     isProjectSwitcherOpen
                       ? 'rotate-180 text-violet-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]'
                       : 'text-slate-400'
@@ -160,9 +160,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   {/* Hover Bridge */}
                   <div className="absolute -top-2 left-0 right-0 h-2 bg-transparent" />
                   
-                  <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-violet-400/90 tracking-wider flex items-center justify-between">
+                  <div className="px-3 py-1.5 text-xs uppercase font-bold text-violet-300 tracking-wider flex items-center justify-between">
                     <span>Switch Workspace Project</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-violet-500/20 text-violet-200 font-semibold border border-violet-500/30">
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-200 font-semibold border border-violet-500/30">
                       {projects.length} {projects.length === 1 ? 'Project' : 'Projects'}
                     </span>
                   </div>
@@ -177,23 +177,23 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                             onSelectProject?.(p);
                             setIsProjectSwitcherOpen(false);
                           }}
-                          className={`w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between gap-2 transition-all duration-150 ${
+                          className={`w-full text-left px-3 py-2 text-sm rounded-xl flex items-center justify-between gap-2 transition-all duration-150 ${
                             isSelected
                               ? 'bg-gradient-to-r from-violet-600/35 via-indigo-600/25 to-transparent text-white font-semibold border-l-2 border-violet-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]'
-                              : 'text-slate-300 hover:bg-white/[0.08] hover:text-white hover:translate-x-0.5'
+                              : 'text-slate-200 hover:bg-white/[0.08] hover:text-white hover:translate-x-0.5'
                           }`}
                         >
                           <div className="flex items-center space-x-2 min-w-0 truncate">
-                            <Layers className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-violet-300' : 'text-slate-400'}`} />
+                            <Layers className={`w-4 h-4 shrink-0 ${isSelected ? 'text-violet-300' : 'text-slate-400'}`} />
                             <span className="truncate">{p.title}</span>
                             {p.isPersonal && (
-                              <span className="text-[9px] bg-violet-500/20 text-violet-200 px-1.5 py-0.5 rounded border border-violet-500/30 shrink-0 font-medium">
+                              <span className="text-xs bg-violet-500/20 text-violet-200 px-1.5 py-0.5 rounded border border-violet-500/30 shrink-0 font-medium">
                                 Personal
                               </span>
                             )}
                           </div>
                           {isSelected && (
-                            <Check className="w-3.5 h-3.5 text-violet-300 shrink-0 ml-1 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]" />
+                            <Check className="w-4 h-4 text-violet-300 shrink-0 ml-1 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]" />
                           )}
                         </button>
                       );
@@ -207,9 +207,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                           setIsProjectSwitcherOpen(false);
                           onOpenNewProjectModal();
                         }}
-                        className="w-full text-left px-3 py-1.5 text-xs rounded-xl flex items-center space-x-2 text-violet-300 hover:bg-violet-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
+                        className="w-full text-left px-3 py-1.5 text-sm rounded-xl flex items-center space-x-2 text-violet-300 hover:bg-violet-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
                       >
-                        <Plus className="w-3.5 h-3.5 text-violet-400" />
+                        <Plus className="w-4 h-4 text-violet-400" />
                         <span>Create New Project...</span>
                       </button>
                     )}
@@ -220,9 +220,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                           setIsProjectSwitcherOpen(false);
                           onOpenJoinProjectModal();
                         }}
-                        className="w-full text-left px-3 py-1.5 text-xs rounded-xl flex items-center space-x-2 text-cyan-300 hover:bg-cyan-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
+                        className="w-full text-left px-3 py-1.5 text-sm rounded-xl flex items-center space-x-2 text-cyan-300 hover:bg-cyan-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
                       >
-                        <Key className="w-3.5 h-3.5 text-cyan-400" />
+                        <Key className="w-4 h-4 text-cyan-400" />
                         <span>Join with Invite Code...</span>
                       </button>
                     )}
@@ -234,9 +234,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             {/* Status Pill */}
             <div className="hidden md:flex items-center space-x-2 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/10 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-slate-300 font-medium">{activeProject.status}</span>
-              <span className="text-slate-600">|</span>
-              <span className="text-violet-400 font-semibold">{activeProject.progressPercent}% Completed</span>
+              <span className="text-slate-200 font-medium">{activeProject.status}</span>
+              <span className="text-slate-500">|</span>
+              <span className="text-violet-300 font-semibold">{activeProject.progressPercent}% Completed</span>
             </div>
           </div>
         ) : (
@@ -253,17 +253,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   e.preventDefault();
                   setIsProjectSwitcherOpen((prev) => !prev);
                 }}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all duration-200 select-none ${
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 select-none ${
                   isProjectSwitcherOpen
                     ? 'bg-gradient-to-r from-violet-950/70 to-indigo-950/70 border-violet-500/60 shadow-[0_0_16px_rgba(139,92,246,0.3)] ring-1 ring-violet-500/40 text-white'
                     : 'bg-white/5 hover:bg-white/[0.08] border-white/10 hover:border-violet-500/30 text-slate-200'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5 text-violet-400" />
+                <Layers className="w-4 h-4 text-violet-400" />
                 <span>Research Workspace</span>
                 {projects.length > 0 && (
                   <ChevronDown 
-                    className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ease-out ${
+                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ease-out ${
                       isProjectSwitcherOpen
                         ? 'rotate-180 text-violet-300 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]'
                         : 'text-slate-400'
@@ -286,9 +286,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   </div>
                   <div className="absolute -top-2 left-0 right-0 h-2 bg-transparent" />
                   
-                  <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-violet-400/90 tracking-wider flex items-center justify-between">
+                  <div className="px-3 py-1.5 text-xs uppercase font-bold text-violet-300 tracking-wider flex items-center justify-between">
                     <span>Select Workspace Project</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-violet-500/20 text-violet-200 font-semibold border border-violet-500/30">
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-200 font-semibold border border-violet-500/30">
                       {projects.length} {projects.length === 1 ? 'Project' : 'Projects'}
                     </span>
                   </div>
@@ -301,13 +301,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                           onSelectProject?.(p);
                           setIsProjectSwitcherOpen(false);
                         }}
-                        className="w-full text-left px-3 py-2 text-xs rounded-xl flex items-center justify-between gap-2 text-slate-300 hover:bg-white/[0.08] hover:text-white hover:translate-x-0.5 transition-all duration-150"
+                        className="w-full text-left px-3 py-2 text-sm rounded-xl flex items-center justify-between gap-2 text-slate-200 hover:bg-white/[0.08] hover:text-white hover:translate-x-0.5 transition-all duration-150"
                       >
                         <div className="flex items-center space-x-2 min-w-0 truncate">
-                          <Layers className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                          <Layers className="w-4 h-4 shrink-0 text-slate-400" />
                           <span className="truncate">{p.title}</span>
                           {p.isPersonal && (
-                            <span className="text-[9px] bg-violet-500/20 text-violet-200 px-1.5 py-0.5 rounded border border-violet-500/30 shrink-0 font-medium">
+                            <span className="text-xs bg-violet-500/20 text-violet-200 px-1.5 py-0.5 rounded border border-violet-500/30 shrink-0 font-medium">
                               Personal
                             </span>
                           )}
@@ -323,9 +323,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                           setIsProjectSwitcherOpen(false);
                           onOpenNewProjectModal();
                         }}
-                        className="w-full text-left px-3 py-1.5 text-xs rounded-xl flex items-center space-x-2 text-violet-300 hover:bg-violet-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
+                        className="w-full text-left px-3 py-1.5 text-sm rounded-xl flex items-center space-x-2 text-violet-300 hover:bg-violet-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
                       >
-                        <Plus className="w-3.5 h-3.5 text-violet-400" />
+                        <Plus className="w-4 h-4 text-violet-400" />
                         <span>Create Personal Workspace...</span>
                       </button>
                     )}
@@ -336,9 +336,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                           setIsProjectSwitcherOpen(false);
                           onOpenJoinProjectModal();
                         }}
-                        className="w-full text-left px-3 py-1.5 text-xs rounded-xl flex items-center space-x-2 text-cyan-300 hover:bg-cyan-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
+                        className="w-full text-left px-3 py-1.5 text-sm rounded-xl flex items-center space-x-2 text-cyan-300 hover:bg-cyan-600/15 hover:text-white font-medium transition-all hover:translate-x-0.5"
                       >
-                        <Key className="w-3.5 h-3.5 text-cyan-400" />
+                        <Key className="w-4 h-4 text-cyan-400" />
                         <span>Join with Invite Code...</span>
                       </button>
                     )}
@@ -352,7 +352,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
       {/* Right: Actions */}
       <div className="flex items-center space-x-2.5">
-        <div className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-medium">
+        <div className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
           <Activity className="w-3.5 h-3.5 animate-pulse" />
           <span>Realtime Sync</span>
         </div>
@@ -361,10 +361,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         {activeProject && !activeProject.isPersonal && (isSupervisor || isOwner) && (
           <button
             onClick={onOpenInviteModal}
-            className="px-3 py-1.5 rounded-xl bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/30 text-violet-300 text-xs font-semibold flex items-center space-x-1.5 transition-all hover:scale-105"
+            className="px-3.5 py-1.5 rounded-xl bg-violet-600/10 hover:bg-violet-600/20 border border-violet-500/30 text-violet-200 text-sm font-semibold flex items-center space-x-1.5 transition-all hover:scale-105"
             title="Manage Team & Invites"
           >
-            <UserPlus className="w-3.5 h-3.5 text-violet-400" />
+            <UserPlus className="w-4 h-4 text-violet-400" />
             <span className="hidden sm:inline">Invite / Members</span>
           </button>
         )}
@@ -373,9 +373,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         {activeProject && !activeProject.isPersonal && !isSupervisor && !isOwner && onOpenNewTaskModal && (
           <button
             onClick={onOpenNewTaskModal}
-            className="px-3 py-1.5 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center space-x-1.5 transition-all hover:scale-105"
+            className="px-3.5 py-1.5 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 text-cyan-200 text-sm font-semibold flex items-center space-x-1.5 transition-all hover:scale-105"
           >
-            <Plus className="w-3.5 h-3.5 text-cyan-400" />
+            <Plus className="w-4 h-4 text-cyan-400" />
             <span className="hidden sm:inline">Propose Task</span>
           </button>
         )}
@@ -384,9 +384,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         {activeProject && canDirectCreateTask && onOpenNewTaskModal && (
           <button
             onClick={onOpenNewTaskModal}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-violet-600/20 flex items-center space-x-1.5 transition-all hover:scale-105"
+            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-sm font-semibold shadow-md shadow-violet-600/20 flex items-center space-x-1.5 transition-all hover:scale-105"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">New Task</span>
           </button>
         )}
@@ -398,7 +398,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             className={`p-2 rounded-xl border transition-all ${
               isChatOpen
                 ? 'bg-violet-600 text-white border-violet-500 shadow-lg shadow-violet-600/30'
-                : 'bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white border-white/10'
+                : 'bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 hover:text-white border-white/10'
             }`}
             title="Toggle Project Discussion Stream"
           >
