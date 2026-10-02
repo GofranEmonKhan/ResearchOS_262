@@ -74,10 +74,10 @@ export const AiUsageIndicator: React.FC<AiUsageIndicatorProps> = ({
   if (variant === 'badge') {
     return (
       <div
-        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono border ${badgeBg} ${className}`}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono border ${badgeBg} ${className}`}
         title={`AI Usage: ${percent}% used`}
       >
-        <Sparkles className="w-3 h-3" />
+        <Sparkles className="w-3.5 h-3.5" />
         <span>{usage ? `${percent}% AI Quota` : 'AI Quota'}</span>
       </div>
     );
@@ -86,14 +86,14 @@ export const AiUsageIndicator: React.FC<AiUsageIndicatorProps> = ({
   if (variant === 'compact') {
     return (
       <div className={`p-2.5 rounded-xl bg-[#0E0F1D]/80 border border-slate-800/90 shadow-sm ${className}`}>
-        <div className="flex items-center justify-between text-[11px] mb-2">
-          <div className="flex items-center gap-1.5 text-slate-200 font-semibold">
+        <div className="flex items-center justify-between text-xs mb-2">
+          <div className="flex items-center gap-1.5 text-slate-100 font-semibold">
             <div className="p-0.5 rounded bg-violet-500/15 border border-violet-500/30 text-violet-400">
-              <Sparkles className="w-3 h-3" />
+              <Sparkles className="w-3.5 h-3.5" />
             </div>
             <span>AI Token Quota</span>
           </div>
-          <span className="font-mono text-[10px] text-violet-300/90 font-medium px-1.5 py-0.5 rounded bg-violet-500/10 border border-violet-500/20">
+          <span className="font-mono text-xs text-violet-200 font-medium px-2 py-0.5 rounded bg-violet-500/15 border border-violet-500/30">
             {usage ? `${formatTokens(usage.tokensUsedThisMonth)} / ${formatTokens(usage.monthlyLimit)}` : '...'}
           </span>
         </div>
@@ -104,8 +104,8 @@ export const AiUsageIndicator: React.FC<AiUsageIndicatorProps> = ({
           />
         </div>
         {isCritical && (
-          <div className="flex items-center gap-1 text-[10px] text-rose-400 mt-1.5">
-            <AlertCircle className="w-3 h-3 shrink-0" />
+          <div className="flex items-center gap-1 text-xs text-rose-400 mt-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             <span>Quota almost exhausted ({percent}%)</span>
           </div>
         )}
@@ -122,8 +122,8 @@ export const AiUsageIndicator: React.FC<AiUsageIndicatorProps> = ({
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-white">AI Resource Utilization</h4>
-            <p className="text-[11px] text-slate-400">Monthly token balance and limits</p>
+            <h4 className="text-sm font-semibold text-white">AI Resource Utilization</h4>
+            <p className="text-xs text-slate-300">Monthly token balance and limits</p>
           </div>
         </div>
         <button
@@ -137,8 +137,8 @@ export const AiUsageIndicator: React.FC<AiUsageIndicatorProps> = ({
       </div>
 
       <div className="space-y-2">
-        <div className="flex justify-between items-baseline text-xs">
-          <span className="text-slate-400">Tokens consumed this cycle</span>
+        <div className="flex justify-between items-baseline text-sm">
+          <span className="text-slate-300">Tokens consumed this cycle</span>
           <span className="font-mono font-medium text-white">
             {usage ? `${usage.tokensUsedThisMonth.toLocaleString()} / ${usage.monthlyLimit.toLocaleString()}` : '—'}
           </span>
@@ -151,7 +151,7 @@ export const AiUsageIndicator: React.FC<AiUsageIndicatorProps> = ({
           />
         </div>
 
-        <div className="flex justify-between text-[10px] text-slate-500 pt-0.5">
+        <div className="flex justify-between text-xs text-slate-400 pt-0.5">
           <span>{percent}% utilized</span>
           <span>Resets on the 1st of every month</span>
         </div>

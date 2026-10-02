@@ -23,11 +23,11 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   }, [photoUrl]);
 
   const sizeClasses = {
-    xs: 'w-6 h-6 text-[9px]',
+    xs: 'w-6 h-6 text-xs',
     sm: 'w-8 h-8 text-xs',
-    md: 'w-9 h-9 text-xs',
-    lg: 'w-12 h-12 text-sm',
-    xl: 'w-16 h-16 text-lg',
+    md: 'w-9 h-9 text-sm',
+    lg: 'w-12 h-12 text-base',
+    xl: 'w-16 h-16 text-xl',
     '2xl': 'w-24 h-24 text-2xl',
   }[size];
 

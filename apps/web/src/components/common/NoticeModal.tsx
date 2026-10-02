@@ -102,15 +102,15 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-white tracking-tight">{title}</h3>
-            <p className="text-xs text-slate-300/80 mt-1.5 leading-relaxed">{message}</p>
+            <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
+            <p className="text-sm text-slate-200 mt-1.5 leading-relaxed">{message}</p>
           </div>
 
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -120,7 +120,7 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 rounded-xl transition-colors"
+              className="px-4 py-2.5 text-sm font-medium text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 rounded-xl transition-colors"
             >
               {secondaryActionText}
             </button>
@@ -135,10 +135,10 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({
                 onClose();
               }
             }}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl shadow-lg transition-all ${config.btnBg}`}
+            className={`inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold rounded-xl shadow-lg transition-all ${config.btnBg}`}
           >
             <span>{primaryActionText}</span>
-            {type === 'project-required' && <ArrowRight className="w-3.5 h-3.5" />}
+            {type === 'project-required' && <ArrowRight className="w-4 h-4" />}
           </button>
         </div>
       </div>
