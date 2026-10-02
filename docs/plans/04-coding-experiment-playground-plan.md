@@ -1,380 +1,289 @@
 # ResearchOS — Implementation Plan: Coding Experiment Playground
 
 > **Document type:** Standalone implementation plan — do NOT embed into any existing spec or docs file.
-> **Status:** ✅ Implemented & Verified (All Steps 1–6 complete, tests passing).
+> **Status:** 
+> - **Phase 1 (Completed & Verified ✅):** In-browser Monaco Python Editor, Pyodide WASM Runtime, Auto-Metrics Extraction, Save Modal, Tab Integration.
+> - **Phase 2 (Planned 🚀):** VS Code–Style Project Folder Tree, Multi-File Python Execution with Pyodide VFS, Dataset Upload & Ingestion (Local + Cloud).
 > **Depends on:** `docs/specs/04-experiment-tracker.md`, `docs/data-model.md §4`, `docs/feature-plan.md §4`, Spec 01–02 RBAC contracts.
 > **Cross-checked against:** All Spec 00–07 files and current backend (`apps/api/`) + frontend (`apps/web/`) implementations.
 
 ---
 
-## 1. Feature Summary
+## 1. Feature Summary & Objectives
 
-The **Coding Experiment Playground** is a new tab added inside the existing
-ExperimentTrackerPage. It gives Researchers an embedded, in-browser Python
-code editor where they can:
+The **Coding Experiment Playground** provides an embedded, VS Code–grade Python development and experimental environment directly inside the ResearchOS Experiment Tracker.
 
-1. **Write** Python code in a Monaco (VS Code-grade) editor.
-2. **Run** the code instantly inside the browser using Pyodide (Python compiled
-   to WebAssembly) — no new backend infrastructure required.
-3. **Capture** stdout, stderr, execution time, and auto-extracted metrics from
-   the last JSON print in a persistent run-history panel.
-4. **Save** any run as a formal Experiment record in one click via a
-   pre-filled SaveRunAsExperimentModal, which calls the **existing**
-   POST /projects/:projectId/experiments API endpoint.
-5. **Compare** the saved experiments using the **existing**
-   ExperimentComparisonModal and ExperimentGraphicalVisualizer — no changes
-   to the comparison infrastructure.
-
-> **Phase scope (this document):** Phase 1 — frontend only. No new backend
-> routes, no new database tables, no new Supabase migrations.
+### Core Capabilities:
+1. **VS Code–Grade Multi-File Workspace:** Project-scoped folder and file hierarchy (`src/`, `models/`, `utils/`, `data/`, `main.py`, `config.json`).
+2. **Strict Research Project Isolation:** Every file, folder, and dataset belongs strictly to the selected Research Project (`projectId`). Switching projects instantly switches workspaces with zero cross-project pollution.
+3. **Dataset Ingestion (Local + Cloud):**
+   - **Local File Uploads:** Drag-and-drop or upload custom datasets (`.csv`, `.json`, `.tsv`, `.txt`, `.npy`, `.parquet`) into the project's `data/` folder.
+   - **Cloud Dataset Streaming:** Direct Python fetch from Hugging Face, GitHub Raw, OpenML, and public cloud URLs using Pyodide HTTP streaming (`pyodide.http.open_url`).
+4. **Multi-File Python Execution in WASM:** Synchronizes all project files into Pyodide's virtual filesystem (`pyodide.FS`), enabling native cross-file module imports (`from models.classifier import ResNet`, `from utils.metrics import compute_f1`).
+5. **Automated Metrics Extraction & Experiment Tracking:** Auto-extracts JSON numeric dictionaries printed on standard output and saves full multi-file experiment snapshots into the ResearchOS experiment tracker.
+6. **Comparison & Manuscript Figure Integration:** Saved experiments seamlessly participate in the 2–5 run comparison matrix and LaTeX figure generation flows without backend schema modifications.
 
 ---
 
 ## 2. Contradiction Analysis vs. Existing Specifications
 
-### 2.1 Role permissions — no conflict
+### 2.1 Role Permissions & RBAC
+| Role | Playground Permissions | Specification Guarantee |
+|---|---|---|
+| **Researcher** | Create/Edit/Delete files & folders, Upload datasets, Execute code, Save experiment runs. | `feature-plan.md §4`: "Create / run experiment = Researcher only". |
+| **Supervisor** | Read-only inspection of file tree and code scripts; can inspect outputs & compare runs; Run and Save actions disabled. | `feature-plan.md §4`: "Supervisor = read-only + compare + comment". |
+| **Admin** | Restricted by AC-18 institutional privacy gate before reaching experiment data. | `specs/04-experiment-tracker.md`: AC-18 institutional privacy barrier. |
 
-| Spec constraint | How this feature respects it |
-|---|---|
-| feature-plan.md 4: "Create / run experiment = Researcher only" | Playground Run button is rendered only for Researcher role |
-| feature-plan.md 4: "Supervisor = read-only + compare + comment" | Supervisor sees the tab but Run and Save are hidden |
-| feature-plan.md 4: "Admin = no visibility of parameters or results" | Admin hits the existing AC-18 gate and never reaches the playground tab |
-| data-model.md 4 Experiment.ownerId is server-derived | SaveRunAsExperimentModal never sends ownerId; Express derives from JWT |
-| Spec 01 RBAC ownership beats role | POST /projects/:projectId/experiments already enforces project-member check |
-
-### 2.2 Data model — no conflict, no new tables
-
-The playground saves runs as **standard Experiment rows** using the existing schema:
-
-config JSON for a playground-sourced experiment:
-`json
+### 2.2 Data Model & Multi-File Storage
+Saved experiments store their reproducibility context in the existing `config` JSON field without requiring schema migrations:
+```json
 {
   "source": "playground",
   "language": "python",
-  "codeSnippet": "# user code",
-  "environment": "Browser / Pyodide 0.26.x",
-  "pyodideVersion": "0.26.x",
-  "model": "",
-  "dataset": "",
-  "hardware": "Browser WASM",
-  "codeCommit": "",
-  "environmentNotes": ""
+  "entrypoint": "main.py",
+  "codeSnippet": "# Content of main.py",
+  "environment": "Browser / Pyodide 0.26.4",
+  "hardware": "Browser WASM Sandbox",
+  "files": [
+    { "path": "main.py", "content": "..." },
+    { "path": "models/classifier.py", "content": "..." },
+    { "path": "utils/metrics.py", "content": "..." },
+    { "path": "data/dataset_sample.json", "content": "..." }
+  ],
+  "dataset": "data/iris.csv (Uploaded) / In-Memory",
+  "environmentNotes": "Executed in Pyodide WASM sandbox with 4 project files"
 }
-`
-
-This is valid per Spec 04 which says config supports "at minimum" those fields;
-adding extra keys (source, language, codeSnippet, pyodideVersion) is allowed.
-
-### 2.3 API endpoints — no new routes needed
-
-| Existing endpoint | Usage |
-|---|---|
-| POST /projects/:projectId/experiments | Save a run as an experiment |
-| GET /projects/:projectId/experiments | Refresh list after save |
-| GET /experiments/compare?ids= | Compare saved runs |
-
-### 2.4 FileAsset — no conflict
-
-outputFileIds will be empty array for playground-created experiments in MVP.
-No Supabase Storage interaction needed.
-
-### 2.5 Manuscript integration — consistent
-
-ExperimentGraphicalVisualizer already supports "Save to Paper Figures" and
-InsertFigureModal already has "Saved Experiment Figures" tab (Spec 04 and 05
-linkage). A playground-saved experiment participates without any changes because
-it is stored as a standard Experiment row.
+```
 
 ---
 
-## 3. Architecture Overview
+## 3. Architecture Overview & Layout
 
-`
+```
 ExperimentTrackerPage.tsx
-├── Tab 0: "Experiment Runs"   [existing grid]
-└── Tab 1: "Code Playground"   [NEW]
-      └── CodePlayground.tsx
-            ├── Left: Monaco Editor (language selector, toolbar)
-            ├── Right: CodePlaygroundOutputPanel.tsx
-            │         stdout / stderr / metrics table / run history
-            └── Bottom Bar: [Run] [Save as Experiment] [Clear]
-`
+├── Top Bar: Project Selector [ "Multimodal LLMs" ▼ ] | Tab Switcher: [ 📊 Experiment Runs ] [ 🐍 Code Playground (Python WASM) ]
+└── CodePlayground.tsx (VS Code Workspace Layout)
+      ├── 📁 Left Panel: FileTreeExplorer (220px collapsible)
+      │     ├── Workspace Header: "PROJECT WORKSPACE" (+ New File, + New Folder, ⬆ Upload Dataset)
+      │     └── Tree View:
+      │           ├── 📁 models/
+      │           │     └── 📄 classifier.py
+      │           ├── 📁 utils/
+      │           │     └── 📄 metrics.py
+      │           ├── 📁 data/
+      │           │     └── 📊 benchmark.csv (Uploaded dataset)
+      │           ├── 📄 config.json
+      │           └── 🚀 main.py [Entrypoint badge]
+      │
+      ├── 💻 Center Panel: Monaco Editor & Tab Bar
+      │     ├── EditorTabs: [ 🚀 main.py ✕ ] [ 📄 classifier.py ✕ ] [ 📊 benchmark.csv ✕ ]
+      │     └── Monaco Editor (syntax highlighting, line numbers, autocomplete, linting)
+      │
+      └── 🖥️ Right Panel: CodePlaygroundOutputPanel (Console / Metrics / History)
+            ├── Console: Real-time STDOUT & STDERR with Traceback rendering
+            ├── Metrics: Auto-detected metric cards (accuracy, loss, F1)
+            └── Actions: [ ▶ Run Code ] [ 💾 Save Run as Experiment ]
+```
 
 ---
 
-## 4. Execution Engine — Pyodide (Python WASM)
+## 4. Virtual File System & Pyodide Integration
 
-- Loaded lazily from CDN on first Run click (not in app bundle).
-- CDN URL: https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js
-- Wrapped in singleton promise — multiple clicks do not create multiple instances.
-- stdout/stderr captured via custom stream redirection.
-- Metric extraction: if last non-empty stdout line is valid JSON with all-numeric
-  values, those key-value pairs become the experiment metrics.
-- Python exceptions shown in red stderr panel; browser tab never crashes.
-- Timeout: 30-second Web Worker timeout kills infinite loops gracefully.
+### 4.1 Pyodide Virtual File System (Emscripten VFS) Mounting
+Prior to executing Python code, all files in the project workspace are automatically synchronized into Pyodide's in-memory `/workspace` filesystem:
 
----
+```ts
+// Sync project files into Pyodide Emscripten VFS
+export function syncWorkspaceToPyodide(pyodide: any, files: ProjectWorkspaceFile[]) {
+  // Ensure base workspace directory exists
+  if (!pyodide.FS.analyzePath('/workspace').exists) {
+    pyodide.FS.mkdir('/workspace');
+  }
 
-## 5. Frontend Components
+  // Create subdirectories and write file contents
+  for (const file of files) {
+    const parts = file.path.split('/');
+    let currentPath = '/workspace';
+    
+    // Create intermediate directories if needed
+    for (let i = 0; i < parts.length - 1; i++) {
+      currentPath += '/' + parts[i];
+      if (!pyodide.FS.analyzePath(currentPath).exists) {
+        pyodide.FS.mkdir(currentPath);
+      }
+    }
 
-### 5.1 CodePlayground.tsx
-Location: apps/web/src/components/experiments/CodePlayground.tsx
+    // Write file content
+    const fullFilePath = `/workspace/${file.path}`;
+    pyodide.FS.writeFile(fullFilePath, file.content, { encoding: 'utf8' });
+  }
 
-Props:
-  projects: Project[]
-  activeProjectId: string
-  currentUserRole: UserRole
-  onExperimentSaved: () => void  — triggers refetch in parent
+  // Add /workspace to Python sys.path so modules can import directly
+  pyodide.runPython(`
+import sys
+if '/workspace' not in sys.path:
+    sys.path.insert(0, '/workspace')
+`);
+}
+```
 
-Internal RunRecord type:
-  id: string (UUID)
-  timestamp: string (ISO)
-  code: string
-  language: 'python'
-  stdout: string
-  stderr: string
-  exitCode: number (0 = success)
-  metrics: Record<string, number>
-  durationMs: number
+### 4.2 Cross-File Python Imports Support
+Researchers can structure clean, modular Python projects:
+```python
+# main.py
+from models.classifier import SimpleClassifier
+from utils.metrics import calculate_accuracy
+import csv
+import json
 
-### 5.2 CodePlaygroundOutputPanel.tsx
-Location: apps/web/src/components/experiments/CodePlaygroundOutputPanel.tsx
+# Read local uploaded dataset
+data = []
+with open('data/benchmark.csv', mode='r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        data.append(row)
 
-Props:
-  runHistory: RunRecord[]
-  activeRunId: string | null
-  onSelectRun: (id: string) => void
-  onSaveRun: (run: RunRecord) => void
-  isRunning: boolean
+model = SimpleClassifier()
+results = model.evaluate(data)
+accuracy = calculate_accuracy(results['predictions'], results['ground_truth'])
 
-### 5.3 SaveRunAsExperimentModal.tsx
-Location: apps/web/src/components/experiments/SaveRunAsExperimentModal.tsx
-
-Props:
-  isOpen: boolean
-  onClose: () => void
-  run: RunRecord
-  projects: Project[]
-  activeProjectId: string
-  onSaved: (experiment: Experiment) => void
-
-Pre-filled fields from RunRecord:
-  name = "Python Run — " + today's date (editable)
-  purpose = ModelTesting (editable dropdown)
-  date = today (editable)
-  hypothesis = "" (editable)
-  config.codeSnippet = run.code (read-only preview)
-  config.language = "python" (read-only)
-  config.environment = "Browser / Pyodide" (editable)
-  config.model = "" (editable)
-  config.dataset = "" (editable)
-  config.hardware = "Browser WASM" (editable)
-  metrics = run.metrics (editable rows)
-  observation = run.stdout.slice(0, 500) (editable)
+print("Experiment finished.")
+print(json.dumps({"accuracy": round(accuracy, 4), "samples": len(data)}))
+```
 
 ---
 
-## 6. Changes to ExperimentTrackerPage.tsx
+## 5. Dataset Upload & Ingestion Specifications
 
-### New state
-  const [activeTab, setActiveTab] = useState<'runs' | 'playground'>('runs');
+### 5.1 Local Dataset Upload
+* **Target Directory:** Default uploaded files are saved into the `data/` folder.
+* **File Types Supported:** `.csv`, `.json`, `.tsv`, `.txt`, `.npy`, `.parquet`.
+* **Size Boundary:** Client-side in-memory processing up to 50MB per file with progress bar and instant text/preview visualization.
+* **UI Controls:**
+  - Drag & drop files directly onto the `data/` folder in the file tree.
+  - "Upload Dataset" button in the file explorer toolbar opening a file picker.
 
-### New import
-  import { Code2 } from 'lucide-react';
+### 5.2 Cloud Dataset Fetching
+Researchers can stream remote datasets directly inside their Python scripts without local downloads:
+```python
+from pyodide.http import open_url
+import json
 
-### Tab bar
-  Rendered below the header bar, above the stats strip.
-  Tabs: "Experiment Runs" (Layers icon) | "Code Playground" (Code2 icon)
+# Download public academic dataset at runtime
+url = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv"
+content = open_url(url).read()
 
-### Conditional render
-  activeTab === 'runs'  → existing stats strip + filter toolbar + experiment grid
-  activeTab === 'playground' → <CodePlayground> component
+with open('data/iris.csv', 'w') as f:
+    f.write(content)
 
-### Admin gate
-  Existing AC-18 early return happens before tab bar renders.
-  Admin never sees the playground tab.
-
-### Supervisor constraint
-  When profile.role === 'Supervisor', CodePlayground receives readOnly={true}
-  which hides Run and Save buttons. Supervisor can view the editor/output
-  but cannot execute code or create experiment records.
-
----
-
-## 7. New npm Dependency
-
-Package: @monaco-editor/react
-Version: ^4.6.0
-Workspace: apps/web
-Reason: VS Code-grade syntax highlighting and keyboard shortcuts in-browser.
-Alternatives considered: CodeMirror 6 (heavier API), ace-editor (dated),
-  plain textarea (poor UX).
-
-Pyodide: loaded from CDN at runtime — NO npm package added.
-This avoids adding ~10 MB to the app bundle.
-
-Installation command:
-  cd apps/web
-  pnpm add @monaco-editor/react@^4.6.0
+print("Iris dataset fetched from cloud.")
+```
 
 ---
 
-## 8. Files to Create / Modify
+## 6. TypeScript Contracts & Data Models
 
-### New files (create)
-  apps/web/src/components/experiments/CodePlayground.tsx
-  apps/web/src/components/experiments/CodePlaygroundOutputPanel.tsx
-  apps/web/src/components/experiments/SaveRunAsExperimentModal.tsx
+### 6.1 Workspace State Contract
+```ts
+export interface ProjectWorkspaceFile {
+  id: string;
+  name: string;
+  path: string; // e.g. 'src/models/classifier.py' or 'data/iris.csv'
+  content: string;
+  fileType: 'python' | 'json' | 'csv' | 'markdown' | 'text' | 'generic';
+  isEntrypoint?: boolean;
+  isReadOnly?: boolean;
+  updatedAt: string;
+}
 
-### Modified files
-  apps/web/src/pages/dashboards/ExperimentTrackerPage.tsx
-    — add activeTab state, tab bar, conditional render, Code2 import
-  apps/web/package.json
-    — add @monaco-editor/react
+export interface ProjectWorkspaceFolder {
+  id: string;
+  name: string;
+  path: string; // e.g. 'models' or 'data'
+  isExpanded?: boolean;
+}
 
-### NOT changed (no modifications)
-  apps/api/src/routes/experiment.routes.ts
-  apps/api/src/services/experiment.service.ts
-  supabase/migrations/
-  packages/shared-types/src/index.ts  (RunRecord is local UI state only)
-  docs/data-model.md
-  docs/specs/04-experiment-tracker.md
-  Any other module spec file
+export interface ProjectWorkspace {
+  projectId: string;
+  entrypointPath: string; // e.g. 'main.py'
+  files: ProjectWorkspaceFile[];
+  folders: ProjectWorkspaceFolder[];
+  openFilePaths: string[];
+  activeFilePath: string;
+  lastModified: string;
+}
+```
 
----
-
-## 9. Data Flow
-
-1. User opens Code Playground tab
-2. CodePlayground mounts → if first run: loadPyodide() from CDN (lazy)
-3. User edits code in Monaco Editor
-4. User clicks Run
-   → handleRun():
-     startTime = performance.now()
-     pyodide.runPythonAsync(code) with stdout/stderr capture
-     durationMs = performance.now() - startTime
-     metrics = extractMetrics(stdout last line)
-     RunRecord created → appended to runHistory[]
-5. Output panel updates (stdout, stderr, metrics, run history entry)
-6. User clicks Save as Experiment
-   → SaveRunAsExperimentModal opens with pre-filled fields
-7. User reviews/edits name, purpose, hypothesis → submits
-   → api.createExperiment(projectId, CreateExperimentDto)
-   → POST /projects/:projectId/experiments
-   → Express: auth + role + project-member check
-   → ExperimentService.createExperiment() → Supabase INSERT
-   → returns Experiment
-8. onExperimentSaved() callback fires
-   → ExperimentTrackerPage.fetchExperiments() called
-   → New card appears in Experiment Runs tab
-9. User selects 2–5 experiments → clicks Compare
-   → ExperimentComparisonModal → ExperimentGraphicalVisualizer
-   [existing flow — unchanged]
+### 6.2 Default Workspace Templates per Project
+When a user opens the playground for a project for the first time, a starter multi-file project is automatically seeded:
+* `main.py` (Entrypoint script with model evaluation and metric emission)
+* `models/classifier.py` (Modular Python class definition)
+* `utils/metrics.py` (Metric helper functions)
+* `data/samples.json` (Structured test dataset)
+* `config.json` (Hyperparameters configuration)
 
 ---
 
-## 10. Implementation Steps (All Completed ✅)
+## 7. Component Architecture & File Layout
 
-- [x] **Step 1: Install dependency**
-  - Ran `pnpm --filter web add @monaco-editor/react@^4.6.0` (installed version `^4.7.0`).
-  - Lockfile updated cleanly.
+### 7.1 New & Updated Components
 
-- [x] **Step 2: Create CodePlayground.tsx**
-  - In-browser Pyodide WASM singleton loader with CDN fallback.
-  - Custom stream interception for stdout and stderr.
-  - Automatic JSON metric extraction utility.
-  - Monaco Editor integration with dark theme (`vs-dark`), Fira Code typography, syntax highlighting.
-  - Preset template switcher (Model Evaluation, Hyperparameter Tuning, Hypothesis Testing).
-  - Execution timeout protection (30-second guard).
-
-- [x] **Step 3: Create CodePlaygroundOutputPanel.tsx**
-  - Multi-tab output console (Console, Metrics, History).
-  - Monospace STDOUT / STDERR display with syntax color differentiation.
-  - Auto-extracted metrics cards.
-  - Session run history drawer with timestamp and duration metrics.
-
-- [x] **Step 4: Create SaveRunAsExperimentModal.tsx**
-  - Pre-fills experiment run name, purpose, date, code snippet, duration, and extracted metrics.
-  - Captures reproducibility metadata (`source: 'playground'`, `language: 'python'`).
-  - Allows editing hyperparameters, metrics, and observations before saving to database.
-  - Calls `api.createExperiment(projectId, dto)`.
-
-- [x] **Step 5: Modify ExperimentTrackerPage.tsx**
-  - Added `activeTab` state (`'runs' | 'playground'`).
-  - Integrated navigation tab bar (`Experiment Runs` & `Code Playground` with `Python WASM` badge).
-  - Enforced RBAC (Admin AC-18 privacy gate intact; Supervisor gets `readOnly={true}`).
-  - Wired `onExperimentSaved` to refresh project experiment list.
-
-- [x] **Step 6: Verify (manual & automated verification)**
-  - `pnpm --filter web build` builds with 0 errors.
-  - `pnpm --filter web typecheck` passes with 0 errors.
-  - Unit & component tests in `apps/web/src/tests/experiment-tracker-ui.test.tsx` pass (81/81 web tests pass).
+| Component | Path | Responsibility |
+|---|---|---|
+| **`CodePlayground.tsx`** | `apps/web/src/components/experiments/CodePlayground.tsx` | Main orchestrator managing project workspace state, Pyodide VFS syncing, execution, and layout. |
+| **`FileTreeExplorer.tsx`** | `apps/web/src/components/experiments/FileTreeExplorer.tsx` | VS Code–style file tree sidebar with folder expansion, New File, New Folder, Upload Dataset, rename/delete, and entrypoint selector. |
+| **`EditorTabs.tsx`** | `apps/web/src/components/experiments/EditorTabs.tsx` | Multi-file tab bar with close icons, dirty state indicator dots, and active tab highlights. |
+| **`DatasetUploadModal.tsx`** | `apps/web/src/components/experiments/DatasetUploadModal.tsx` | Drag & drop modal for uploading local CSV/JSON datasets into the `data/` folder. |
+| **`workspaceStorage.ts`** | `apps/web/src/lib/workspaceStorage.ts` | Project-scoped persistence layer using browser `IndexedDB` with fallback to `localStorage`. |
+| **`SaveRunAsExperimentModal.tsx`** | `apps/web/src/components/experiments/SaveRunAsExperimentModal.tsx` | Pre-populates multi-file code snapshots and metrics for saving directly to backend API. |
 
 ---
 
-## 11. Acceptance Criteria Status
+## 8. Implementation Roadmap (Phases & Steps)
 
-  [x] "Code Playground" tab appears for Researcher and Supervisor roles
-  [x] Admin is blocked by AC-18 gate and never sees the tab
-  [x] Python code editor has syntax highlighting (Monaco language="python")
-  [x] Run executes code in-browser and shows output within 10 seconds
-  [x] Pyodide loads only on first Run click, not on page load
-  [x] Last-line JSON with all-numeric values auto-extracted as metrics
-  [x] Python exceptions shown in stderr; browser tab does not crash
-  [x] Run history lists all session runs newest-first; clicking restores output
-  [x] Run and Save buttons are NOT rendered for Supervisor role
-  [x] Save as Experiment modal opens pre-filled from RunRecord
-  [x] Submitting modal calls POST /projects/:projectId/experiments (verified Network tab)
-  [x] New experiment appears in Experiment Runs tab within 2 seconds of save
-  [x] Saved experiment participates in 2–5 run compare flow
-  [x] config JSON includes source="playground", codeSnippet, language
-  [x] outputFileIds is empty array (no Storage interaction)
-  [x] Supervisor can flag playground-created experiment via existing flag modal
-  [x] All existing Spec 04 acceptance criteria remain satisfied (no regression)
+### Phase 1: Core Single-File WASM Engine (COMPLETED ✅)
+- [x] Step 1: Install `@monaco-editor/react@^4.7.0`.
+- [x] Step 2: Implement single-script `CodePlayground.tsx` with Pyodide runtime and 30s timeout guard.
+- [x] Step 3: Implement `CodePlaygroundOutputPanel.tsx` with Console, Metrics, and Run History.
+- [x] Step 4: Implement `SaveRunAsExperimentModal.tsx` pre-filling duration, code, and metrics.
+- [x] Step 5: Integrate `ExperimentTrackerPage.tsx` tab navigation and enforce RBAC rules.
+- [x] Step 6: Automated verification (TypeScript typecheck, production build, 81 unit tests passing).
 
----
-
-## 12. Out of Scope (Future Phases)
-
-  - Server-side Python execution (GPU / package access beyond Pyodide)
-  - R and SQL language execution
-  - File upload as dataset input
-  - Persistent versioned code notebooks
-  - Code-to-Git-commit linkage (auto codeCommit)
-  - Pyodide package installer UI
-  - Real-time co-editing of playground code
-
----
-
-## 13. Risk Register
-
-  Risk: Pyodide CDN unavailable
-  Mitigation: Degrade gracefully; allow manual metric entry
-
-  Risk: Pyodide takes >10s on slow connection
-  Mitigation: Progress bar during load; disable Run button with loading text
-
-  Risk: Infinite loop (while True)
-  Mitigation: 30-second timeout; terminate Pyodide worker if exceeded
-
-  Risk: Large stdout floods DOM
-  Mitigation: Cap display at 10,000 characters; append truncation notice
-
-  Risk: Monaco bundle size
-  Mitigation: @monaco-editor/react lazy-loads; minimal initial bundle impact
+### Phase 2: VS Code Project File Tree & Dataset Ingestion (READY FOR EXECUTION 🚀)
+- [ ] **Step 2.1: Workspace Storage Layer (`workspaceStorage.ts`)**
+  - Implement project-scoped IndexedDB storage keyed by `researchos_workspace_${projectId}`.
+  - Implement default workspace template generator for new projects.
+- [ ] **Step 2.2: File Tree Explorer Component (`FileTreeExplorer.tsx`)**
+  - Collapsible nested folder rendering.
+  - Actions: `+ New File`, `+ New Folder`, `⬆ Upload Dataset`, `Rename`, `Delete`.
+  - Set Entrypoint file action (marked with 🚀 badge).
+- [ ] **Step 2.3: Dataset Upload & Drag-and-Drop (`DatasetUploadModal.tsx`)**
+  - Drag-and-drop file parser for `.csv`, `.json`, `.tsv`, `.txt`.
+  - Saves uploaded datasets directly into `data/<filename>`.
+- [ ] **Step 2.4: Multi-Tab Editor Integration (`EditorTabs.tsx`)**
+  - Tab bar above Monaco editor supporting multiple open files.
+  - Tab close, active tab switching, and syntax detection per file extension.
+- [ ] **Step 2.5: Pyodide Emscripten VFS Sync**
+  - Sync all project files and subfolders into Pyodide `/workspace/` prior to execution.
+  - Configure `sys.path` to allow cross-file Python `import` statements.
+- [ ] **Step 2.6: Multi-File Snapshot in Experiment Saving**
+  - Update `SaveRunAsExperimentModal.tsx` to serialize all project files into `experiment.config.files`.
+  - Enable full reproducibility of multi-file experiments.
+- [ ] **Step 2.7: Verification & Automated Tests**
+  - Add UI tests for File Tree, Multi-Tab switching, dataset upload, and relative import execution.
+  - Verify zero TypeScript or build errors.
 
 ---
 
-## 14. Documents Read for This Plan
+## 9. Acceptance Criteria (Phase 2)
 
-  docs/data-model.md §4 — Experiment schema confirmed
-  docs/feature-plan.md §4 — Role rules confirmed
-  docs/specs/04-experiment-tracker.md — Full spec reviewed
-  docs/specs/01-auth-rbac.md — RBAC middleware pattern confirmed
-  docs/specs/02-research-workspace.md — Project access scope confirmed
-  apps/api/src/routes/experiment.routes.ts — Backend contract reviewed
-  apps/api/src/services/experiment.service.ts — Service logic reviewed
-  apps/web/src/lib/api.ts — api.createExperiment confirmed present
-  apps/web/src/pages/dashboards/ExperimentTrackerPage.tsx — Integration points mapped
-  apps/web/src/components/experiments/ExperimentGraphicalVisualizer.tsx — No changes needed
-  supabase/migrations/ listing — No new migration needed
+- [ ] **Project Scoping:** Switching the project dropdown instantly loads the specific file tree and code files for that research project.
+- [ ] **VS Code File Explorer:** Users can create, rename, and delete nested files and folders in the sidebar.
+- [ ] **Entrypoint Selection:** Users can mark any `.py` script as the main execution entrypoint.
+- [ ] **Multi-Tab Editing:** Users can open multiple files in tabs and switch between them smoothly.
+- [ ] **Dataset Upload:** Users can upload local CSV, JSON, and text datasets into the `data/` folder and inspect them in the editor.
+- [ ] **Cross-File Imports:** Running the entrypoint script successfully executes local module imports (e.g. `from utils.metrics import compute_accuracy`).
+- [ ] **Cloud Datasets:** Scripts can fetch public online datasets using `pyodide.http.open_url`.
+- [ ] **Saved Snapshot:** Saved experiments contain the complete multi-file project snapshot in `config.files`.
+- [ ] **Supervisor Mode:** Supervisors can browse all project files and folders in read-only mode (Run, Save, and Edit actions disabled).
+- [ ] **Zero Regressions:** All existing Spec 04 experiment tracking and comparison features continue to pass without error.
