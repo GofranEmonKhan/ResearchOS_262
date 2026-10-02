@@ -17,6 +17,7 @@ import {
   deleteSavedExperimentFigure,
 } from '../../lib/figureStorage';
 import { SavedExperimentFigure } from '@researchos/shared-types';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 export interface FigureAssetPayload {
   path: string;
@@ -586,16 +587,18 @@ export const InsertFigureModal: React.FC<InsertFigureModalProps> = ({
                 <label className="text-xs font-semibold text-slate-300 mb-1 block">
                   Display Width
                 </label>
-                <select
+                <HoverSelect
                   value={width}
-                  onChange={(e) => setWidth(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-900/80 border border-slate-700/80 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
-                >
-                  <option value="0.9\linewidth">0.9\linewidth (Recommended 90%)</option>
-                  <option value="\linewidth">\linewidth (Full Column 100%)</option>
-                  <option value="0.75\linewidth">0.75\linewidth (Centered 75%)</option>
-                  <option value="0.5\linewidth">0.5\linewidth (Compact 50%)</option>
-                </select>
+                  onChange={(val) => setWidth(val as any)}
+                  className="w-full"
+                  buttonClassName="w-full justify-between px-3 py-2 bg-slate-900/80 border-slate-700/80 rounded-xl text-xs text-white"
+                  options={[
+                    { value: '0.9\\linewidth', label: '0.9\\linewidth', badge: 'Recommended 90%' },
+                    { value: '\\linewidth', label: '\\linewidth', badge: 'Full Column 100%' },
+                    { value: '0.75\\linewidth', label: '0.75\\linewidth', badge: 'Centered 75%' },
+                    { value: '0.5\\linewidth', label: '0.5\\linewidth', badge: 'Compact 50%' },
+                  ]}
+                />
               </div>
             </div>
 

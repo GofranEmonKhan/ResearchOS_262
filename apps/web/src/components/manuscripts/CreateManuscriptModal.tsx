@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api.js';
 import { CreateManuscriptDto, Manuscript, Project } from '@researchos/shared-types';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 interface CreateManuscriptModalProps {
   isOpen: boolean;
@@ -83,6 +84,12 @@ export const CreateManuscriptModal: React.FC<CreateManuscriptModalProps> = ({
     }
   };
 
+  const projectOptions = (projects || []).map((p) => ({
+    value: p.id,
+    label: `${p.title} ${p.isPersonal ? '(Personal Workspace)' : '(Collaborative Project)'}`,
+    badge: p.isPersonal ? 'Personal' : 'Project',
+  }));
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
@@ -94,14 +101,14 @@ export const CreateManuscriptModal: React.FC<CreateManuscriptModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-900/50">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="create-manuscript-title" className="text-base font-bold text-white tracking-tight">
+              <h2 id="create-manuscript-title" className="text-lg font-bold text-white tracking-tight">
                 New Academic Manuscript
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-300">
                 Initiate research paper draft with structured IMRAD sections
               </p>
             </div>
@@ -124,36 +131,32 @@ export const CreateManuscriptModal: React.FC<CreateManuscriptModalProps> = ({
 
           {/* Research Project Workspace Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <Folder className="w-3.5 h-3.5 text-amber-400" />
-              Research Project Workspace <span className="text-rose-400">*</span>
+            <label className="block text-sm font-medium text-slate-200 mb-1.5 flex items-center gap-1.5">
+              <Folder className="w-4 h-4 text-amber-400" />
+              <span>Research Project Workspace</span> <span className="text-rose-400">*</span>
             </label>
             {projects && projects.length > 0 ? (
-              <select
+              <HoverSelect
                 value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
-                required
-              >
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title} {p.isPersonal ? '(Personal Workspace)' : '(Collaborative Project)'}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedProjectId}
+                placeholder="Select Research Project..."
+                className="w-full"
+                buttonClassName="w-full justify-between px-3.5 py-2.5 rounded-xl bg-slate-900 border-slate-700 text-sm text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                options={projectOptions}
+              />
             ) : (
-              <div className="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-400 flex items-center gap-2">
+              <div className="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-slate-300 flex items-center gap-2">
                 <Folder className="w-4 h-4 text-amber-500" />
                 <span>Current Project</span>
               </div>
             )}
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-xs text-slate-300 mt-1.5">
               Select the project workspace for this paper. One project can host multiple manuscript drafts.
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-slate-200 mb-1.5">
               Paper Title <span className="text-rose-400">*</span>
             </label>
             <input
@@ -161,15 +164,15 @@ export const CreateManuscriptModal: React.FC<CreateManuscriptModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Scalable Low-Rank Adaptation for Multi-Modal Foundation Models"
-              className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               required
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <Building className="w-3.5 h-3.5 text-slate-400" />
+            <label className="block text-sm font-medium text-slate-200 mb-1.5 flex items-center gap-1.5">
+              <Building className="w-4 h-4 text-slate-400" />
               Target Publication Venue (Journal / Conference)
             </label>
             <input
@@ -177,12 +180,12 @@ export const CreateManuscriptModal: React.FC<CreateManuscriptModalProps> = ({
               value={targetVenue}
               onChange={(e) => setTargetVenue(e.target.value)}
               placeholder="e.g. NeurIPS 2026, Nature Communications, IEEE TPAMI"
-              className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium text-slate-200 mb-1.5">
               Executive Abstract
             </label>
             <textarea
@@ -190,7 +193,7 @@ export const CreateManuscriptModal: React.FC<CreateManuscriptModalProps> = ({
               onChange={(e) => setAbstract(e.target.value)}
               rows={3}
               placeholder="Summarize research problem, proposed methodology, benchmark results and primary takeaways..."
-              className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+              className="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
             />
           </div>
 
@@ -201,40 +204,40 @@ export const CreateManuscriptModal: React.FC<CreateManuscriptModalProps> = ({
               id="defaultSections"
               checked={defaultSections}
               onChange={(e) => setDefaultSections(e.target.checked)}
-              className="mt-0.5 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+              className="mt-1 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
             />
             <label htmlFor="defaultSections" className="cursor-pointer select-none">
-              <span className="text-xs font-semibold text-white block">
+              <span className="text-sm font-semibold text-white block">
                 Initialize Standard IMRAD Section Structure
               </span>
-              <span className="text-[11px] text-slate-400 block mt-0.5">
+              <span className="text-xs text-slate-300 block mt-0.5">
                 Automatically scaffolds Abstract, Introduction, Related Work, Methodology, Results, and Discussion sections.
               </span>
             </label>
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white"
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !title.trim()}
-              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-xs font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
             >
               {submitting ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Creating Draft...</span>
                 </>
               ) : (
                 <>
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                   <span>Create Manuscript</span>
                 </>
               )}

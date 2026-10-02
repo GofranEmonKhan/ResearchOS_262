@@ -36,6 +36,7 @@ import {
   Bot,
   Wand2,
   X,
+  ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { api } from '../../lib/api.js';
@@ -182,6 +183,27 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
   const [sectionToDelete, setSectionToDelete] = useState<{ id: string; title: string } | null>(null);
   const [isDeletingSection, setIsDeletingSection] = useState(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
+
+  // Interactive Export Dropdown State
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const exportCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleExportMouseEnter = useCallback(() => {
+    if (exportCloseTimerRef.current) {
+      clearTimeout(exportCloseTimerRef.current);
+      exportCloseTimerRef.current = null;
+    }
+    setIsExportOpen(true);
+  }, []);
+
+  const handleExportMouseLeave = useCallback(() => {
+    if (exportCloseTimerRef.current) {
+      clearTimeout(exportCloseTimerRef.current);
+    }
+    exportCloseTimerRef.current = setTimeout(() => {
+      setIsExportOpen(false);
+    }, 150);
+  }, []);
 
   // Selected Text Snippet for Review Anchor
   const [selectedSnippet, setSelectedSnippet] = useState<string | null>(null);
@@ -809,21 +831,21 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
           {/* Version Snapshots */}
           <button
             onClick={() => setIsVersionHistoryOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white text-xs sm:text-sm font-semibold border border-slate-700 transition-colors cursor-pointer"
             title="View snapshot versions"
           >
-            <History className="w-3.5 h-3.5 text-blue-400" />
+            <History className="w-4 h-4 text-blue-400" />
             <span className="hidden sm:inline">Versions</span>
-            <span className="text-[10px] px-1 rounded bg-slate-900 text-slate-400">{versions.length}</span>
+            <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">{versions.length}</span>
           </button>
 
           {/* Manuscript Writing Guidelines */}
           <button
             onClick={() => setIsGuidelinesModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 text-xs font-semibold border border-amber-500/30 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 text-xs sm:text-sm font-semibold border border-amber-500/30 transition-colors cursor-pointer"
             title="Manuscript Writing Guidelines & Cheatsheet [Ctrl+/]"
           >
-            <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+            <HelpCircle className="w-4 h-4 text-amber-400" />
             <span className="hidden sm:inline">Guidelines</span>
           </button>
 
@@ -831,41 +853,70 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
           {userAccess.isSupervisor && (
             <button
               onClick={() => setIsAssignReviewerOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 text-xs font-semibold border border-violet-500/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 text-xs sm:text-sm font-semibold border border-violet-500/30 transition-colors cursor-pointer"
             >
-              <UserCheck className="w-3.5 h-3.5" />
+              <UserCheck className="w-4 h-4" />
               <span className="hidden sm:inline">Assign Reviewer</span>
             </button>
           )}
 
-          {/* Export Dropdown */}
-          <div className="relative group">
+          {/* Interactive Export Dropdown */}
+          <div
+            className="relative inline-block"
+            onMouseEnter={handleExportMouseEnter}
+            onMouseLeave={handleExportMouseLeave}
+          >
             <button
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+              type="button"
+              onClick={() => setIsExportOpen((prev) => !prev)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-100 text-xs sm:text-sm font-semibold border border-slate-700 transition-colors cursor-pointer shadow-sm"
+              title="Export Manuscript as Markdown, LaTeX, or BibTeX"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4 text-amber-400" />
               <span>Export</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-[#0F1420] border border-slate-800 shadow-2xl py-1 hidden group-hover:block z-50">
-              <button
-                onClick={() => handleExport('markdown')}
-                className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors flex items-center justify-between"
-              >
-                <span>Markdown (.md)</span>
-              </button>
-              <button
-                onClick={() => handleExport('latex')}
-                className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors flex items-center justify-between"
-              >
-                <span>LaTeX (.tex)</span>
-              </button>
-              <button
-                onClick={() => handleExport('bibtex')}
-                className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors flex items-center justify-between"
-              >
-                <span>BibTeX References (.bib)</span>
-              </button>
-            </div>
+
+            {isExportOpen && (
+              <div className="absolute right-0 top-full mt-1.5 w-56 rounded-2xl bg-[#0C101A] border border-slate-800 shadow-2xl shadow-black/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3 py-1.5 border-b border-slate-800/80 mb-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Export Formats</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExport('markdown');
+                    setIsExportOpen(false);
+                  }}
+                  className="w-full text-left px-3.5 py-2 text-sm text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center justify-between cursor-pointer"
+                >
+                  <span className="font-medium">Markdown Document</span>
+                  <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">.md</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExport('latex');
+                    setIsExportOpen(false);
+                  }}
+                  className="w-full text-left px-3.5 py-2 text-sm text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center justify-between cursor-pointer"
+                >
+                  <span className="font-medium">LaTeX Article</span>
+                  <span className="text-xs font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">.tex</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExport('bibtex');
+                    setIsExportOpen(false);
+                  }}
+                  className="w-full text-left px-3.5 py-2 text-sm text-slate-200 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center justify-between cursor-pointer"
+                >
+                  <span className="font-medium">BibTeX Citations</span>
+                  <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">.bib</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -881,16 +932,16 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
         <aside
           onMouseEnter={() => setIsSectionSidebarHovered(true)}
           onMouseLeave={() => setIsSectionSidebarHovered(false)}
-          className={`border-r border-slate-800 bg-[#080B12] flex flex-col shrink-0 select-none transition-all duration-300 ease-in-out ${
+          className={`border-r border-slate-800/80 bg-[#080B12] flex flex-col shrink-0 select-none transition-all duration-300 ease-in-out ${
             isSectionSidebarExpanded ? 'w-80' : 'w-[72px]'
           }`}
           aria-label="Manuscript Sections Navigator"
         >
           {/* Header */}
           <div
-            className={`border-b border-slate-800 transition-all ${
+            className={`border-b border-slate-800/80 transition-all ${
               isSectionSidebarExpanded
-                ? 'px-3.5 py-3 flex items-center justify-between bg-[#0a0e17]'
+                ? 'px-4 py-3 flex items-center justify-between bg-[#0A0F1A]/80 backdrop-blur-sm'
                 : 'p-3 flex flex-col items-center justify-center gap-1.5 cursor-pointer bg-[#080B12]'
             }`}
             onClick={!isSectionSidebarExpanded ? () => setIsSectionSidebarPinned(true) : undefined}
@@ -898,15 +949,15 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
           >
             {isSectionSidebarExpanded ? (
               <>
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="p-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
                     <Layers className="w-4 h-4" />
                   </div>
-                  <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
                       Sections
                     </span>
-                    <span className="text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
                       {sections.length}
                     </span>
                   </div>
@@ -915,7 +966,7 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                   {(userAccess.isAuthor || userAccess.isSupervisor) && (
                     <button
                       onClick={handleAddSection}
-                      className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-transparent hover:border-slate-700 cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
                       title="Add Section"
                     >
                       <Plus className="w-4 h-4" />
@@ -926,7 +977,7 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                     className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                       isSectionSidebarPinned
                         ? 'text-amber-300 bg-amber-500/20 border border-amber-500/40 shadow-sm shadow-amber-500/20'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
                     }`}
                     title={isSectionSidebarPinned ? 'Unpin sidebar (auto-collapse on hover leave)' : 'Pin sidebar open'}
                   >
@@ -939,7 +990,7 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                 <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
                   <Layers className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-mono text-amber-300 font-bold bg-amber-500/15 px-1.5 py-0.5 rounded-md border border-amber-500/30">
+                <span className="text-xs font-mono text-amber-300 font-bold bg-amber-500/15 px-1.5 py-0.5 rounded-md border border-amber-500/30">
                   {sections.length}
                 </span>
               </>
@@ -947,8 +998,8 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
           </div>
 
           {/* Section Items */}
-          <div className={`flex-1 overflow-y-auto space-y-1.5 ${
-            isSectionSidebarExpanded ? 'p-2.5' : 'p-2 flex flex-col items-center gap-1.5'
+          <div className={`flex-1 overflow-y-auto space-y-1 ${
+            isSectionSidebarExpanded ? 'p-3' : 'p-2 flex flex-col items-center gap-1.5'
           }`}>
             {sections.map((sec, index) => {
               const isActive = sec.id === activeSectionId;
@@ -957,17 +1008,17 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                   key={sec.id}
                   className={`group relative rounded-xl transition-all ${
                     isSectionSidebarExpanded
-                      ? `px-3 py-2.5 flex items-center justify-between border ${
+                      ? `px-3 py-2 flex items-center justify-between border ${
                           isActive
-                            ? 'bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-amber-500/40 text-white shadow-sm shadow-amber-950/20'
-                            : 'bg-slate-900/30 border-slate-800/80 hover:border-slate-700/60 hover:bg-slate-800/50 text-slate-300'
+                            ? 'bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-amber-500/35 text-white shadow-sm shadow-amber-950/20'
+                            : 'border-transparent hover:border-slate-800 hover:bg-slate-800/40 text-slate-300'
                         }`
                       : 'w-full flex justify-center py-0.5'
                   }`}
                 >
-                  {/* Active Indicator Bar */}
+                  {/* Active Left Glow Bar */}
                   {isActive && (
-                    <div className="absolute left-0 top-2 bottom-2 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-r shadow-[0_0_10px_rgba(245,158,11,0.7)]" />
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-r shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
                   )}
 
                   {isSectionSidebarExpanded ? (
@@ -977,15 +1028,15 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                         className="flex items-center gap-2.5 text-left flex-1 min-w-0 pr-1 cursor-pointer"
                         title={`${index + 1}. ${sec.title} (${(sec.wordCount || 0).toLocaleString()} words)`}
                       >
-                        <span className={`w-5 h-5 rounded-md flex items-center justify-center font-mono text-[10px] font-bold shrink-0 transition-colors ${
+                        <span className={`w-5 h-5 rounded-md flex items-center justify-center font-mono text-xs font-bold shrink-0 transition-colors ${
                           isActive
                             ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/30'
-                            : 'bg-slate-800/90 text-slate-400 border border-slate-700/50 group-hover:bg-slate-700/80 group-hover:text-slate-200'
+                            : 'text-slate-400 group-hover:text-slate-200 group-hover:bg-slate-800/80'
                         }`}>
                           {index + 1}
                         </span>
-                        <span className={`text-xs tracking-tight truncate flex-1 min-w-0 ${
-                          isActive ? 'text-white font-semibold' : 'text-slate-300 font-medium group-hover:text-white'
+                        <span className={`text-sm tracking-tight truncate flex-1 min-w-0 ${
+                          isActive ? 'text-white font-bold' : 'text-slate-200 font-medium group-hover:text-white'
                         }`}>
                           {sec.title}
                         </span>
@@ -997,20 +1048,20 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
                       </button>
 
                       <div className="flex items-center gap-1 shrink-0 relative">
-                        {/* Word count badge (fades out on hover for authors/supervisors so action buttons take zero layout shift) */}
-                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md transition-opacity duration-150 ${
+                        {/* Word count badge */}
+                        <span className={`text-xs font-mono px-2 py-0.5 rounded-md transition-opacity duration-150 ${
                           userAccess.isAuthor || userAccess.isSupervisor ? 'group-hover:opacity-0' : ''
                         } ${
                           isActive
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/35 font-medium'
-                            : 'bg-slate-800/80 text-slate-400 border border-slate-700/50 group-hover:text-slate-300'
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold'
+                            : 'text-slate-400 group-hover:text-slate-200'
                         }`}>
                           {(sec.wordCount || 0).toLocaleString()}w
                         </span>
 
-                        {/* Reorder / Delete tools on hover - absolutely positioned over word count badge */}
+                        {/* Reorder / Delete tools on hover */}
                         {(userAccess.isAuthor || userAccess.isSupervisor) && (
-                          <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity duration-150 bg-slate-900/95 rounded-md p-0.5 border border-slate-700/80 shadow-md">
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity duration-150 bg-slate-900/95 rounded-lg p-0.5 border border-slate-700/80 shadow-md">
                             {index > 0 && (
                               <button
                                 onClick={(e) => {
@@ -1075,20 +1126,20 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
 
           {/* Bottom Word Count Footer */}
           {isSectionSidebarExpanded ? (
-            <div className="p-3 border-t border-slate-800 bg-[#080B12] flex items-center justify-between text-xs">
-              <div className="flex flex-col">
-                <span className="text-slate-400 font-medium text-[11px]">Total Manuscript</span>
-                <span className="text-[10px] text-slate-500">
+            <div className="p-3.5 border-t border-slate-800/80 bg-[#0A0F1A]/90 flex items-center justify-between text-xs">
+              <div className="flex flex-col space-y-0.5">
+                <span className="text-slate-300 font-semibold text-xs">Total Manuscript</span>
+                <span className="text-[11px] text-slate-400 font-medium">
                   ~{Math.max(1, Math.ceil(sections.reduce((acc, s) => acc + (s.wordCount || 0), 0) / 220))} min read · {sections.length} sections
                 </span>
               </div>
-              <span className="font-mono font-bold text-amber-400 text-xs bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">
+              <span className="font-mono font-bold text-amber-300 text-xs sm:text-sm bg-amber-500/10 px-2.5 py-1 rounded-xl border border-amber-500/20 shadow-sm">
                 {sections.reduce((acc, s) => acc + (s.wordCount || 0), 0).toLocaleString()} words
               </span>
             </div>
           ) : (
             <div
-              className="p-2.5 border-t border-slate-800 flex flex-col items-center justify-center text-[10px] font-mono cursor-pointer hover:bg-slate-900/50 transition-colors"
+              className="p-2.5 border-t border-slate-800/80 flex flex-col items-center justify-center text-xs font-mono cursor-pointer hover:bg-slate-900/50 transition-colors"
               title={`Total manuscript words: ${sections.reduce((acc, s) => acc + (s.wordCount || 0), 0).toLocaleString()}`}
               onClick={() => setIsSectionSidebarPinned(true)}
             >

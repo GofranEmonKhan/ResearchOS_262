@@ -19,6 +19,7 @@ import { Manuscript, ManuscriptStatus, Project } from '@researchos/shared-types'
 import { WorkspaceLayout } from '../../components/layout/WorkspaceLayout.js';
 import { CreateManuscriptModal } from '../../components/manuscripts/CreateManuscriptModal.js';
 import { NoticeModal } from '../../components/common/NoticeModal.js';
+import { HoverSelect } from '../../components/common/HoverSelect.js';
 import { supabase } from '../../supabase.js';
 
 interface ManuscriptsPageProps {
@@ -81,37 +82,37 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
     switch (status) {
       case 'Draft':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-200 border border-slate-700">
             Draft
           </span>
         );
       case 'UnderInternalReview':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
             Under Review
           </span>
         );
       case 'Revising':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/30">
             Revising
           </span>
         );
       case 'ReadyForSubmission':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
             Ready for Submission
           </span>
         );
       case 'Submitted':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/30">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-500/15 text-violet-300 border border-violet-500/30">
             Submitted
           </span>
         );
       case 'Published':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/30">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-500/15 text-teal-200 border border-teal-500/30">
             Published
           </span>
         );
@@ -146,14 +147,14 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded border border-amber-500/30">
                   Module 05: Academic Publishing
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 Manuscript Writing & Peer Review
               </h1>
-              <p className="text-sm text-slate-400 max-w-xl">
+              <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
                 Distraction-free scholarly drafting, IMRAD structure, in-text citation grounding, and rigorous internal peer review governance.
               </p>
             </div>
@@ -166,7 +167,7 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
                 }
                 setIsCreateModalOpen(true);
               }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-lg shadow-amber-600/25 transition-all shrink-0"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm shadow-lg shadow-amber-600/25 transition-all shrink-0 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>New Manuscript</span>
@@ -180,8 +181,8 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
                 <FileText className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xl font-bold text-white">{totalCount}</span>
-                <p className="text-xs text-slate-400">Total Manuscripts</p>
+                <span className="text-2xl font-bold text-white">{totalCount}</span>
+                <p className="text-xs text-slate-300 font-medium">Total Manuscripts</p>
               </div>
             </div>
 
@@ -190,8 +191,8 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
                 <MessageSquare className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xl font-bold text-white">{underReviewCount}</span>
-                <p className="text-xs text-slate-400">Under Internal Review</p>
+                <span className="text-2xl font-bold text-white">{underReviewCount}</span>
+                <p className="text-xs text-slate-300 font-medium">Under Internal Review</p>
               </div>
             </div>
 
@@ -200,8 +201,8 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xl font-bold text-white">{readyCount}</span>
-                <p className="text-xs text-slate-400">Ready / Submitted</p>
+                <span className="text-2xl font-bold text-white">{readyCount}</span>
+                <p className="text-xs text-slate-300 font-medium">Ready / Submitted</p>
               </div>
             </div>
           </div>
@@ -210,46 +211,50 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
         {/* Filter & Search Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="flex-1 relative">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search manuscripts by title, abstract, or venue..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-amber-500 transition-colors"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Status Filter */}
-            <select
+            <HoverSelect
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="Draft">Drafts</option>
-              <option value="UnderInternalReview">Under Internal Review</option>
-              <option value="Revising">Author Revisions</option>
-              <option value="ReadyForSubmission">Ready for Submission</option>
-              <option value="Submitted">Submitted</option>
-              <option value="Published">Published</option>
-            </select>
+              onChange={setStatusFilter}
+              placeholder="All Statuses"
+              className="w-48"
+              options={[
+                { value: 'ALL', label: 'All Statuses' },
+                { value: 'Draft', label: 'Drafts' },
+                { value: 'UnderInternalReview', label: 'Under Review', badge: 'Review' },
+                { value: 'Revising', label: 'Author Revisions', badge: 'Revising' },
+                { value: 'ReadyForSubmission', label: 'Ready for Submission' },
+                { value: 'Submitted', label: 'Submitted' },
+                { value: 'Published', label: 'Published' },
+              ]}
+            />
 
             {/* Project Filter */}
             {projects.length > 0 && (
-              <select
+              <HoverSelect
                 value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="px-3 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
-              >
-                <option value="">All Projects</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedProjectId}
+                placeholder="All Projects"
+                className="w-56"
+                options={[
+                  { value: '', label: 'All Projects' },
+                  ...projects.map((p) => ({
+                    value: p.id,
+                    label: p.title,
+                    badge: p.isPersonal ? 'Personal' : 'Project',
+                  })),
+                ]}
+              />
             )}
           </div>
         </div>
@@ -312,43 +317,43 @@ export const ManuscriptsPage: React.FC<ManuscriptsPageProps> = ({ onNavigate }) 
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {getStatusBadge(m.status)}
                       {project && (
-                        <span className="text-[10px] text-slate-400 flex items-center gap-1 font-medium bg-slate-900/90 px-2 py-0.5 rounded-md border border-slate-800 truncate max-w-[140px]">
-                          <Folder className="w-3 h-3 text-amber-500/80 shrink-0" />
+                        <span className="text-xs text-slate-300 flex items-center gap-1 font-medium bg-slate-900/90 px-2 py-0.5 rounded-md border border-slate-800 truncate max-w-[150px]">
+                          <Folder className="w-3.5 h-3.5 text-amber-500/80 shrink-0" />
                           <span className="truncate">{project.title}</span>
                         </span>
                       )}
                     </div>
                     {m.targetVenue && (
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1 font-medium truncate max-w-[130px]">
-                        <Building className="w-3 h-3 text-amber-400 shrink-0" />
+                      <span className="text-xs text-slate-300 flex items-center gap-1 font-medium truncate max-w-[140px]">
+                        <Building className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                         {m.targetVenue}
                       </span>
                     )}
                   </div>
 
-                  <h3 className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-2 leading-snug">
+                  <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-2 leading-snug">
                     {m.title}
                   </h3>
 
                   {m.abstract && (
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
                       {m.abstract}
                     </p>
                   )}
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
+                <div className="pt-4 mt-4 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       <Layers className="w-3.5 h-3.5" />
                       <span>{m.sections?.length || 0} sections</span>
                     </span>
-                    <span className="font-mono text-slate-400">
+                    <span className="font-mono text-slate-300 font-medium">
                       {(m.totalWordCount || 0).toLocaleString()}w
                     </span>
                   </div>
 
-                  <span className="flex items-center gap-1 text-amber-400 font-semibold group-hover:translate-x-1 transition-transform">
+                  <span className="flex items-center gap-1.5 text-amber-400 text-xs font-semibold group-hover:translate-x-1 transition-transform">
                     <span>Open Editor</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </span>

@@ -18,6 +18,7 @@ import {
   ManuscriptSection,
 } from '@researchos/shared-types';
 import { api } from '../../lib/api.js';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 interface ReviewCommentDrawerProps {
   manuscriptId: string;
@@ -459,22 +460,29 @@ export const ReviewCommentDrawer: React.FC<ReviewCommentDrawerProps> = ({
       {/* New Comment Submission Footer (For Reviewers & Supervisors) */}
       {(isReviewer || isSupervisor || isAuthor) && (
         <form onSubmit={handleAddComment} className="p-4 border-t border-slate-800 bg-slate-950/70 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
-              Add Review Comment
-            </span>
-            <div className="flex items-center gap-2">
-              <select
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <MessageSquare className="w-4 h-4 text-amber-400" />
+                <span>Add Review Comment</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">Severity Classification</span>
+            </div>
+            <div>
+              <HoverSelect
                 value={newSeverity}
-                onChange={(e) => setNewSeverity(e.target.value as ReviewCommentSeverity)}
-                className="text-[11px] bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-300 focus:outline-none focus:border-amber-500"
-              >
-                <option value="CriticalFlaw">Critical Flaw (Blocks)</option>
-                <option value="MajorScientific">Major Scientific (Blocks)</option>
-                <option value="MinorScientific">Minor Scientific</option>
-                <option value="GrammarOrTypo">Grammar / Typo</option>
-              </select>
+                onChange={(val) => setNewSeverity(val as ReviewCommentSeverity)}
+                className="w-full"
+                placement="top"
+                buttonClassName="w-full h-9 px-3 py-1.5 rounded-xl bg-slate-900 border-slate-700 text-xs text-slate-200 justify-between"
+                menuClassName="w-full left-0 right-0"
+                options={[
+                  { value: 'CriticalFlaw', label: 'Critical Flaw', badge: 'Blocks' },
+                  { value: 'MajorScientific', label: 'Major Scientific', badge: 'Blocks' },
+                  { value: 'MinorScientific', label: 'Minor Scientific', badge: 'Minor' },
+                  { value: 'GrammarOrTypo', label: 'Grammar / Typo', badge: 'Style' },
+                ]}
+              />
             </div>
           </div>
 
