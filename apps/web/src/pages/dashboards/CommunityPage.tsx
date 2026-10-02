@@ -13,9 +13,15 @@ import {
   HelpCircle,
   Mail,
   BookOpen,
+  ArrowUpDown,
+  Clock,
+  ArrowBigUp,
+  Flame,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { WorkspaceLayout } from '../../components/layout/WorkspaceLayout.js';
+import { HoverSelect } from '../../components/common/HoverSelect.js';
 import { PostCard } from '../../components/community/PostCard.js';
 import { CreatePostModal } from '../../components/community/CreatePostModal.js';
 import { PostDetailModal } from '../../components/community/PostDetailModal.js';
@@ -430,21 +436,46 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                       ? 'Search research blogs...'
                       : 'Search scientific posts...'
                   }
-                  className="w-full pl-8 pr-3 py-1.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full pl-8.5 pr-8 py-2 bg-black/40 border border-white/10 hover:border-white/20 focus:border-indigo-500 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                 />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
-              {/* Sort Dropdown for Discussions */}
+              {/* Interactive Sort Dropdown for Discussions */}
               {activeTab !== 'blogs' && (
-                <select
+                <HoverSelect
                   value={selectedSort}
-                  onChange={(e) => setSelectedSort(e.target.value as any)}
-                  className="px-3 py-1.5 bg-black/40 border border-white/10 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="top-voted">Top Voted</option>
-                  <option value="most-active">Most Active</option>
-                </select>
+                  options={[
+                    {
+                      value: 'newest',
+                      label: 'Newest First',
+                      icon: <Clock className="w-3.5 h-3.5 text-indigo-400" />,
+                    },
+                    {
+                      value: 'top-voted',
+                      label: 'Top Voted',
+                      icon: <ArrowBigUp className="w-3.5 h-3.5 text-amber-400" />,
+                    },
+                    {
+                      value: 'most-active',
+                      label: 'Most Active',
+                      icon: <Flame className="w-3.5 h-3.5 text-rose-400" />,
+                    },
+                  ]}
+                  onChange={(val) => setSelectedSort(val as any)}
+                  icon={<ArrowUpDown className="w-3.5 h-3.5 text-indigo-400" />}
+                  align="right"
+                  buttonClassName="py-2 px-3 text-xs bg-[#0F0E20]/90 border-white/10 hover:border-indigo-500/40 rounded-xl"
+                  menuClassName="w-44"
+                />
               )}
             </div>
           )}

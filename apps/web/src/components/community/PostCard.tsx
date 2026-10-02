@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare,
   CheckCircle2,
@@ -68,6 +68,19 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [isInlineTrayOpen, setIsInlineTrayOpen] = useState(false);
   const [localAnswerCount, setLocalAnswerCount] = useState(post.answersCount || 0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const optionsMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close options menu when clicking outside
+  useEffect(() => {
+    if (!showOptionsMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (optionsMenuRef.current && !optionsMenuRef.current.contains(e.target as Node)) {
+        setShowOptionsMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showOptionsMenu]);
 
   // Post inline editing state
   const [isEditingPost, setIsEditingPost] = useState(false);
@@ -264,25 +277,30 @@ export const PostCard: React.FC<PostCardProps> = ({
           </button>
 
           {/* Options Dropdown Menu */}
-          <div className="relative">
+          <div className="relative" ref={optionsMenuRef}>
             <button
               onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+              className={`p-1.5 rounded-lg transition-colors ${
+                showOptionsMenu
+                  ? 'text-white bg-white/15'
+                  : 'text-slate-400 hover:text-white hover:bg-white/10'
+              }`}
+              title="More options"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
 
             {showOptionsMenu && (
-              <div className="absolute right-0 top-8 z-30 w-44 py-1 bg-[#141327] border border-white/10 rounded-xl shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 top-8 z-30 w-48 py-1.5 bg-[#121124] border border-white/15 rounded-xl shadow-2xl backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-100">
                 <button
                   onClick={(e) => {
                     setShowOptionsMenu(false);
                     handleCopyShareLink(e);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 text-left"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors text-left"
                 >
-                  <Share2 className="w-3.5 h-3.5" />
-                  Copy Link
+                  <Share2 className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Copy Permalink</span>
                 </button>
 
                 {canModify && onEdit && (
@@ -291,10 +309,10 @@ export const PostCard: React.FC<PostCardProps> = ({
                       setShowOptionsMenu(false);
                       setIsEditingPost(true);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 text-left"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors text-left"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    Edit Post
+                    <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Edit Post</span>
                   </button>
                 )}
 
@@ -304,10 +322,10 @@ export const PostCard: React.FC<PostCardProps> = ({
                       setShowOptionsMenu(false);
                       setShowDeleteConfirm(true);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-left"
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 transition-colors text-left"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Delete Post
+                    <span>Delete Post</span>
                   </button>
                 )}
 
@@ -316,10 +334,10 @@ export const PostCard: React.FC<PostCardProps> = ({
                     setShowOptionsMenu(false);
                     onReport(post.id);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-400 hover:text-amber-300 hover:bg-white/5 text-left border-t border-white/5"
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-400 hover:text-amber-300 hover:bg-white/10 transition-colors text-left border-t border-white/10 mt-1 pt-2"
                 >
-                  <Flag className="w-3.5 h-3.5" />
-                  Report Content
+                  <Flag className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Report Content</span>
                 </button>
               </div>
             )}

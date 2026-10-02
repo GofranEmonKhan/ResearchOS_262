@@ -9,8 +9,11 @@ import {
   MessageSquare,
   Image as ImageIcon,
   Upload,
+  Globe,
+  Folder,
 } from 'lucide-react';
 import { ForumPost } from '@researchos/shared-types';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -219,20 +222,26 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
                 Link to Project (Optional)
               </label>
-              <div className="relative">
-                <select
-                  value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition-all"
-                >
-                  <option value="">Public Community Discussion (No project link)</option>
-                  {userProjects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      📁 {p.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <HoverSelect
+                value={projectId}
+                options={[
+                  {
+                    value: '',
+                    label: 'Public Community Discussion (No project link)',
+                    icon: <Globe className="w-3.5 h-3.5 text-indigo-400" />,
+                  },
+                  ...userProjects.map((p) => ({
+                    value: p.id,
+                    label: p.title,
+                    icon: <Folder className="w-3.5 h-3.5 text-amber-400" />,
+                  })),
+                ]}
+                onChange={(val) => setProjectId(val)}
+                placeholder="Select project..."
+                align="left"
+                buttonClassName="w-full py-2.5 px-4 text-xs bg-black/40 border-white/10 hover:border-indigo-500/40 rounded-xl"
+                menuClassName="w-full max-h-56"
+              />
             </div>
           )}
 
