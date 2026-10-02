@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   X,
   Plus,
@@ -9,6 +9,7 @@ import {
   Layers,
   Sparkles,
   AlertCircle,
+  FlaskConical,
 } from 'lucide-react';
 import {
   ExperimentPurpose,
@@ -16,6 +17,7 @@ import {
   CreateExperimentDto,
   Project,
 } from '@researchos/shared-types';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 interface CreateExperimentModalProps {
   isOpen: boolean;
@@ -58,6 +60,24 @@ export const CreateExperimentModal: React.FC<CreateExperimentModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const projectOptions = useMemo(() => {
+    return projects.map((p) => ({
+      value: p.id,
+      label: p.title + (p.isPersonal ? ' (Personal)' : ''),
+      icon: <Layers className="w-3.5 h-3.5 text-indigo-400" />,
+      badge: p.isPersonal ? 'Personal' : undefined,
+    }));
+  }, [projects]);
+
+  const purposeOptions = useMemo(() => [
+    { value: 'ModelTesting', label: 'Model Testing', badge: 'Model' },
+    { value: 'HyperparameterTuning', label: 'Hyperparameter Tuning', badge: 'HParams' },
+    { value: 'DatasetComparison', label: 'Dataset Comparison', badge: 'Data' },
+    { value: 'PerformanceEvaluation', label: 'Performance Evaluation', badge: 'Eval' },
+    { value: 'Baseline', label: 'Baseline', badge: 'Baseline' },
+    { value: 'Final', label: 'Final Benchmark', badge: 'Final' },
+  ], []);
 
   if (!isOpen) return null;
 
@@ -155,22 +175,23 @@ export const CreateExperimentModal: React.FC<CreateExperimentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-[#111319] border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-[#0E131F] border border-slate-700/80 rounded-2xl w-full max-w-3xl shadow-2xl shadow-black/90 overflow-hidden my-8 max-h-[90vh] flex flex-col text-slate-100">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between bg-[#0d0e12]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Layers className="w-5 h-5" />
+        <div className="px-6 py-4.5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60 shrink-0">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+              <FlaskConical className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-100">Log New Experiment Run</h2>
-              <p className="text-xs text-slate-400">Record hyperparameters, metrics, and reproducibility details</p>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">Log New Experiment Run</h2>
+              <p className="text-xs text-slate-300 font-medium">Record configuration, hyperparameters, and verified metrics</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -179,7 +200,7 @@ export const CreateExperimentModal: React.FC<CreateExperimentModalProps> = ({
         {/* Modal Body */}
         <div className="p-6 space-y-6 overflow-y-auto flex-1">
           {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-center gap-2">
+            <div className="p-3.5 bg-rose-500/15 border border-rose-500/30 rounded-xl text-rose-200 text-xs sm:text-sm font-medium flex items-center gap-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{error}</span>
             </div>
@@ -188,24 +209,21 @@ export const CreateExperimentModal: React.FC<CreateExperimentModalProps> = ({
           {/* Project & Run Name */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
                 Target Project <span className="text-rose-400">*</span>
               </label>
-              <select
+              <HoverSelect
                 value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                className="w-full bg-[#171922] border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-              >
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title} {p.isPersonal ? '(Personal)' : ''}
-                  </option>
-                ))}
-              </select>
+                options={projectOptions}
+                onChange={(val) => setProjectId(val)}
+                className="w-full"
+                buttonClassName="bg-[#141926] border-slate-700/80 text-white text-xs sm:text-sm py-2 px-3 rounded-xl"
+                placement="bottom"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
                 Experiment Run Name <span className="text-rose-400">*</span>
               </label>
               <input
@@ -213,7 +231,7 @@ export const CreateExperimentModal: React.FC<CreateExperimentModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Fine-tuned RoBERTa on SQuAD 2.0"
-                className="w-full bg-[#171922] border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#141926] border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>
@@ -221,34 +239,26 @@ export const CreateExperimentModal: React.FC<CreateExperimentModalProps> = ({
           {/* Purpose & Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
                 Experiment Purpose
               </label>
-              <select
+              <HoverSelect
                 value={purpose}
-                onChange={(e) => setPurpose(e.target.value as ExperimentPurpose)}
-                className="w-full bg-[#171922] border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-              >
-                {Object.values(EXPERIMENT_PURPOSES).map((p) => (
-                  <option key={p} value={p}>
-                    {p === 'ModelTesting' && 'Model Testing'}
-                    {p === 'HyperparameterTuning' && 'Hyperparameter Tuning'}
-                    {p === 'DatasetComparison' && 'Dataset Comparison'}
-                    {p === 'PerformanceEvaluation' && 'Performance Evaluation'}
-                    {p === 'Baseline' && 'Baseline'}
-                    {p === 'Final' && 'Final Benchmark'}
-                  </option>
-                ))}
-              </select>
+                options={purposeOptions}
+                onChange={(val) => setPurpose(val as ExperimentPurpose)}
+                className="w-full"
+                buttonClassName="bg-[#141926] border-slate-700/80 text-white text-xs sm:text-sm py-2 px-3 rounded-xl"
+                placement="bottom"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Date of Run</label>
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">Date of Run</label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-[#171922] border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#141926] border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>

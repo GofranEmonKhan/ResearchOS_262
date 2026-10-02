@@ -10,9 +10,11 @@ import {
   FileCode,
   CheckCircle2,
   ExternalLink,
+  Layers,
 } from 'lucide-react';
 import { Experiment, AlignedMetricRow } from '@researchos/shared-types';
 import { saveExperimentFigure, svgToPngDataUrl } from '../../lib/figureStorage.js';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 interface ExperimentGraphicalVisualizerProps {
   experiments: Experiment[];
@@ -37,6 +39,15 @@ export const ExperimentGraphicalVisualizer: React.FC<ExperimentGraphicalVisualiz
   const [baselineExpId, setBaselineExpId] = useState<string>(
     experiments.find((e) => e.purpose === 'Baseline')?.id || experiments[0]?.id || ''
   );
+
+  const baselineOptions = useMemo(() => {
+    return experiments.map((e) => ({
+      value: e.id,
+      label: e.name,
+      badge: e.purpose === 'Baseline' ? 'Baseline' : undefined,
+    }));
+  }, [experiments]);
+
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(() =>
     metricMatrix.filter((m) => m.isNumeric).map((m) => m.metricKey)
   );
@@ -372,18 +383,16 @@ ${metricRows.join('\n')}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-slate-400">Change Baseline:</span>
-            <select
+            <span className="text-slate-300 font-medium text-xs">Change Baseline:</span>
+            <HoverSelect
               value={baselineExpId}
-              onChange={(e) => setBaselineExpId(e.target.value)}
-              className="bg-black/60 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-indigo-500"
-            >
-              {experiments.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
-                </option>
-              ))}
-            </select>
+              options={baselineOptions}
+              onChange={(val) => setBaselineExpId(val)}
+              className="w-48 sm:w-56"
+              buttonClassName="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white"
+              size="sm"
+              placement="bottom"
+            />
           </div>
         </div>
 

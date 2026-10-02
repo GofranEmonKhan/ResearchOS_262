@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Save,
@@ -10,6 +10,7 @@ import {
   Terminal,
   FileCode,
   Layers,
+  FlaskConical,
 } from 'lucide-react';
 import {
   ExperimentPurpose,
@@ -20,6 +21,7 @@ import {
 } from '@researchos/shared-types';
 import { RunRecord } from './CodePlayground';
 import { api } from '../../lib/api';
+import { HoverSelect } from '../common/HoverSelect';
 
 interface SaveRunAsExperimentModalProps {
   isOpen: boolean;
@@ -59,6 +61,24 @@ export const SaveRunAsExperimentModal: React.FC<SaveRunAsExperimentModalProps> =
     run?.stdout ? run.stdout.trim().slice(0, 500) : ''
   );
   const [showCodePreview, setShowCodePreview] = useState(false);
+
+  const projectOptions = useMemo(() => {
+    return projects.map((p) => ({
+      value: p.id,
+      label: p.title + (p.isPersonal ? ' (Personal)' : ''),
+      icon: <Layers className="w-3.5 h-3.5 text-indigo-400" />,
+      badge: p.isPersonal ? 'Personal' : undefined,
+    }));
+  }, [projects]);
+
+  const purposeOptions = useMemo(() => [
+    { value: 'ModelTesting', label: 'Model Testing', badge: 'Model' },
+    { value: 'HyperparameterTuning', label: 'Hyperparameter Tuning', badge: 'HParams' },
+    { value: 'DatasetComparison', label: 'Dataset Comparison', badge: 'Data' },
+    { value: 'PerformanceEvaluation', label: 'Performance Evaluation', badge: 'Eval' },
+    { value: 'Baseline', label: 'Baseline', badge: 'Baseline' },
+    { value: 'Final', label: 'Final Benchmark', badge: 'Final' },
+  ], []);
 
   // Dynamic Metrics rows
   const [metricsRows, setMetricsRows] = useState<{ key: string; value: string }[]>(() => {
@@ -249,24 +269,21 @@ export const SaveRunAsExperimentModal: React.FC<SaveRunAsExperimentModalProps> =
           {/* Core Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Project <span className="text-rose-400">*</span>
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                Target Project <span className="text-rose-400">*</span>
               </label>
-              <select
+              <HoverSelect
                 value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                className="w-full bg-surface-3 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50"
-              >
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[#181a20]">
-                    {p.title} {p.isPersonal ? '(Personal)' : ''}
-                  </option>
-                ))}
-              </select>
+                options={projectOptions}
+                onChange={(val) => setProjectId(val)}
+                className="w-full"
+                buttonClassName="bg-[#141926] border-slate-700/80 text-white text-xs sm:text-sm py-2 px-3 rounded-xl"
+                placement="bottom"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
                 Experiment Name <span className="text-rose-400">*</span>
               </label>
               <input
@@ -274,41 +291,33 @@ export const SaveRunAsExperimentModal: React.FC<SaveRunAsExperimentModalProps> =
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. ResNet-50 Pyodide Baseline"
-                className="w-full bg-surface-3 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50"
+                className="w-full bg-[#141926] border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
                 Experiment Purpose
               </label>
-              <select
+              <HoverSelect
                 value={purpose}
-                onChange={(e) => setPurpose(e.target.value as ExperimentPurpose)}
-                className="w-full bg-surface-3 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50"
-              >
-                {Object.values(EXPERIMENT_PURPOSES).map((p) => (
-                  <option key={p} value={p} className="bg-[#181a20]">
-                    {p === 'ModelTesting' && 'Model Testing'}
-                    {p === 'HyperparameterTuning' && 'Hyperparameter Tuning'}
-                    {p === 'DatasetComparison' && 'Dataset Comparison'}
-                    {p === 'PerformanceEvaluation' && 'Performance Evaluation'}
-                    {p === 'Baseline' && 'Baseline'}
-                    {p === 'Final' && 'Final Benchmark'}
-                  </option>
-                ))}
-              </select>
+                options={purposeOptions}
+                onChange={(val) => setPurpose(val as ExperimentPurpose)}
+                className="w-full"
+                buttonClassName="bg-[#141926] border-slate-700/80 text-white text-xs sm:text-sm py-2 px-3 rounded-xl"
+                placement="bottom"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-200 mb-1.5">
                 Date
               </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-surface-3 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50"
+                className="w-full bg-[#141926] border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>

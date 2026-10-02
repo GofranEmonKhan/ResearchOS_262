@@ -7,6 +7,7 @@ import { ExperimentDetailModal } from '../../components/experiments/ExperimentDe
 import { SupervisorFlagModal } from '../../components/experiments/SupervisorFlagModal.js';
 import { ExperimentComparisonModal } from '../../components/experiments/ExperimentComparisonModal.js';
 import { CodePlayground } from '../../components/experiments/CodePlayground.js';
+import { HoverSelect } from '../../components/common/HoverSelect.js';
 import { api } from '../../lib/api.js';
 import {
   Experiment,
@@ -80,6 +81,22 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
   const [detailExperimentId, setDetailExperimentId] = useState<string | null>(null);
   const [flaggingExperiment, setFlaggingExperiment] = useState<Experiment | null>(null);
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
+
+  // Filter options
+  const projectOptions = useMemo(() => {
+    return projects.map((p) => ({
+      value: p.id,
+      label: p.title,
+      icon: <FolderKanban className="w-3.5 h-3.5 text-indigo-400" />,
+      badge: p.isPersonal ? 'Personal' : undefined,
+    }));
+  }, [projects]);
+
+  const statusOptions = useMemo(() => [
+    { value: 'ALL', label: 'All Statuses' },
+    { value: 'Draft', label: 'Drafts Only', badge: 'Draft' },
+    { value: 'Final', label: 'Finalized Only', badge: 'Final' },
+  ], []);
 
   // Toast / notification feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -303,31 +320,25 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
               </div>
               <span>Experiment Tracker</span>
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-300 font-medium mt-1">
               Log reproducible runs, track hyperparameters & metrics, and run multi-model comparisons
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Project Selector Dropdown */}
-            {projects.length > 0 && (
-              <div className="relative">
-                <select
-                  value={selectedProjectId}
-                  onChange={(e) => {
-                    setSelectedProjectId(e.target.value);
-                    setSelectedForCompare([]);
-                  }}
-                  className="appearance-none bg-surface-2 hover:bg-surface-3 border border-white/10 text-white text-xs font-semibold rounded-xl pl-3 pr-8 py-2 cursor-pointer transition-colors focus:outline-none focus:border-indigo-500"
-                >
-                  {projects.map((proj) => (
-                    <option key={proj.id} value={proj.id} className="bg-surface-1 text-slate-200">
-                      {proj.title}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
+            {projectOptions.length > 0 && (
+              <HoverSelect
+                value={selectedProjectId}
+                options={projectOptions}
+                onChange={(val) => {
+                  setSelectedProjectId(val);
+                  setSelectedForCompare([]);
+                }}
+                className="w-52 sm:w-64"
+                buttonClassName="bg-surface-2 hover:bg-surface-3 border border-white/10 text-white text-xs font-semibold py-2 px-3 rounded-xl"
+                placement="bottom"
+              />
             )}
 
             {activeTab === 'runs' && (
@@ -343,7 +354,7 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
                     isCompareMode
                       ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-sm'
-                      : 'bg-surface-2 hover:bg-surface-3 text-slate-300 border-white/10'
+                      : 'bg-surface-2 hover:bg-surface-3 text-slate-200 border-white/10'
                   }`}
                 >
                   <Sliders className="w-3.5 h-3.5 text-indigo-400" />
@@ -354,7 +365,7 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
                   disabled={projects.length === 0}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>New Experiment</span>
@@ -370,7 +381,7 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
             onClick={() => setActiveTab('runs')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               activeTab === 'runs'
-                ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
             }`}
           >
@@ -387,7 +398,7 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
             onClick={() => setActiveTab('playground')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               activeTab === 'playground'
-                ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
             }`}
           >
@@ -455,7 +466,7 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by experiment name, hypothesis, model, or notes..."
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-surface-2/80 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-surface-2/80 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
               />
               {searchQuery && (
                 <button
@@ -469,25 +480,25 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
 
             {/* Status Filter Dropdown */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 flex items-center gap-1">
-                <Filter className="w-3.5 h-3.5" />
+              <span className="text-xs text-slate-300 font-medium flex items-center gap-1.5 shrink-0">
+                <Filter className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Status:</span>
               </span>
-              <select
+              <HoverSelect
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value as ExperimentStatus | 'ALL')}
-                className="bg-surface-2 border border-white/10 text-xs text-slate-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-indigo-500"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="Draft">Draft Only</option>
-                <option value="Final">Final Only</option>
-              </select>
+                options={statusOptions}
+                onChange={(val) => setSelectedStatus(val as ExperimentStatus | 'ALL')}
+                className="w-36 sm:w-44"
+                buttonClassName="bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-semibold text-slate-200 py-1.5 px-2.5 rounded-xl"
+                size="sm"
+                placement="bottom"
+              />
             </div>
           </div>
 
           {/* Purpose Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            <span className="text-slate-500 text-[11px] uppercase tracking-wider font-semibold mr-1 shrink-0">
+            <span className="text-slate-400 text-[11px] uppercase tracking-wider font-semibold mr-1 shrink-0">
               Purpose:
             </span>
             {PURPOSES.map((item) => {
@@ -496,10 +507,10 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
                 <button
                   key={item.key}
                   onClick={() => setSelectedPurpose(item.key)}
-                  className={`px-3 py-1 rounded-lg font-medium transition-all shrink-0 ${
+                  className={`px-3 py-1 rounded-lg font-medium transition-all shrink-0 cursor-pointer ${
                     isActive
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-surface-2 hover:bg-surface-3 text-slate-400 hover:text-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-400/40'
+                      : 'bg-surface-2 hover:bg-surface-3 text-slate-300 hover:text-white border border-white/5'
                   }`}
                 >
                   {item.label}
