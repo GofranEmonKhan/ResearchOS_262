@@ -27,6 +27,7 @@ import {
   FolderTree,
   Rocket,
   Database,
+  Trash2,
 } from 'lucide-react';
 import { Project, UserRole, Experiment } from '@researchos/shared-types';
 import { SaveRunAsExperimentModal } from './SaveRunAsExperimentModal';
@@ -198,6 +199,14 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
   const [showExplorer, setShowExplorer] = useState<boolean>(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
+  // Adjustable split layout widths in pixels
+  const [explorerWidth, setExplorerWidth] = useState<number>(250);
+  const [outputWidth, setOutputWidth] = useState<number>(440);
+  const [isDraggingExplorer, setIsDraggingExplorer] = useState<boolean>(false);
+  const [isDraggingOutput, setIsDraggingOutput] = useState<boolean>(false);
+  const [consoleCopied, setConsoleCopied] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Execution State
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [pyodideStatus, setPyodideStatus] = useState<'unloaded' | 'loading' | 'ready' | 'error'>('unloaded');
@@ -213,6 +222,64 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
   const editorRef = useRef<any>(null);
   const isSupervisor = currentUserRole === 'Supervisor';
   const canExecute = !readOnly && !isSupervisor;
+
+  // Dragging logic for left explorer resizer
+  useEffect(() => {
+    if (!isDraggingExplorer) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const newWidth = Math.min(Math.max(e.clientX - rect.left, 160), 480);
+      setExplorerWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingExplorer(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDraggingExplorer]);
+
+  // Dragging logic for right output panel resizer
+  useEffect(() => {
+    if (!isDraggingOutput) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const newWidth = Math.min(Math.max(rect.right - e.clientX, 280), 750);
+      setOutputWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingOutput(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDraggingOutput]);
 
   // Load project workspace when active project changes
   useEffect(() => {
@@ -416,6 +483,26 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
     navigator.clipboard.writeText(activeFile.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyConsole = () => {
+    if (!activeRun) return;
+    const text = [
+      activeRun.stdout ? `--- STDOUT ---\n${activeRun.stdout}` : '',
+      activeRun.stderr ? `--- STDERR ---\n${activeRun.stderr}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+    navigator.clipboard.writeText(text);
+    setConsoleCopied(true);
+    setTimeout(() => setConsoleCopied(false), 2000);
+  };
+
+  const handleClearOutput = () => {
+    if (activeRun) {
+      setRunHistory((prev) => prev.filter((r) => r.id !== activeRun.id));
+      setActiveRunId(null);
+    }
   };
 
   const handleOpenSaveModal = (run: RunRecord) => {
@@ -641,11 +728,14 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
         </div>
       </div>
 
-      {/* Main Workspace (3-Column Split Grid) */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08]">
-        {/* Left Side: File Explorer Sidebar (2.5 cols / collapsible) */}
+      {/* Main Workspace (3-Column Resizable Split Layout) */}
+      <div ref={containerRef} className="flex-1 flex flex-row min-h-0 relative overflow-hidden">
+        {/* Left Side: File Explorer Sidebar (Resizable / Collapsible) */}
         {showExplorer && (
-          <div className="lg:col-span-3 flex flex-col min-h-0 bg-[#181a20]">
+          <div
+            style={{ width: `${explorerWidth}px` }}
+            className="shrink-0 flex flex-col min-h-0 bg-[#16181f] border-r border-white/[0.08] overflow-hidden select-none"
+          >
             <FileTreeExplorer
               files={workspace.files}
               folders={workspace.folders}
@@ -664,8 +754,25 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
           </div>
         )}
 
-        {/* Center: Multi-Tab Monaco Editor (6.5 cols or 7.5 cols if explorer collapsed) */}
-        <div className={`${showExplorer ? 'lg:col-span-5' : 'lg:col-span-7'} flex flex-col min-h-0 bg-[#1e1e1e]`}>
+        {/* Left Resizer Splitter */}
+        {showExplorer && (
+          <div
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setIsDraggingExplorer(true);
+            }}
+            title="Drag to resize File Explorer"
+            className={`w-1.5 hover:w-2 bg-white/[0.04] hover:bg-indigo-500/80 active:bg-indigo-500 cursor-col-resize z-20 flex items-center justify-center transition-all relative group shrink-0 border-x border-white/[0.04] ${
+              isDraggingExplorer ? 'bg-indigo-500 w-2 shadow-lg shadow-indigo-500/50' : ''
+            }`}
+          >
+            <div className="absolute inset-y-0 -left-1 -right-1 cursor-col-resize" />
+            <div className="w-0.5 h-6 bg-slate-600 group-hover:bg-white rounded-full transition-colors opacity-30 group-hover:opacity-100" />
+          </div>
+        )}
+
+        {/* Center: Multi-Tab Monaco Editor (Fills remaining flexible space) */}
+        <div className="flex-1 min-w-0 flex flex-col min-h-0 bg-[#1e1e1e] overflow-hidden">
           {/* Multi-File Tab Bar */}
           <EditorTabs
             openFilePaths={workspace.openFilePaths}
@@ -721,16 +828,34 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Execution Output, Metrics & History (4 cols) */}
-        <div className={`${showExplorer ? 'lg:col-span-4' : 'lg:col-span-5'} flex flex-col min-h-0 bg-surface-2/40`}>
-          {/* Output Tabs Header */}
-          <div className="flex items-center justify-between px-4 py-2.5 bg-surface-2/90 border-b border-white/[0.08] backdrop-blur-md">
+        {/* Right Resizer Splitter */}
+        <div
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setIsDraggingOutput(true);
+          }}
+          title="Drag to resize Output & Metrics sidebar"
+          className={`w-1.5 hover:w-2 bg-white/[0.04] hover:bg-indigo-500/80 active:bg-indigo-500 cursor-col-resize z-20 flex items-center justify-center transition-all relative group shrink-0 border-x border-white/[0.04] ${
+            isDraggingOutput ? 'bg-indigo-500 w-2 shadow-lg shadow-indigo-500/50' : ''
+          }`}
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1 cursor-col-resize" />
+          <div className="w-0.5 h-6 bg-slate-600 group-hover:bg-white rounded-full transition-colors opacity-30 group-hover:opacity-100" />
+        </div>
+
+        {/* Right Side: Execution Output, Metrics & History (Resizable) */}
+        <div
+          style={{ width: `${outputWidth}px` }}
+          className="shrink-0 flex flex-col min-h-0 bg-[#111319] border-l border-white/[0.08] overflow-hidden"
+        >
+          {/* Output Header with Tabs and Action Toolbar */}
+          <div className="flex items-center justify-between px-3.5 py-2.5 bg-[#161822] border-b border-white/[0.08] select-none">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setOutputTab('console')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                   outputTab === 'console'
-                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shadow-sm'
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 }`}
               >
@@ -749,7 +874,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                 onClick={() => setOutputTab('metrics')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                   outputTab === 'metrics'
-                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shadow-sm'
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 }`}
               >
@@ -766,7 +891,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                 onClick={() => setOutputTab('history')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                   outputTab === 'history'
-                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shadow-sm'
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 }`}
               >
@@ -780,40 +905,60 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
               </button>
             </div>
 
-            {/* Save Run button */}
-            {activeRun && canExecute && (
-              <button
-                onClick={() => handleOpenSaveModal(activeRun)}
-                className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>Save as Exp</span>
-              </button>
-            )}
+            {/* Quick Actions in Output Header */}
+            <div className="flex items-center gap-1.5">
+              {activeRun && (
+                <>
+                  <button
+                    onClick={handleCopyConsole}
+                    title="Copy Output"
+                    className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-surface-3/60 rounded-md transition-colors"
+                  >
+                    {consoleCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={handleClearOutput}
+                    title="Clear Output"
+                    className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-surface-3/60 rounded-md transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+
+              {activeRun && canExecute && (
+                <button
+                  onClick={() => handleOpenSaveModal(activeRun)}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 rounded-lg text-[11px] font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save as Exp</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Active Run Status Bar */}
+          {/* Active Run Status Meta Pill Bar */}
           {activeRun && (
-            <div className="flex items-center justify-between px-4 py-2 bg-surface-3/50 border-b border-white/[0.06] text-xs">
+            <div className="flex items-center justify-between px-4 py-2 bg-[#141720] border-b border-white/[0.06] text-xs">
               <div className="flex items-center gap-2">
                 {activeRun.exitCode === 0 ? (
-                  <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                  <span className="flex items-center gap-1.5 text-emerald-400 font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[11px]">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Success</span>
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-rose-400 font-medium">
+                  <span className="flex items-center gap-1.5 text-rose-400 font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-[11px]">
                     <XCircle className="w-3.5 h-3.5" />
                     <span>Error (Exit {activeRun.exitCode})</span>
                   </span>
                 )}
-                <span className="text-slate-600">•</span>
-                <span className="text-slate-400 flex items-center gap-1">
+                <span className="text-slate-400 flex items-center gap-1 font-mono text-[11px]">
                   <Clock className="w-3 h-3 text-slate-500" />
                   <span>{activeRun.durationMs}ms</span>
                 </span>
               </div>
-              <span className="text-[11px] text-slate-500">
+              <span className="text-[11px] text-slate-400 font-mono">
                 {new Date(activeRun.timestamp).toLocaleTimeString()}
               </span>
             </div>
@@ -847,14 +992,16 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
               <div className="space-y-3">
                 {!activeRun && !isRunning && (
                   <div className="h-full flex flex-col items-center justify-center text-center py-16 text-slate-500 font-sans">
-                    <Terminal className="w-10 h-10 text-slate-600 mb-3 stroke-[1.5]" />
-                    <p className="text-sm font-medium text-slate-400">
+                    <div className="w-12 h-12 rounded-2xl bg-surface-3/60 border border-white/10 flex items-center justify-center mb-3 text-slate-400 shadow-inner">
+                      <Terminal className="w-6 h-6 stroke-[1.5]" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-300">
                       {canExecute ? 'Ready to execute project' : 'Supervisor Mode Active'}
                     </p>
-                    <p className="text-xs text-slate-600 max-w-xs mt-1">
+                    <p className="text-xs text-slate-400 max-w-xs mt-1.5 leading-relaxed">
                       {canExecute ? (
                         <>
-                          Press <kbd className="px-1.5 py-0.5 bg-surface-3 rounded text-slate-300 border border-white/10 font-mono text-[11px]">Run</kbd> or <kbd className="px-1.5 py-0.5 bg-surface-3 rounded text-slate-300 border border-white/10 font-mono text-[11px]">Ctrl+Enter</kbd> to run <span className="font-mono text-indigo-400">{workspace.entrypointPath}</span> in the browser WASM sandbox.
+                          Press <kbd className="px-1.5 py-0.5 bg-surface-3 rounded text-slate-200 border border-white/10 font-mono text-[11px]">Run</kbd> or <kbd className="px-1.5 py-0.5 bg-surface-3 rounded text-slate-200 border border-white/10 font-mono text-[11px]">Ctrl+Enter</kbd> to execute <span className="font-mono text-indigo-400">{workspace.entrypointPath}</span> in the browser sandbox.
                         </>
                       ) : (
                         'In-browser execution is restricted to active project researchers.'
@@ -864,39 +1011,42 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                 )}
 
                 {isRunning && (
-                  <div className="flex items-center gap-2.5 text-indigo-300 py-6 justify-center">
-                    <div className="w-4 h-4 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />
-                    <span className="font-sans text-xs">Running {workspace.entrypointPath}...</span>
+                  <div className="flex flex-col items-center justify-center gap-3 py-16 text-indigo-300">
+                    <div className="w-6 h-6 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />
+                    <span className="font-sans text-xs font-medium">Executing {workspace.entrypointPath}...</span>
                   </div>
                 )}
 
                 {activeRun && (
                   <>
                     {activeRun.stdout && (
-                      <div className="space-y-1">
-                        <div className="text-[10px] uppercase tracking-wider text-slate-500 font-sans font-semibold">
-                          STDOUT
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-400 font-sans font-bold">
+                          <span>Standard Output (STDOUT)</span>
+                          <span className="text-slate-400 font-mono font-normal lowercase">
+                            {activeRun.stdout.trim().split('\n').length} lines
+                          </span>
                         </div>
-                        <div className="p-3 bg-black/40 border border-white/[0.06] rounded-xl text-emerald-300/90 whitespace-pre-wrap leading-relaxed select-text font-mono">
+                        <div className="p-3.5 bg-[#090a0f] border border-white/[0.08] rounded-xl text-emerald-300 font-mono text-xs whitespace-pre-wrap leading-relaxed select-text shadow-inner">
                           {activeRun.stdout}
                         </div>
                       </div>
                     )}
 
                     {activeRun.stderr && (
-                      <div className="space-y-1">
-                        <div className="text-[10px] uppercase tracking-wider text-rose-400 font-sans font-semibold">
-                          STDERR / Traceback
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-rose-400 font-sans font-bold">
+                          <span>Standard Error (Traceback)</span>
                         </div>
-                        <div className="p-3 bg-rose-950/20 border border-rose-500/20 rounded-xl text-rose-300 whitespace-pre-wrap leading-relaxed select-text font-mono">
+                        <div className="p-3.5 bg-rose-950/25 border border-rose-500/30 rounded-xl text-rose-300 font-mono text-xs whitespace-pre-wrap leading-relaxed select-text shadow-inner">
                           {activeRun.stderr}
                         </div>
                       </div>
                     )}
 
                     {!activeRun.stdout && !activeRun.stderr && (
-                      <div className="text-slate-500 italic py-4 text-center font-sans">
-                        Program executed with no console output.
+                      <div className="text-slate-400 italic py-6 text-center font-sans text-xs">
+                        Program completed with exit code 0 and empty console output.
                       </div>
                     )}
                   </>
@@ -909,15 +1059,17 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
               <div className="space-y-4 font-sans">
                 {activeRun && Object.keys(activeRun.metrics).length > 0 ? (
                   <>
-                    <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-amber-400" />
+                    <div className="p-3.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-amber-400">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
                         <div>
-                          <span className="text-xs font-semibold text-slate-200">
+                          <span className="text-xs font-bold text-slate-100">
                             Auto-Extracted Metrics ({Object.keys(activeRun.metrics).length})
                           </span>
                           <p className="text-[11px] text-slate-400">
-                            Detected from JSON payload on stdout. Ready to save as Experiment.
+                            Parsed from JSON output. Ready to log into experiment tracker.
                           </p>
                         </div>
                       </div>
@@ -927,12 +1079,12 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                       {Object.entries(activeRun.metrics).map(([key, val]) => (
                         <div
                           key={key}
-                          className="p-3 bg-surface-3/60 border border-white/10 rounded-xl flex flex-col justify-between hover:border-indigo-500/30 transition-colors"
+                          className="p-3.5 bg-[#161822] border border-white/[0.08] rounded-xl flex flex-col justify-between hover:border-indigo-500/40 transition-all group"
                         >
                           <span className="text-[11px] text-slate-400 font-medium truncate" title={key}>
                             {key}
                           </span>
-                          <span className="text-lg font-bold text-white font-mono mt-1">
+                          <span className="text-xl font-bold text-white font-mono mt-1.5">
                             {typeof val === 'number' ? val.toLocaleString(undefined, { maximumFractionDigits: 4 }) : val}
                           </span>
                         </div>
@@ -943,7 +1095,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                       <div className="pt-2">
                         <button
                           onClick={() => handleOpenSaveModal(activeRun)}
-                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-900/20 transition-all active:scale-[0.99]"
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-900/25 transition-all active:scale-[0.99]"
                         >
                           <Save className="w-4 h-4" />
                           <span>Save This Run as Experiment</span>
@@ -954,8 +1106,8 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                 ) : (
                   <div className="text-center py-12 text-slate-500">
                     <BarChart2 className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-slate-400">No metrics extracted</p>
-                    <p className="text-xs text-slate-600 max-w-xs mx-auto mt-1">
+                    <p className="text-sm font-medium text-slate-300">No metrics extracted</p>
+                    <p className="text-xs text-slate-400 max-w-xs mx-auto mt-1 leading-relaxed">
                       Print a JSON dictionary with numeric metrics on the final line (e.g. <code className="text-indigo-400">print(json.dumps(&#123;"accuracy": 0.94&#125;))</code>) to auto-extract metrics.
                     </p>
                   </div>
@@ -965,12 +1117,12 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
 
             {/* TAB: HISTORY */}
             {outputTab === 'history' && (
-              <div className="space-y-2 font-sans">
+              <div className="space-y-2.5 font-sans">
                 {runHistory.length === 0 ? (
                   <div className="text-center py-12 text-slate-500">
                     <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-slate-400">No runs in this session</p>
-                    <p className="text-xs text-slate-600">
+                    <p className="text-sm font-medium text-slate-300">No runs in this session</p>
+                    <p className="text-xs text-slate-400 mt-1">
                       Execute code to build up your session run history.
                     </p>
                   </div>
@@ -987,8 +1139,8 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                         }}
                         className={`p-3 rounded-xl border cursor-pointer transition-all ${
                           isSelected
-                            ? 'bg-indigo-500/10 border-indigo-500/40 shadow-sm'
-                            : 'bg-surface-3/40 border-white/[0.06] hover:bg-surface-3/80 hover:border-white/10'
+                            ? 'bg-indigo-500/15 border-indigo-500/50 shadow-md'
+                            : 'bg-[#161822] border-white/[0.08] hover:bg-[#1c1f2b] hover:border-white/20'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -998,23 +1150,23 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                             ) : (
                               <XCircle className="w-3.5 h-3.5 text-rose-400" />
                             )}
-                            <span className="text-xs font-semibold text-slate-200">
+                            <span className="text-xs font-bold text-slate-200">
                               Run #{runHistory.length - idx}
                             </span>
                           </div>
-                          <span className="text-[11px] text-slate-500 font-mono">
+                          <span className="text-[11px] text-slate-400 font-mono">
                             {new Date(run.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
 
                         <div className="flex items-center justify-between mt-2 text-[11px] text-slate-400">
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 font-mono">
                             <Clock className="w-3 h-3 text-slate-500" />
                             <span>{run.durationMs}ms</span>
                           </span>
 
                           {metricCount > 0 && (
-                            <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-medium">
+                            <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-medium text-[10px]">
                               {metricCount} metric{metricCount > 1 ? 's' : ''}
                             </span>
                           )}
