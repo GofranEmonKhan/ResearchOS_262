@@ -10,6 +10,10 @@ import { ExperimentComparisonModal } from '../components/experiments/ExperimentC
 import { ExperimentGraphicalVisualizer } from '../components/experiments/ExperimentGraphicalVisualizer.js';
 import { CodePlayground } from '../components/experiments/CodePlayground.js';
 import { SaveRunAsExperimentModal } from '../components/experiments/SaveRunAsExperimentModal.js';
+import { FileTreeExplorer } from '../components/experiments/FileTreeExplorer.js';
+import { EditorTabs } from '../components/experiments/EditorTabs.js';
+import { DatasetUploadModal } from '../components/experiments/DatasetUploadModal.js';
+import { createDefaultWorkspace, detectFileType } from '../lib/workspaceStorage.js';
 import {
   Experiment,
   Project,
@@ -303,11 +307,12 @@ describe('Spec 04 — Experiment Tracker UI Component Tests', () => {
       />
     );
 
-    assert.ok(html.includes('Python 3.12 (WASM Engine)'), 'Contains engine badge');
+    assert.ok(html.includes('Python 3.12 (WASM)'), 'Contains engine badge');
+    assert.ok(html.includes('Explorer'), 'Contains Explorer toggle button');
     assert.ok(html.includes('Console'), 'Contains Console tab');
     assert.ok(html.includes('Metrics'), 'Contains Metrics tab');
     assert.ok(html.includes('History'), 'Contains History tab');
-    assert.ok(html.includes('Run Code'), 'Contains Run Code button for researcher');
+    assert.ok(html.includes('Run main.py'), 'Contains Run entrypoint button for researcher');
   });
 
   it('11. CodePlayground in Supervisor view renders in read-only mode without Run/Save buttons', () => {
@@ -321,7 +326,7 @@ describe('Spec 04 — Experiment Tracker UI Component Tests', () => {
     );
 
     assert.ok(html.includes('Supervisor View Only'), 'Displays Supervisor View Only indicator');
-    assert.ok(!html.includes('Run Code'), 'Run Code button is NOT rendered for supervisor');
+    assert.ok(!html.includes('Run main.py'), 'Run Code button is NOT rendered for supervisor');
   });
 
   it('12. SaveRunAsExperimentModal renders pre-filled fields from RunRecord', () => {
@@ -353,5 +358,84 @@ describe('Spec 04 — Experiment Tracker UI Component Tests', () => {
     assert.ok(html.includes('Tracked Experiment Metrics'), 'Displays metrics section');
     assert.ok(html.includes('Save as Final Experiment'), 'Contains submit action button');
   });
+
+  it('13. FileTreeExplorer renders folders, files, entrypoint 🚀 badge, and action controls', () => {
+    const workspace = createDefaultWorkspace('proj-1');
+    const html = renderToString(
+      <FileTreeExplorer
+        files={workspace.files}
+        folders={workspace.folders}
+        activeFilePath={workspace.activeFilePath}
+        entrypointPath={workspace.entrypointPath}
+        onSelectFile={() => {}}
+        onCreateFile={() => {}}
+        onCreateFolder={() => {}}
+        onDeleteFile={() => {}}
+        onDeleteFolder={() => {}}
+        onRenameFile={() => {}}
+        onSetEntrypoint={() => {}}
+        onOpenUploadModal={() => {}}
+      />
+    );
+
+    assert.ok(html.includes('Files'), 'Contains workspace explorer header');
+    assert.ok(html.includes('main.py'), 'Renders entrypoint file');
+    assert.ok(html.includes('models'), 'Renders models folder');
+    assert.ok(html.includes('utils'), 'Renders utils folder');
+    assert.ok(html.includes('data'), 'Renders data folder');
+    assert.ok(html.includes('Upload Dataset'), 'Renders upload dataset action');
+  });
+
+  it('14. EditorTabs renders open file tabs, active highlights, and entrypoint indicators', () => {
+    const workspace = createDefaultWorkspace('proj-1');
+    const html = renderToString(
+      <EditorTabs
+        openFilePaths={['main.py', 'models/classifier.py', 'data/dataset_sample.json']}
+        activeFilePath="main.py"
+        entrypointPath="main.py"
+        files={workspace.files}
+        onSelectTab={() => {}}
+        onCloseTab={() => {}}
+      />
+    );
+
+    assert.ok(html.includes('main.py'), 'Contains main.py tab');
+    assert.ok(html.includes('classifier.py'), 'Contains classifier.py tab');
+    assert.ok(html.includes('dataset_sample.json'), 'Contains dataset_sample.json tab');
+    assert.ok(html.includes('border-t-indigo-500'), 'Active tab is highlighted with active styling');
+  });
+
+  it('15. DatasetUploadModal renders drag and drop zone, target path, and supported format chips', () => {
+    const html = renderToString(
+      <DatasetUploadModal
+        isOpen={true}
+        onClose={() => {}}
+        onUploadDataset={() => {}}
+      />
+    );
+
+    assert.ok(html.includes('Upload Project Dataset'), 'Modal title rendered');
+    assert.ok(html.includes('data/'), 'Contains target destination folder note');
+    assert.ok(html.includes('.csv'), 'Displays .csv format chip');
+    assert.ok(html.includes('.json'), 'Displays .json format chip');
+    assert.ok(html.includes('.tsv'), 'Displays .tsv format chip');
+  });
+
+  it('16. workspaceStorage creates isolated project workspaces and detects file types correctly', () => {
+    const ws1 = createDefaultWorkspace('proj-1');
+    const ws2 = createDefaultWorkspace('proj-2');
+
+    assert.equal(ws1.projectId, 'proj-1', 'Workspace 1 has proj-1 ID');
+    assert.equal(ws2.projectId, 'proj-2', 'Workspace 2 has proj-2 ID');
+    assert.equal(ws1.entrypointPath, 'main.py', 'Default entrypoint is main.py');
+    assert.ok(ws1.files.length >= 4, 'Workspace is seeded with multi-file template');
+
+    assert.equal(detectFileType('main.py'), 'python', 'detects Python');
+    assert.equal(detectFileType('config.json'), 'json', 'detects JSON');
+    assert.equal(detectFileType('data/iris.csv'), 'csv', 'detects CSV');
+    assert.equal(detectFileType('notes.md'), 'markdown', 'detects Markdown');
+    assert.equal(detectFileType('log.txt'), 'text', 'detects Text');
+  });
 });
+
 

@@ -136,6 +136,10 @@ export const SaveRunAsExperimentModal: React.FC<SaveRunAsExperimentModalProps> =
         }
       }
 
+      // Detect dataset file from snapshot
+      const dataFile = run.filesSnapshot?.find((f) => f.path.startsWith('data/'));
+      const datasetValue = dataset.trim() || dataFile?.path || undefined;
+
       const dto: CreateExperimentDto = {
         name: name.trim(),
         purpose,
@@ -144,12 +148,19 @@ export const SaveRunAsExperimentModal: React.FC<SaveRunAsExperimentModalProps> =
         config: {
           source: 'playground',
           language: 'python',
+          entrypoint: run.entrypointPath || 'main.py',
           codeSnippet: run.code,
           environment: environment.trim() || 'Browser / Pyodide',
           model: model.trim() || undefined,
-          dataset: dataset.trim() || undefined,
+          dataset: datasetValue,
           hardware: hardware.trim() || 'Browser WASM',
-          environmentNotes: `Executed in Pyodide WASM sandbox (${run.durationMs}ms duration, exit code ${run.exitCode})`,
+          environmentNotes: `Executed in Pyodide WASM sandbox (${run.durationMs}ms duration, exit code ${run.exitCode}, ${run.filesSnapshot?.length || 1} project files)`,
+          files: run.filesSnapshot?.map((f) => ({
+            path: f.path,
+            name: f.name,
+            fileType: f.fileType,
+            content: f.content,
+          })),
         },
         metrics: parsedMetrics,
         observation: observation.trim() || undefined,

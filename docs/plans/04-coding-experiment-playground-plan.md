@@ -3,7 +3,7 @@
 > **Document type:** Standalone implementation plan — do NOT embed into any existing spec or docs file.
 > **Status:** 
 > - **Phase 1 (Completed & Verified ✅):** In-browser Monaco Python Editor, Pyodide WASM Runtime, Auto-Metrics Extraction, Save Modal, Tab Integration.
-> - **Phase 2 (Planned 🚀):** VS Code–Style Project Folder Tree, Multi-File Python Execution with Pyodide VFS, Dataset Upload & Ingestion (Local + Cloud).
+> - **Phase 2 (Completed & Verified ✅):** VS Code–Style Project Folder Tree, Multi-File Python Execution with Pyodide VFS, Dataset Upload & Ingestion (Local + Cloud).
 > **Depends on:** `docs/specs/04-experiment-tracker.md`, `docs/data-model.md §4`, `docs/feature-plan.md §4`, Spec 01–02 RBAC contracts.
 > **Cross-checked against:** All Spec 00–07 files and current backend (`apps/api/`) + frontend (`apps/web/`) implementations.
 
@@ -249,41 +249,41 @@ When a user opens the playground for a project for the first time, a starter mul
 - [x] Step 5: Integrate `ExperimentTrackerPage.tsx` tab navigation and enforce RBAC rules.
 - [x] Step 6: Automated verification (TypeScript typecheck, production build, 81 unit tests passing).
 
-### Phase 2: VS Code Project File Tree & Dataset Ingestion (READY FOR EXECUTION 🚀)
-- [ ] **Step 2.1: Workspace Storage Layer (`workspaceStorage.ts`)**
+### Phase 2: VS Code Project File Tree & Dataset Ingestion (COMPLETED & VERIFIED ✅)
+- [x] **Step 2.1: Workspace Storage Layer (`workspaceStorage.ts`)**
   - Implement project-scoped IndexedDB storage keyed by `researchos_workspace_${projectId}`.
   - Implement default workspace template generator for new projects.
-- [ ] **Step 2.2: File Tree Explorer Component (`FileTreeExplorer.tsx`)**
+- [x] **Step 2.2: File Tree Explorer Component (`FileTreeExplorer.tsx`)**
   - Collapsible nested folder rendering.
   - Actions: `+ New File`, `+ New Folder`, `⬆ Upload Dataset`, `Rename`, `Delete`.
   - Set Entrypoint file action (marked with 🚀 badge).
-- [ ] **Step 2.3: Dataset Upload & Drag-and-Drop (`DatasetUploadModal.tsx`)**
+- [x] **Step 2.3: Dataset Upload & Drag-and-Drop (`DatasetUploadModal.tsx`)**
   - Drag-and-drop file parser for `.csv`, `.json`, `.tsv`, `.txt`.
   - Saves uploaded datasets directly into `data/<filename>`.
-- [ ] **Step 2.4: Multi-Tab Editor Integration (`EditorTabs.tsx`)**
+- [x] **Step 2.4: Multi-Tab Editor Integration (`EditorTabs.tsx`)**
   - Tab bar above Monaco editor supporting multiple open files.
   - Tab close, active tab switching, and syntax detection per file extension.
-- [ ] **Step 2.5: Pyodide Emscripten VFS Sync**
+- [x] **Step 2.5: Pyodide Emscripten VFS Sync**
   - Sync all project files and subfolders into Pyodide `/workspace/` prior to execution.
   - Configure `sys.path` to allow cross-file Python `import` statements.
-- [ ] **Step 2.6: Multi-File Snapshot in Experiment Saving**
+- [x] **Step 2.6: Multi-File Snapshot in Experiment Saving**
   - Update `SaveRunAsExperimentModal.tsx` to serialize all project files into `experiment.config.files`.
   - Enable full reproducibility of multi-file experiments.
-- [ ] **Step 2.7: Verification & Automated Tests**
+- [x] **Step 2.7: Verification & Automated Tests**
   - Add UI tests for File Tree, Multi-Tab switching, dataset upload, and relative import execution.
-  - Verify zero TypeScript or build errors.
+  - Verify zero TypeScript or build errors (85 tests passing).
 
 ---
 
 ## 9. Acceptance Criteria (Phase 2)
 
-- [ ] **Project Scoping:** Switching the project dropdown instantly loads the specific file tree and code files for that research project.
-- [ ] **VS Code File Explorer:** Users can create, rename, and delete nested files and folders in the sidebar.
-- [ ] **Entrypoint Selection:** Users can mark any `.py` script as the main execution entrypoint.
-- [ ] **Multi-Tab Editing:** Users can open multiple files in tabs and switch between them smoothly.
-- [ ] **Dataset Upload:** Users can upload local CSV, JSON, and text datasets into the `data/` folder and inspect them in the editor.
-- [ ] **Cross-File Imports:** Running the entrypoint script successfully executes local module imports (e.g. `from utils.metrics import compute_accuracy`).
-- [ ] **Cloud Datasets:** Scripts can fetch public online datasets using `pyodide.http.open_url`.
-- [ ] **Saved Snapshot:** Saved experiments contain the complete multi-file project snapshot in `config.files`.
-- [ ] **Supervisor Mode:** Supervisors can browse all project files and folders in read-only mode (Run, Save, and Edit actions disabled).
-- [ ] **Zero Regressions:** All existing Spec 04 experiment tracking and comparison features continue to pass without error.
+- [x] **Project Scoping:** Switching the project dropdown instantly loads the specific file tree and code files for that research project.
+- [x] **VS Code File Explorer:** Users can create, rename, and delete nested files and folders in the sidebar.
+- [x] **Entrypoint Selection:** Users can mark any `.py` script as the main execution entrypoint.
+- [x] **Multi-Tab Editing:** Users can open multiple files in tabs and switch between them smoothly.
+- [x] **Dataset Upload:** Users can upload local CSV, JSON, and text datasets into the `data/` folder and inspect them in the editor.
+- [x] **Cross-File Imports:** Running the entrypoint script successfully executes local module imports (e.g. `from utils.metrics import compute_accuracy`).
+- [x] **Cloud Datasets:** Scripts can fetch public online datasets using `pyodide.http.open_url`.
+- [x] **Saved Snapshot:** Saved experiments contain the complete multi-file project snapshot in `config.files`.
+- [x] **Supervisor Mode:** Supervisors can browse all project files and folders in read-only mode (Run, Save, and Edit actions disabled).
+- [x] **Zero Regressions:** All existing Spec 04 experiment tracking and comparison features continue to pass without error.

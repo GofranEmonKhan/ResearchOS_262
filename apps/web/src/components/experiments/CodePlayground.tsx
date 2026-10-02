@@ -5,6 +5,7 @@ const Editor: any =
   typeof MonacoEditorComponent === 'function'
     ? MonacoEditorComponent
     : (MonacoEditorComponent as any)?.default || MonacoEditorComponent;
+
 import {
   Play,
   RotateCcw,
@@ -19,14 +20,27 @@ import {
   Copy,
   Check,
   Code2,
-  FileCode,
   Info,
   AlertTriangle,
   Maximize2,
   Minimize2,
+  FolderTree,
+  Rocket,
+  Database,
 } from 'lucide-react';
 import { Project, UserRole, Experiment } from '@researchos/shared-types';
 import { SaveRunAsExperimentModal } from './SaveRunAsExperimentModal';
+import { FileTreeExplorer } from './FileTreeExplorer';
+import { EditorTabs } from './EditorTabs';
+import { DatasetUploadModal } from './DatasetUploadModal';
+import {
+  ProjectWorkspace,
+  ProjectWorkspaceFile,
+  loadProjectWorkspace,
+  saveProjectWorkspace,
+  createDefaultWorkspace,
+  detectFileType,
+} from '../../lib/workspaceStorage';
 
 export interface RunRecord {
   id: string;
@@ -38,6 +52,8 @@ export interface RunRecord {
   exitCode: number;
   metrics: Record<string, number>;
   durationMs: number;
+  entrypointPath?: string;
+  filesSnapshot?: ProjectWorkspaceFile[];
 }
 
 export interface CodePlaygroundProps {
@@ -48,108 +64,6 @@ export interface CodePlaygroundProps {
   onSaveRunRequest?: (run: RunRecord) => void;
   readOnly?: boolean;
 }
-
-const STARTER_TEMPLATES: { id: string; name: string; description: string; code: string }[] = [
-  {
-    id: 'model-evaluation',
-    name: 'Model Evaluation & Metrics',
-    description: 'Calculates precision, recall, F1, and logs JSON metrics for auto-extraction.',
-    code: `# ResearchOS Python Playground — Model Evaluation
-# Tip: Output a JSON dictionary on the final stdout line to auto-extract experiment metrics!
-import json
-import math
-
-def calculate_metrics(tp, fp, fn, tn):
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-    accuracy = (tp + tn) / (tp + tn + fp + fn)
-    return {
-        "accuracy": round(accuracy, 4),
-        "precision": round(precision, 4),
-        "recall": round(recall, 4),
-        "f1_score": round(f1, 4),
-        "loss": round(0.1428 + 0.02 * math.sin(f1), 4)
-    }
-
-print("Running baseline classification evaluation...")
-results = calculate_metrics(tp=84, fp=12, fn=16, tn=188)
-
-print("Evaluation completed successfully.")
-print(f"Metrics Summary: Accuracy={results['accuracy']}, F1={results['f1_score']}")
-print(json.dumps(results))
-`,
-  },
-  {
-    id: 'hyperparameter-tuning',
-    name: 'Hyperparameter Tuning Simulation',
-    description: 'Simulates grid search across learning rates and batch sizes.',
-    code: `# Hyperparameter Optimization Simulation
-import json
-
-experiments = [
-    {"lr": 0.001, "batch_size": 32, "val_acc": 0.912, "val_loss": 0.231},
-    {"lr": 0.0005, "batch_size": 64, "val_acc": 0.938, "val_loss": 0.178},
-    {"lr": 0.0001, "batch_size": 128, "val_acc": 0.895, "val_loss": 0.294},
-]
-
-print("Iterating over hyperparameter search space:")
-best_exp = max(experiments, key=lambda x: x["val_acc"])
-
-for i, exp in enumerate(experiments, 1):
-    print(f"Trial #{i}: lr={exp['lr']} | batch={exp['batch_size']} -> Val Acc: {exp['val_acc']*100:.1f}%")
-
-print(f"\\nOptimal Configuration: lr={best_exp['lr']}, batch_size={best_exp['batch_size']}")
-
-# Emit optimal metrics for auto-extraction
-metrics = {
-    "best_val_accuracy": best_exp["val_acc"],
-    "best_val_loss": best_exp["val_loss"],
-    "learning_rate": best_exp["lr"],
-    "batch_size": best_exp["batch_size"]
-}
-print(json.dumps(metrics))
-`,
-  },
-  {
-    id: 'statistical-test',
-    name: 'Statistical Hypothesis Testing',
-    description: 'Calculates mean, variance, and two-sample t-statistic.',
-    code: `# Statistical Hypothesis Analysis
-import json
-import math
-
-group_control = [23.4, 24.1, 22.8, 25.0, 23.9, 24.5, 23.1, 24.8]
-group_treatment = [26.2, 27.1, 25.8, 28.0, 26.9, 27.5, 26.1, 27.8]
-
-def mean(arr):
-    return sum(arr) / len(arr)
-
-def variance(arr, m):
-    return sum((x - m) ** 2 for x in arr) / (len(arr) - 1)
-
-m_c, m_t = mean(group_control), mean(group_treatment)
-v_c, v_t = variance(group_control, m_c), variance(group_treatment, m_t)
-n = len(group_control)
-
-# Pooled standard error
-se_diff = math.sqrt((v_c / n) + (v_t / n))
-t_stat = (m_t - m_c) / se_diff
-
-print(f"Control Mean: {m_c:.3f} (Var: {v_c:.3f})")
-print(f"Treatment Mean: {m_t:.3f} (Var: {v_t:.3f})")
-print(f"Calculated t-statistic: {t_stat:.4f}")
-
-metrics = {
-    "control_mean": round(m_c, 3),
-    "treatment_mean": round(m_t, 3),
-    "effect_size": round(m_t - m_c, 3),
-    "t_statistic": round(t_stat, 4)
-}
-print(json.dumps(metrics))
-`,
-  },
-];
 
 // Global singleton for Pyodide loader
 declare global {
@@ -168,7 +82,6 @@ function getPyodideInstance(): Promise<any> {
   }
 
   window.__pyodideInstancePromise = new Promise((resolve, reject) => {
-    // Check if script tag already exists
     if (window.loadPyodide) {
       window.loadPyodide({ indexURL: PYODIDE_INDEX_URL })
         .then(resolve)
@@ -195,6 +108,45 @@ function getPyodideInstance(): Promise<any> {
   });
 
   return window.__pyodideInstancePromise;
+}
+
+/**
+ * Synchronize all files in the project workspace to Pyodide Emscripten Virtual Filesystem (/workspace)
+ */
+function syncWorkspaceToPyodide(pyodide: any, files: ProjectWorkspaceFile[]) {
+  try {
+    if (!pyodide.FS.analyzePath('/workspace').exists) {
+      pyodide.FS.mkdir('/workspace');
+    }
+
+    for (const file of files) {
+      const parts = file.path.split('/');
+      let currentPath = '/workspace';
+
+      // Create intermediate directories if needed
+      for (let i = 0; i < parts.length - 1; i++) {
+        currentPath += '/' + parts[i];
+        if (!pyodide.FS.analyzePath(currentPath).exists) {
+          pyodide.FS.mkdir(currentPath);
+        }
+      }
+
+      // Write file content into Emscripten virtual filesystem
+      const fullFilePath = `/workspace/${file.path}`;
+      pyodide.FS.writeFile(fullFilePath, file.content, { encoding: 'utf8' });
+    }
+
+    // Insert /workspace into sys.path so modules can import from any folder
+    pyodide.runPython(`
+import sys
+import os
+if '/workspace' not in sys.path:
+    sys.path.insert(0, '/workspace')
+os.chdir('/workspace')
+`);
+  } catch (err) {
+    console.warn('VFS sync note:', err);
+  }
 }
 
 /**
@@ -239,8 +191,14 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
   onSaveRunRequest,
   readOnly = false,
 }) => {
-  const [selectedTemplate, setSelectedTemplate] = useState<string>(STARTER_TEMPLATES[0].id);
-  const [code, setCode] = useState<string>(STARTER_TEMPLATES[0].code);
+  const currentProjectId = activeProjectId || projects[0]?.id || 'default-project';
+
+  // Project Workspace State (persisted in IndexedDB / localStorage)
+  const [workspace, setWorkspace] = useState<ProjectWorkspace>(() => loadProjectWorkspace(currentProjectId));
+  const [showExplorer, setShowExplorer] = useState<boolean>(true);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
+
+  // Execution State
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [pyodideStatus, setPyodideStatus] = useState<'unloaded' | 'loading' | 'ready' | 'error'>('unloaded');
   const [pyodideError, setPyodideError] = useState<string | null>(null);
@@ -256,7 +214,209 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
   const isSupervisor = currentUserRole === 'Supervisor';
   const canExecute = !readOnly && !isSupervisor;
 
+  // Load project workspace when active project changes
+  useEffect(() => {
+    const loaded = loadProjectWorkspace(currentProjectId);
+    setWorkspace(loaded);
+  }, [currentProjectId]);
+
+  // Persist workspace changes
+  const updateAndSaveWorkspace = useCallback((newWorkspace: ProjectWorkspace) => {
+    setWorkspace(newWorkspace);
+    saveProjectWorkspace(newWorkspace);
+  }, []);
+
+  const activeFile =
+    workspace.files.find((f) => f.path === workspace.activeFilePath) ||
+    workspace.files.find((f) => f.path === workspace.entrypointPath) ||
+    workspace.files[0];
+
   const activeRun = runHistory.find((r) => r.id === activeRunId) || runHistory[0] || null;
+
+  const handleEditorMount: OnMount = (editor) => {
+    editorRef.current = editor;
+  };
+
+  const handleCodeChange = (newContent: string) => {
+    if (!activeFile) return;
+    const updatedFiles = workspace.files.map((f) =>
+      f.path === activeFile.path ? { ...f, content: newContent, updatedAt: new Date().toISOString() } : f
+    );
+    updateAndSaveWorkspace({
+      ...workspace,
+      files: updatedFiles,
+    });
+  };
+
+  const handleSelectFile = (filePath: string) => {
+    const isAlreadyOpen = workspace.openFilePaths.includes(filePath);
+    const newOpenPaths = isAlreadyOpen ? workspace.openFilePaths : [...workspace.openFilePaths, filePath];
+
+    updateAndSaveWorkspace({
+      ...workspace,
+      openFilePaths: newOpenPaths,
+      activeFilePath: filePath,
+    });
+  };
+
+  const handleCloseTab = (filePath: string) => {
+    const filtered = workspace.openFilePaths.filter((p) => p !== filePath);
+    const fallbackPath = filtered[filtered.length - 1] || workspace.entrypointPath || workspace.files[0]?.path || 'main.py';
+
+    updateAndSaveWorkspace({
+      ...workspace,
+      openFilePaths: filtered.length > 0 ? filtered : [fallbackPath],
+      activeFilePath: workspace.activeFilePath === filePath ? fallbackPath : workspace.activeFilePath,
+    });
+  };
+
+  const handleCreateFile = (filePath: string) => {
+    const filename = filePath.split('/').pop() || filePath;
+    const newFile: ProjectWorkspaceFile = {
+      id: `file-${crypto.randomUUID()}`,
+      name: filename,
+      path: filePath,
+      fileType: detectFileType(filename),
+      updatedAt: new Date().toISOString(),
+      content: filePath.endsWith('.py') ? `# ${filename}\n` : filePath.endsWith('.json') ? '{\n  \n}\n' : '',
+    };
+
+    // Auto-create folder if path has slash
+    const folderParts = filePath.split('/');
+    let newFolders = [...workspace.folders];
+    if (folderParts.length > 1) {
+      const folderPath = folderParts.slice(0, -1).join('/');
+      if (!newFolders.some((f) => f.path === folderPath)) {
+        newFolders.push({
+          id: `folder-${crypto.randomUUID()}`,
+          name: folderParts[folderParts.length - 2],
+          path: folderPath,
+          isExpanded: true,
+        });
+      }
+    }
+
+    updateAndSaveWorkspace({
+      ...workspace,
+      folders: newFolders,
+      files: [...workspace.files, newFile],
+      openFilePaths: [...workspace.openFilePaths, filePath],
+      activeFilePath: filePath,
+    });
+  };
+
+  const handleCreateFolder = (folderPath: string) => {
+    const folderName = folderPath.split('/').pop() || folderPath;
+    if (workspace.folders.some((f) => f.path === folderPath)) return;
+
+    const newFolder = {
+      id: `folder-${crypto.randomUUID()}`,
+      name: folderName,
+      path: folderPath,
+      isExpanded: true,
+    };
+
+    updateAndSaveWorkspace({
+      ...workspace,
+      folders: [...workspace.folders, newFolder],
+    });
+  };
+
+  const handleDeleteFile = (filePath: string) => {
+    const remainingFiles = workspace.files.filter((f) => f.path !== filePath);
+    const remainingTabs = workspace.openFilePaths.filter((p) => p !== filePath);
+    const nextActive = remainingTabs[0] || remainingFiles[0]?.path || 'main.py';
+
+    updateAndSaveWorkspace({
+      ...workspace,
+      files: remainingFiles,
+      openFilePaths: remainingTabs.length > 0 ? remainingTabs : [nextActive],
+      activeFilePath: nextActive,
+      entrypointPath: workspace.entrypointPath === filePath ? nextActive : workspace.entrypointPath,
+    });
+  };
+
+  const handleRenameFile = (oldPath: string, newPath: string) => {
+    const filename = newPath.split('/').pop() || newPath;
+    const updatedFiles = workspace.files.map((f) =>
+      f.path === oldPath
+        ? {
+            ...f,
+            name: filename,
+            path: newPath,
+            fileType: detectFileType(filename),
+            updatedAt: new Date().toISOString(),
+          }
+        : f
+    );
+
+    const updatedTabs = workspace.openFilePaths.map((p) => (p === oldPath ? newPath : p));
+
+    updateAndSaveWorkspace({
+      ...workspace,
+      files: updatedFiles,
+      openFilePaths: updatedTabs,
+      activeFilePath: workspace.activeFilePath === oldPath ? newPath : workspace.activeFilePath,
+      entrypointPath: workspace.entrypointPath === oldPath ? newPath : workspace.entrypointPath,
+    });
+  };
+
+  const handleSetEntrypoint = (filePath: string) => {
+    const updatedFiles = workspace.files.map((f) => ({
+      ...f,
+      isEntrypoint: f.path === filePath,
+    }));
+
+    updateAndSaveWorkspace({
+      ...workspace,
+      files: updatedFiles,
+      entrypointPath: filePath,
+    });
+  };
+
+  const handleUploadDataset = (newFile: ProjectWorkspaceFile) => {
+    // Check if data/ folder exists
+    let newFolders = [...workspace.folders];
+    if (!newFolders.some((f) => f.path === 'data')) {
+      newFolders.push({
+        id: `folder-data-${crypto.randomUUID()}`,
+        name: 'data',
+        path: 'data',
+        isExpanded: true,
+      });
+    }
+
+    // Replace if exists, else append
+    const existingIndex = workspace.files.findIndex((f) => f.path === newFile.path);
+    let newFiles = [...workspace.files];
+    if (existingIndex >= 0) {
+      newFiles[existingIndex] = newFile;
+    } else {
+      newFiles.push(newFile);
+    }
+
+    updateAndSaveWorkspace({
+      ...workspace,
+      folders: newFolders,
+      files: newFiles,
+      openFilePaths: [...workspace.openFilePaths, newFile.path],
+      activeFilePath: newFile.path,
+    });
+  };
+
+  const handleResetWorkspace = () => {
+    if (confirm('Reset this project workspace to default template files?')) {
+      const defaultWs = createDefaultWorkspace(currentProjectId);
+      updateAndSaveWorkspace(defaultWs);
+    }
+  };
+
+  const handleCopyCode = () => {
+    if (!activeFile) return;
+    navigator.clipboard.writeText(activeFile.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleOpenSaveModal = (run: RunRecord) => {
     if (onSaveRunRequest) {
@@ -267,37 +427,14 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
     }
   };
 
-  const handleEditorMount: OnMount = (editor) => {
-    editorRef.current = editor;
-  };
-
-  const handleTemplateChange = (templateId: string) => {
-    const template = STARTER_TEMPLATES.find((t) => t.id === templateId);
-    if (template) {
-      setSelectedTemplate(templateId);
-      setCode(template.code);
-      if (editorRef.current) {
-        editorRef.current.setValue(template.code);
-      }
-    }
-  };
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleResetCode = () => {
-    const template = STARTER_TEMPLATES.find((t) => t.id === selectedTemplate) || STARTER_TEMPLATES[0];
-    setCode(template.code);
-    if (editorRef.current) {
-      editorRef.current.setValue(template.code);
-    }
-  };
-
   const executeCode = useCallback(async () => {
     if (isRunning || !canExecute) return;
+
+    const entryFile = workspace.files.find((f) => f.path === workspace.entrypointPath) || workspace.files[0];
+    if (!entryFile) {
+      alert('No entrypoint Python script found to execute.');
+      return;
+    }
 
     setIsRunning(true);
     setOutputTab('console');
@@ -315,7 +452,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
       setPyodideStatus('ready');
       setPyodideError(null);
 
-      // Redirect stdout and stderr using Python sys module redirection
+      // Redirect stdout and stderr
       pyodide.setStdout({
         batched: (text: string) => {
           stdoutBuffer += text + '\n';
@@ -328,13 +465,16 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
         },
       });
 
-      // Execute Python code with a 30-second timeout guard
+      // Synchronize all workspace files and subfolders into Pyodide virtual filesystem
+      syncWorkspaceToPyodide(pyodide, workspace.files);
+
+      // 30-second timeout guard
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Execution timed out after 30 seconds.')), 30000)
       );
 
       await Promise.race([
-        pyodide.runPythonAsync(code),
+        pyodide.runPythonAsync(entryFile.content),
         timeoutPromise,
       ]);
     } catch (err: any) {
@@ -353,7 +493,9 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
       const newRun: RunRecord = {
         id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
-        code,
+        code: entryFile.content,
+        entrypointPath: entryFile.path,
+        filesSnapshot: workspace.files,
         language: 'python',
         stdout: stdoutBuffer,
         stderr: stderrBuffer,
@@ -370,7 +512,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
         setOutputTab('metrics');
       }
     }
-  }, [code, isRunning, canExecute, pyodideStatus]);
+  }, [workspace, isRunning, canExecute, pyodideStatus]);
 
   // Keyboard shortcut Ctrl+Enter / Cmd+Enter to run
   useEffect(() => {
@@ -384,42 +526,66 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [executeCode]);
 
+  // Determine Monaco editor language mode
+  const editorLanguage =
+    activeFile?.fileType === 'python'
+      ? 'python'
+      : activeFile?.fileType === 'json'
+      ? 'json'
+      : activeFile?.fileType === 'markdown'
+      ? 'markdown'
+      : 'text';
+
   return (
     <div
       className={`flex flex-col bg-surface-1 border border-white/[0.08] rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
-        isFullscreen ? 'fixed inset-4 z-50 rounded-2xl border-indigo-500/30' : 'h-[780px] w-full'
+        isFullscreen ? 'fixed inset-4 z-50 rounded-2xl border-indigo-500/30' : 'h-[820px] w-full'
       }`}
     >
       {/* Top Header / Toolbar */}
-      <div className="flex flex-wrap items-center justify-between px-5 py-3.5 bg-surface-2/80 border-b border-white/[0.08] backdrop-blur-md gap-3">
-        {/* Left: Engine & Template Selector */}
+      <div className="flex flex-wrap items-center justify-between px-5 py-3 bg-surface-2/90 border-b border-white/[0.08] backdrop-blur-md gap-3">
+        {/* Left: Engine, Project Scope Badge & File Tree Toggle */}
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowExplorer(!showExplorer)}
+            title={showExplorer ? 'Hide Explorer' : 'Show Explorer'}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+              showExplorer
+                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-sm'
+                : 'bg-surface-3/60 text-slate-400 border-white/10 hover:text-white'
+            }`}
+          >
+            <FolderTree className="w-4 h-4" />
+            <span className="hidden sm:inline">Explorer</span>
+          </button>
+
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
             <Code2 className="w-4 h-4 text-indigo-400" />
-            <span>Python 3.12 (WASM Engine)</span>
+            <span>Python 3.12 (WASM)</span>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium">Template:</span>
-            <select
-              value={selectedTemplate}
-              onChange={(e) => handleTemplateChange(e.target.value)}
-              className="bg-surface-3 border border-white/10 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500/50 hover:border-white/20 transition-colors cursor-pointer"
-            >
-              {STARTER_TEMPLATES.map((tmpl) => (
-                <option key={tmpl.id} value={tmpl.id} className="bg-surface-2 text-slate-200">
-                  {tmpl.name}
-                </option>
-              ))}
-            </select>
+          <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-surface-3/80 border border-white/10 text-slate-300 text-xs font-mono">
+            <Rocket className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Entry: <strong className="text-white">{workspace.entrypointPath}</strong></span>
           </div>
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
+          {!readOnly && (
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              title="Upload Dataset (.csv, .json)"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-all"
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Upload Dataset</span>
+            </button>
+          )}
+
           <button
             onClick={handleCopyCode}
-            title="Copy Code"
+            title="Copy Current File Code"
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white bg-surface-3/60 hover:bg-surface-3 border border-white/10 rounded-lg transition-all"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -427,8 +593,8 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
           </button>
 
           <button
-            onClick={handleResetCode}
-            title="Reset to Template"
+            onClick={handleResetWorkspace}
+            title="Reset Project Workspace"
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white bg-surface-3/60 hover:bg-surface-3 border border-white/10 rounded-lg transition-all"
           >
             <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
@@ -461,7 +627,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
               ) : (
                 <>
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Run Code</span>
+                  <span>{`Run ${workspace.entrypointPath}`}</span>
                   <span className="hidden xl:inline text-[10px] opacity-70 bg-indigo-700/50 px-1 rounded">⌘↵</span>
                 </>
               )}
@@ -475,33 +641,54 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
         </div>
       </div>
 
-      {/* Main Workspace (Split Grid) */}
+      {/* Main Workspace (3-Column Split Grid) */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 divide-y lg:divide-y-0 lg:divide-x divide-white/[0.08]">
-        {/* Left Side: Monaco Code Editor (7 cols) */}
-        <div className="lg:col-span-7 flex flex-col min-h-0 bg-[#1e1e1e]">
-          <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-white/[0.06] text-xs text-slate-400">
-            <div className="flex items-center gap-2">
-              <FileCode className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="text-slate-200 font-mono text-[11px]">experiment.py</span>
-            </div>
-            <div className="text-[11px] text-slate-500">
-              Pyodide Browser WASM Sandbox • In-Memory
-            </div>
+        {/* Left Side: File Explorer Sidebar (2.5 cols / collapsible) */}
+        {showExplorer && (
+          <div className="lg:col-span-3 flex flex-col min-h-0 bg-[#181a20]">
+            <FileTreeExplorer
+              files={workspace.files}
+              folders={workspace.folders}
+              activeFilePath={workspace.activeFilePath}
+              entrypointPath={workspace.entrypointPath}
+              onSelectFile={handleSelectFile}
+              onCreateFile={handleCreateFile}
+              onCreateFolder={handleCreateFolder}
+              onDeleteFile={handleDeleteFile}
+              onDeleteFolder={() => {}}
+              onRenameFile={handleRenameFile}
+              onSetEntrypoint={handleSetEntrypoint}
+              onOpenUploadModal={() => setIsUploadModalOpen(true)}
+              readOnly={!canExecute}
+            />
           </div>
+        )}
+
+        {/* Center: Multi-Tab Monaco Editor (6.5 cols or 7.5 cols if explorer collapsed) */}
+        <div className={`${showExplorer ? 'lg:col-span-5' : 'lg:col-span-7'} flex flex-col min-h-0 bg-[#1e1e1e]`}>
+          {/* Multi-File Tab Bar */}
+          <EditorTabs
+            openFilePaths={workspace.openFilePaths}
+            activeFilePath={workspace.activeFilePath}
+            files={workspace.files}
+            entrypointPath={workspace.entrypointPath}
+            onSelectTab={handleSelectFile}
+            onCloseTab={handleCloseTab}
+          />
 
           <div className="flex-1 min-h-[300px] relative">
             {typeof window === 'undefined' ? (
               <textarea
                 readOnly
-                value={code}
+                value={activeFile?.content || ''}
                 className="w-full h-full bg-[#1e1e1e] text-slate-200 font-mono text-xs p-4 resize-none focus:outline-none"
               />
             ) : (
               <Editor
                 height="100%"
-                defaultLanguage="python"
-                value={code}
-                onChange={(value: string | undefined) => setCode(value || '')}
+                language={editorLanguage}
+                value={activeFile?.content || ''}
+                onChange={(value: string | undefined) => handleCodeChange(value || '')}
                 onMount={handleEditorMount}
                 theme="vs-dark"
                 options={{
@@ -521,21 +708,21 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                   cursorBlinking: 'smooth',
                   smoothScrolling: true,
                   padding: { top: 12, bottom: 12 },
-                  readOnly: isRunning,
+                  readOnly: isRunning || !canExecute,
                 }}
               />
             )}
 
-            {/* Quick helper badge overlay */}
+            {/* Helper Overlay */}
             <div className="absolute bottom-3 right-4 pointer-events-none bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-[10px] text-slate-400 flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>Emit JSON on last line for auto-metrics</span>
+              <span>Emscripten VFS active • Multi-file imports enabled</span>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Execution Output, Metrics & History (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col min-h-0 bg-surface-2/40">
+        {/* Right Side: Execution Output, Metrics & History (4 cols) */}
+        <div className={`${showExplorer ? 'lg:col-span-4' : 'lg:col-span-5'} flex flex-col min-h-0 bg-surface-2/40`}>
           {/* Output Tabs Header */}
           <div className="flex items-center justify-between px-4 py-2.5 bg-surface-2/90 border-b border-white/[0.08] backdrop-blur-md">
             <div className="flex items-center gap-1">
@@ -639,8 +826,8 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
               <div className="mb-3 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-300 flex items-center gap-3">
                 <div className="w-4 h-4 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />
                 <div>
-                  <div className="font-semibold text-xs">Initializing Pyodide WASM...</div>
-                  <div className="text-[11px] text-indigo-400/80">Downloading Python standard libraries (~10MB CDN)</div>
+                  <div className="font-semibold text-xs">Initializing Pyodide WASM VFS...</div>
+                  <div className="text-[11px] text-indigo-400/80">Mounting multi-file project workspace & Python runtime</div>
                 </div>
               </div>
             )}
@@ -662,12 +849,12 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                   <div className="h-full flex flex-col items-center justify-center text-center py-16 text-slate-500 font-sans">
                     <Terminal className="w-10 h-10 text-slate-600 mb-3 stroke-[1.5]" />
                     <p className="text-sm font-medium text-slate-400">
-                      {canExecute ? 'Ready to execute code' : 'Supervisor Mode Active'}
+                      {canExecute ? 'Ready to execute project' : 'Supervisor Mode Active'}
                     </p>
                     <p className="text-xs text-slate-600 max-w-xs mt-1">
                       {canExecute ? (
                         <>
-                          Press <kbd className="px-1.5 py-0.5 bg-surface-3 rounded text-slate-300 border border-white/10 font-mono text-[11px]">Run</kbd> or <kbd className="px-1.5 py-0.5 bg-surface-3 rounded text-slate-300 border border-white/10 font-mono text-[11px]">Ctrl+Enter</kbd> to run your script in the browser WASM sandbox.
+                          Press <kbd className="px-1.5 py-0.5 bg-surface-3 rounded text-slate-300 border border-white/10 font-mono text-[11px]">Run</kbd> or <kbd className="px-1.5 py-0.5 bg-surface-3 rounded text-slate-300 border border-white/10 font-mono text-[11px]">Ctrl+Enter</kbd> to run <span className="font-mono text-indigo-400">{workspace.entrypointPath}</span> in the browser WASM sandbox.
                         </>
                       ) : (
                         'In-browser execution is restricted to active project researchers.'
@@ -679,7 +866,7 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
                 {isRunning && (
                   <div className="flex items-center gap-2.5 text-indigo-300 py-6 justify-center">
                     <div className="w-4 h-4 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />
-                    <span className="font-sans text-xs">Executing Python code...</span>
+                    <span className="font-sans text-xs">Running {workspace.entrypointPath}...</span>
                   </div>
                 )}
 
@@ -841,6 +1028,15 @@ export const CodePlayground: React.FC<CodePlaygroundProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Dataset Upload Modal */}
+      {isUploadModalOpen && (
+        <DatasetUploadModal
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+          onUploadDataset={handleUploadDataset}
+        />
+      )}
 
       {/* Save Run as Experiment Modal */}
       {isSaveModalOpen && runToSave && (
