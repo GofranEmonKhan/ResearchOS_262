@@ -22,6 +22,15 @@ export default {
           lavender: '#C084FC',
           light: '#DDD6FE',
         },
+        text: {
+          primary: '#F8FAFC',
+          secondary: '#CBD5E1',
+          muted: '#94A3B8',
+        },
+        border: {
+          subtle: 'rgba(255, 255, 255, 0.10)',
+          glow: 'rgba(168, 85, 247, 0.35)',
+        },
         accent: {
           cyan: '#38BDF8',
           emerald: '#10B981',
