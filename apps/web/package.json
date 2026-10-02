@@ -13,6 +13,7 @@
     "test": "tsx --test src/tests/*.test.tsx"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@researchos/shared-types": "workspace:*",
     "@supabase/supabase-js": "^2.49.1",
     "clsx": "^2.1.1",

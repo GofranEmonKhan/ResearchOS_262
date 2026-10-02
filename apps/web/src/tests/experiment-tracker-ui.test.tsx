@@ -8,6 +8,8 @@ import { SupervisorFlagModal } from '../components/experiments/SupervisorFlagMod
 import { ExperimentDetailModal } from '../components/experiments/ExperimentDetailModal.js';
 import { ExperimentComparisonModal } from '../components/experiments/ExperimentComparisonModal.js';
 import { ExperimentGraphicalVisualizer } from '../components/experiments/ExperimentGraphicalVisualizer.js';
+import { CodePlayground } from '../components/experiments/CodePlayground.js';
+import { SaveRunAsExperimentModal } from '../components/experiments/SaveRunAsExperimentModal.js';
 import {
   Experiment,
   Project,
@@ -291,4 +293,65 @@ describe('Spec 04 — Experiment Tracker UI Component Tests', () => {
     assert.ok(html.includes('Save to Paper Figures'), 'Contains Save to Paper Figures action button');
     assert.ok(html.includes('Multi-Experiment Metric Comparison Matrix'), 'Contains visualizer chart title');
   });
+
+  it('10. CodePlayground renders Python WASM engine badge, editor container, and tabs', () => {
+    const html = renderToString(
+      <CodePlayground
+        projects={mockProjects}
+        activeProjectId="proj-1"
+        currentUserRole="Researcher"
+      />
+    );
+
+    assert.ok(html.includes('Python 3.12 (WASM Engine)'), 'Contains engine badge');
+    assert.ok(html.includes('Console'), 'Contains Console tab');
+    assert.ok(html.includes('Metrics'), 'Contains Metrics tab');
+    assert.ok(html.includes('History'), 'Contains History tab');
+    assert.ok(html.includes('Run Code'), 'Contains Run Code button for researcher');
+  });
+
+  it('11. CodePlayground in Supervisor view renders in read-only mode without Run/Save buttons', () => {
+    const html = renderToString(
+      <CodePlayground
+        projects={mockProjects}
+        activeProjectId="proj-1"
+        currentUserRole="Supervisor"
+        readOnly={true}
+      />
+    );
+
+    assert.ok(html.includes('Supervisor View Only'), 'Displays Supervisor View Only indicator');
+    assert.ok(!html.includes('Run Code'), 'Run Code button is NOT rendered for supervisor');
+  });
+
+  it('12. SaveRunAsExperimentModal renders pre-filled fields from RunRecord', () => {
+    const mockRun = {
+      id: 'run-uuid-123',
+      timestamp: '2026-10-03T01:00:00.000Z',
+      code: 'import json\nprint(json.dumps({"accuracy": 0.942}))',
+      language: 'python' as const,
+      stdout: '{"accuracy": 0.942}\n',
+      stderr: '',
+      exitCode: 0,
+      metrics: { accuracy: 0.942 },
+      durationMs: 342,
+    };
+
+    const html = renderToString(
+      <SaveRunAsExperimentModal
+        isOpen={true}
+        onClose={() => {}}
+        run={mockRun}
+        projects={mockProjects}
+        activeProjectId="proj-1"
+      />
+    );
+
+    assert.ok(html.includes('Save Run as Experiment'), 'Contains modal title');
+    assert.ok(html.includes('Python WASM'), 'Contains Python WASM badge');
+    assert.ok(html.includes('342ms'), 'Displays execution duration');
+    assert.ok(html.includes('Tracked Experiment Metrics'), 'Displays metrics section');
+    assert.ok(html.includes('Save as Final Experiment'), 'Contains submit action button');
+  });
 });
+

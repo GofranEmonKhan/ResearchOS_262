@@ -6,6 +6,7 @@ import { CreateExperimentModal } from '../../components/experiments/CreateExperi
 import { ExperimentDetailModal } from '../../components/experiments/ExperimentDetailModal.js';
 import { SupervisorFlagModal } from '../../components/experiments/SupervisorFlagModal.js';
 import { ExperimentComparisonModal } from '../../components/experiments/ExperimentComparisonModal.js';
+import { CodePlayground } from '../../components/experiments/CodePlayground.js';
 import { api } from '../../lib/api.js';
 import {
   Experiment,
@@ -31,6 +32,7 @@ import {
   ShieldAlert,
   FolderKanban,
   CheckCircle2,
+  Code2,
 } from 'lucide-react';
 
 interface ExperimentTrackerPageProps {
@@ -69,6 +71,9 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
   // Compare Mode & Selection State (2 to 5 experiments)
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState<Experiment[]>([]);
+
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'runs' | 'playground'>('runs');
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -325,38 +330,79 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
               </div>
             )}
 
-            {/* Toggle Compare Mode */}
-            <button
-              onClick={() => {
-                setIsCompareMode(!isCompareMode);
-                if (isCompareMode) {
-                  setSelectedForCompare([]);
-                }
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                isCompareMode
-                  ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-sm'
-                  : 'bg-surface-2 hover:bg-surface-3 text-slate-300 border-white/10'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-              <span>{isCompareMode ? 'Exit Compare' : 'Compare Mode'}</span>
-            </button>
+            {activeTab === 'runs' && (
+              <>
+                {/* Toggle Compare Mode */}
+                <button
+                  onClick={() => {
+                    setIsCompareMode(!isCompareMode);
+                    if (isCompareMode) {
+                      setSelectedForCompare([]);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    isCompareMode
+                      ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-sm'
+                      : 'bg-surface-2 hover:bg-surface-3 text-slate-300 border-white/10'
+                  }`}
+                >
+                  <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>{isCompareMode ? 'Exit Compare' : 'Compare Mode'}</span>
+                </button>
 
-            {/* Create Experiment Button */}
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              disabled={projects.length === 0}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Experiment</span>
-            </button>
+                {/* Create Experiment Button */}
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  disabled={projects.length === 0}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition-all disabled:opacity-50"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>New Experiment</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Quick Stats Strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        {/* Navigation Tabs Bar */}
+        <div className="flex items-center gap-2 border-b border-white/[0.08] pb-1">
+          <button
+            onClick={() => setActiveTab('runs')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'runs'
+                ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+            }`}
+          >
+            <Layers className="w-4 h-4" />
+            <span>Experiment Runs</span>
+            {stats.total > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-surface-3 text-slate-300 text-[10px] font-mono">
+                {stats.total}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('playground')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'playground'
+                ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+            }`}
+          >
+            <Code2 className="w-4 h-4 text-emerald-400" />
+            <span>Code Playground</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold font-mono">
+              Python WASM
+            </span>
+          </button>
+        </div>
+
+        {activeTab === 'runs' ? (
+          <>
+            {/* Quick Stats Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
           <div className="p-4 rounded-2xl bg-surface-1/90 border border-white/[0.08] shadow-md flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
               <Layers className="w-5 h-5" />
@@ -528,6 +574,19 @@ export const ExperimentTrackerPage: React.FC<ExperimentTrackerPageProps> = ({ on
               );
             })}
           </div>
+        )}
+        </>
+        ) : (
+          <CodePlayground
+            projects={projects}
+            activeProjectId={selectedProjectId}
+            currentUserRole={profile?.role || 'Researcher'}
+            onExperimentSaved={() => {
+              fetchExperiments();
+              showToast('Experiment saved from Code Playground!');
+            }}
+            readOnly={profile?.role === 'Supervisor'}
+          />
         )}
 
         {/* Floating Bottom Compare Action Bar */}
