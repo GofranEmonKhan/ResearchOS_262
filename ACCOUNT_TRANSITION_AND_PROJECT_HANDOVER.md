@@ -100,6 +100,12 @@
 4. **UI Readability & Aesthetics Refinement**:
    - Strictly applied [`UI_READABILITY_REFINEMENT_PLAN.md`](file:///c:/Users/Abdul%20Gofran%20Emon/ResearchOS/UI_READABILITY_REFINEMENT_PLAN.md) across all dashboards and components: Minimum 12px font size floor, Deep Cosmic Obsidian palette (`#07070C`), AAA text contrast ratios, crisp glass surface borders, and active hover dropdowns.
 
+5. **Perplexity-Style AI Literature Discovery & Multi-Source Scholarly Retrieval**:
+   - Decomposes conversational natural language research prompts into canonical research topics, academic disciplines, and targeted keyword search queries via Gemini.
+   - Executes parallel multi-query bibliographic searches against OpenAlex with inverted abstract reconstruction and citation ranking.
+   - Provides resilient scholarly knowledge fallback so free-form prompts always yield real peer-reviewed literature.
+   - Synthesizes Perplexity-style research review briefs with inline citation badges `[1]`, `[2]`, academic consensus statements, key themes, research gaps, and 1-click project library ingestion with automated `pgvector` embedding.
+
 ---
 
 ## 6. Verification Command Cheatsheet for New Session

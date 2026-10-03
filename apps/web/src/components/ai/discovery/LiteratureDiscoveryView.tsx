@@ -292,6 +292,47 @@ export const LiteratureDiscoveryView: React.FC<LiteratureDiscoveryViewProps> = (
       {/* ── Results Container ───────────────────────────────────────────── */}
       {response && !isLoading && (
         <div className="space-y-6">
+          {/* Perplexity-Style Search Strategy & Query Decomposition Card */}
+          {response.queryPlan && (
+            <div className="p-4 rounded-xl bg-violet-950/20 border border-violet-500/25 shadow-md backdrop-blur-sm space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-violet-300">
+                  <Compass className="w-4 h-4 text-violet-400" />
+                  <span>Scholarly Search Strategy</span>
+                  <span className="text-white/40">•</span>
+                  <span className="text-slate-300">{response.queryPlan.academicDomain}</span>
+                </div>
+                <div className="text-xs text-slate-400 font-mono">
+                  {response.papers.length} peer-reviewed works retrieved
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-0.5 text-xs">
+                <span className="text-slate-400 shrink-0 font-medium">Understood Topic:</span>
+                <span className="text-white font-semibold px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
+                  {response.queryPlan.normalizedTopic}
+                </span>
+              </div>
+
+              {response.queryPlan.searchQueries.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs">
+                  <span className="text-slate-400 shrink-0 font-medium">Targeted Academic Keywords:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {response.queryPlan.searchQueries.map((q, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-200 font-mono text-[11px]"
+                      >
+                        <Search className="w-2.5 h-2.5 text-violet-400" />
+                        "{q}"
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Perplexity-Style Synthesis Card */}
           <div className="p-6 rounded-2xl bg-surface-1/95 border border-white/10 shadow-xl space-y-5 backdrop-blur-sm">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3.5">

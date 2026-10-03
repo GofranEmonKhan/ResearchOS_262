@@ -181,6 +181,30 @@ describe('AI Literature Discovery & Review Engine Test Suite', () => {
       assert.ok(Array.isArray(json.synthesis.researchGaps), 'Should return researchGaps array');
       assert.ok(Array.isArray(json.papers), 'Should return papers array');
     });
+
+    it('decomposes conversational inquiries and retrieves literature via AI query planner', async () => {
+      const res = await fetch(`${baseUrl}/ai/discover`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${researcherToken}`,
+        },
+        body: JSON.stringify({
+          topic: 'Could you please give me some related paper of shared smartphone uses in HCI domain research?',
+          limit: 3,
+        }),
+      });
+
+      assert.equal(res.status, 200);
+      const json = await res.json();
+
+      assert.ok(json.queryPlan, 'Should return AI query plan');
+      assert.ok(json.queryPlan.normalizedTopic, 'Should have normalized topic');
+      assert.ok(Array.isArray(json.queryPlan.searchQueries), 'Should have keyword search queries');
+      assert.ok(json.queryPlan.searchQueries.length > 0, 'Should have at least 1 keyword search query');
+      assert.ok(json.synthesis, 'Should return synthesis');
+      assert.ok(Array.isArray(json.papers), 'Should return papers array');
+    });
   });
 
   // ─── 3. POST /ai/discover/import (1-Click Ingestion & Project Guard) ──────────

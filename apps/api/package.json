@@ -15,6 +15,7 @@
     "test": "tsx --test --test-concurrency=1 src/tests/auth-rbac.test.ts src/tests/workspace.test.ts src/tests/literature.test.ts src/tests/literature-rls.test.ts src/tests/experiment-contracts.test.ts src/tests/experiment.test.ts src/tests/forum-community-contracts.test.ts src/tests/forum-community.test.ts src/tests/manuscript.test.ts src/tests/ai-assistant.test.ts src/tests/marketplace.test.ts src/tests/admin-console.test.ts",
     "test:marketplace": "tsx --test src/tests/marketplace.test.ts",
     "test:ai": "tsx --test src/tests/ai-assistant.test.ts",
+    "test:discovery": "tsx --test src/tests/literature-discovery.test.ts",
     "test:admin": "tsx --test src/tests/admin-console.test.ts"
   },
   "dependencies": {

@@ -2031,8 +2031,16 @@ export interface LiteratureDiscoveryRequest {
   };
 }
 
+export interface LiteratureDiscoveryQueryPlan {
+  originalQuery: string;
+  normalizedTopic: string;
+  academicDomain: string;
+  searchQueries: string[];
+}
+
 export interface LiteratureDiscoveryResponse {
   topic: string;
+  queryPlan?: LiteratureDiscoveryQueryPlan;
   synthesis: {
     summary: string;
     consensus: string;
