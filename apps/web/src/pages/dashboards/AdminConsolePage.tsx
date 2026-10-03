@@ -135,7 +135,7 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
         )}
 
         {/* Command Center Tabs Navigation Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar p-2.5 rounded-2xl bg-[#090A16]/95 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
+        <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2 p-2 rounded-2xl bg-gradient-to-b from-[#0d0e21]/95 to-[#060712]/98 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
           {navTabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -143,13 +143,13 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer select-none ${
+                className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer select-none group ${
                   isActive
-                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold shadow-lg shadow-violet-600/35 border border-violet-400/40 ring-1 ring-white/20'
-                    : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white border border-white/[0.08] hover:border-violet-500/30 shadow-sm'
+                    ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-lg shadow-violet-600/35 border border-violet-400/50 ring-1 ring-white/20'
+                    : 'bg-gradient-to-b from-slate-800/60 via-slate-900/80 to-[#0c0d1e]/90 hover:from-slate-700/70 hover:via-indigo-950/40 hover:to-purple-950/30 text-slate-300 hover:text-white border border-slate-700/50 hover:border-violet-500/50 shadow-sm'
                 }`}
               >
-                <span className={isActive ? 'text-white' : 'text-violet-400'}>
+                <span className={`transition-colors ${isActive ? 'text-white' : 'text-violet-400 group-hover:text-violet-300'}`}>
                   {tab.icon}
                 </span>
                 <span>{tab.label}</span>

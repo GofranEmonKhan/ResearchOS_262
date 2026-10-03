@@ -366,15 +366,15 @@ export const AdminAiConfigPanel: React.FC<AdminAiConfigPanelProps> = ({ onNotify
       </div>
 
       {/* Sub-Navigation Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3 gap-2 flex-wrap">
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#0E1118] border border-slate-800">
+      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-gradient-to-b from-[#0d0e21]/90 to-[#070814]/90 border border-slate-800 shadow-inner">
           <button
             type="button"
             onClick={() => setActiveTab('engine')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'engine'
-                ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
+                : 'bg-gradient-to-b from-slate-800/40 to-slate-900/60 hover:from-slate-700/50 hover:to-slate-800/70 text-slate-300 hover:text-white border border-slate-700/40 hover:border-violet-500/30'
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
@@ -384,10 +384,10 @@ export const AdminAiConfigPanel: React.FC<AdminAiConfigPanelProps> = ({ onNotify
           <button
             type="button"
             onClick={() => setActiveTab('quotas')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'quotas'
-                ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
+                : 'bg-gradient-to-b from-slate-800/40 to-slate-900/60 hover:from-slate-700/50 hover:to-slate-800/70 text-slate-300 hover:text-white border border-slate-700/40 hover:border-violet-500/30'
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
@@ -397,10 +397,10 @@ export const AdminAiConfigPanel: React.FC<AdminAiConfigPanelProps> = ({ onNotify
           <button
             type="button"
             onClick={() => setActiveTab('policy')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'policy'
-                ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
+                : 'bg-gradient-to-b from-slate-800/40 to-slate-900/60 hover:from-slate-700/50 hover:to-slate-800/70 text-slate-300 hover:text-white border border-slate-700/40 hover:border-violet-500/30'
             }`}
           >
             <ShieldAlert className="w-3.5 h-3.5" />
@@ -410,10 +410,10 @@ export const AdminAiConfigPanel: React.FC<AdminAiConfigPanelProps> = ({ onNotify
           <button
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'analytics'
-                ? 'bg-violet-600 text-white shadow-md shadow-violet-600/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
+                : 'bg-gradient-to-b from-slate-800/40 to-slate-900/60 hover:from-slate-700/50 hover:to-slate-800/70 text-slate-300 hover:text-white border border-slate-700/40 hover:border-violet-500/30'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
@@ -425,7 +425,7 @@ export const AdminAiConfigPanel: React.FC<AdminAiConfigPanelProps> = ({ onNotify
           type="button"
           onClick={() => loadData(true)}
           disabled={isRefreshing}
-          className="px-3 py-1.5 rounded-xl bg-[#141824] hover:bg-slate-800 border border-slate-700/60 text-slate-300 text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
+          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-b from-slate-800/80 to-slate-900/90 hover:from-slate-700/90 hover:to-slate-800/90 border border-slate-700/60 hover:border-violet-500/40 text-slate-200 hover:text-white text-xs flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
           title="Refresh AI configuration and usage stats"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-violet-400' : ''}`} />
@@ -555,7 +555,7 @@ export const AdminAiConfigPanel: React.FC<AdminAiConfigPanelProps> = ({ onNotify
               <button
                 type="submit"
                 disabled={isSavingConfig}
-                className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs transition-all shadow-md shadow-violet-600/30 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-500 hover:via-indigo-500 hover:to-purple-500 text-white font-bold text-xs transition-all shadow-lg shadow-violet-600/35 border border-violet-400/40 ring-1 ring-white/20 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 {isSavingConfig ? (
                   <>
