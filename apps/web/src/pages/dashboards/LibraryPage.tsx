@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext.js';
 import { WorkspaceLayout } from '../../components/layout/WorkspaceLayout.js';
 import { CollectionSidebar } from '../../components/literature/CollectionSidebar.js';
@@ -62,6 +62,48 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
   // Export dropdown
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const exportContainerRef = useRef<HTMLDivElement>(null);
+  const exportCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const cancelExportClose = useCallback(() => {
+    if (exportCloseTimerRef.current) {
+      clearTimeout(exportCloseTimerRef.current);
+      exportCloseTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleExportClose = useCallback(() => {
+    cancelExportClose();
+    exportCloseTimerRef.current = setTimeout(() => {
+      setIsExportOpen(false);
+    }, 150);
+  }, [cancelExportClose]);
+
+  const handleExportMouseEnter = () => {
+    if (isExporting || papers.length === 0) return;
+    cancelExportClose();
+    setIsExportOpen(true);
+  };
+
+  const handleExportMouseLeave = () => {
+    scheduleExportClose();
+  };
+
+  // Close export dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportContainerRef.current && !exportContainerRef.current.contains(e.target as Node)) {
+        setIsExportOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (exportCloseTimerRef.current) {
+        clearTimeout(exportCloseTimerRef.current);
+      }
+    };
+  }, []);
 
   // Modals
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -207,7 +249,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
     >
       <div className="max-w-7xl mx-auto space-y-6 pb-12">
         {/* Page Title & Top Actions */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="relative z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
               <BookOpen className="w-6 h-6 text-violet-400" />
@@ -219,37 +261,66 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Export Dropdown */}
-            <div className="relative">
+            {/* Export Dropdown with Interactive Hover & Click */}
+            <div
+              ref={exportContainerRef}
+              onMouseEnter={handleExportMouseEnter}
+              onMouseLeave={handleExportMouseLeave}
+              className="relative"
+            >
               <button
-                onClick={() => setIsExportOpen(!isExportOpen)}
+                type="button"
+                onClick={() => {
+                  cancelExportClose();
+                  setIsExportOpen(!isExportOpen);
+                }}
                 disabled={isExporting || papers.length === 0}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-surface-2 hover:bg-surface-3 border border-white/15 text-slate-100 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 select-none shadow-sm disabled:opacity-50 ${
+                  isExportOpen
+                    ? 'bg-gradient-to-r from-violet-950/70 to-indigo-950/70 border-violet-500/60 shadow-[0_0_16px_rgba(139,92,246,0.3)] ring-1 ring-violet-500/40 text-white'
+                    : 'bg-surface-2 hover:bg-surface-3 border-white/15 text-slate-100 hover:text-white'
+                }`}
               >
                 {isExporting ? (
                   <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
                 ) : (
-                  <Download className="w-4 h-4 text-slate-300" />
+                  <Download className={`w-4 h-4 transition-colors ${isExportOpen ? 'text-violet-300' : 'text-slate-300'}`} />
                 )}
                 <span>Export Citations</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                    isExportOpen ? 'rotate-180 text-violet-300' : 'text-slate-400'
+                  }`}
+                />
               </button>
 
               {isExportOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-2 border border-white/15 shadow-2xl z-30 py-1.5 text-xs">
+                <div
+                  className="absolute right-0 top-full mt-2 w-52 rounded-2xl popover-neon-surface p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+                  style={{ transformOrigin: 'top right' }}
+                >
+                  <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-white/[0.08] mb-1">
+                    Select Format
+                  </div>
                   <button
-                    onClick={() => handleExport('bibtex')}
-                    className="w-full text-left px-4 py-2 hover:bg-white/[0.08] text-slate-100 font-medium flex items-center justify-between transition-colors"
+                    onClick={() => {
+                      setIsExportOpen(false);
+                      handleExport('bibtex');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-violet-600/25 text-slate-100 hover:text-white font-medium flex items-center justify-between transition-colors group text-xs"
                   >
-                    <span>BibTeX (.bib)</span>
-                    <span className="text-xs text-slate-400 font-mono px-1.5 py-0.5 rounded bg-white/5">LaTeX</span>
+                    <span className="font-semibold group-hover:text-violet-200">BibTeX (.bib)</span>
+                    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-200 border border-violet-500/30">LaTeX</span>
                   </button>
                   <button
-                    onClick={() => handleExport('ris')}
-                    className="w-full text-left px-4 py-2 hover:bg-white/[0.08] text-slate-100 font-medium flex items-center justify-between transition-colors"
+                    onClick={() => {
+                      setIsExportOpen(false);
+                      handleExport('ris');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-violet-600/25 text-slate-100 hover:text-white font-medium flex items-center justify-between transition-colors group text-xs"
                   >
-                    <span>RIS (.ris)</span>
-                    <span className="text-xs text-slate-400 font-mono px-1.5 py-0.5 rounded bg-white/5">EndNote</span>
+                    <span className="font-semibold group-hover:text-violet-200">RIS (.ris)</span>
+                    <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-md bg-white/10 text-slate-300 border border-white/15">EndNote</span>
                   </button>
                 </div>
               )}
@@ -266,17 +337,17 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Library Scope Selector & Filters Bar */}
-        <div className="p-4 rounded-2xl bg-surface-1/95 border border-white/10 shadow-lg space-y-3.5 backdrop-blur-sm">
+        {/* Library Scope Selector & Filters Bar — Elevated z-30 stacking context */}
+        <div className="relative z-30 p-4 rounded-2xl bg-surface-1/95 border border-white/10 shadow-lg space-y-3.5 backdrop-blur-sm">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5">
-            {/* Library Mode Tabs */}
-            <div className="flex items-center p-1 rounded-xl bg-surface-2/90 border border-white/10 overflow-x-auto">
+            {/* Library Mode Tabs — Anchored without layout shifts */}
+            <div className="flex items-center p-1 rounded-xl bg-surface-2/90 border border-white/10 shrink-0 select-none">
               <button
                 onClick={() => {
                   setActiveLibraryTab('personal');
                   setSelectedCollectionId(null);
                 }}
-                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 whitespace-nowrap ${
                   activeLibraryTab === 'personal'
                     ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
                     : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
@@ -289,7 +360,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
                   setActiveLibraryTab('project');
                   setSelectedCollectionId(null);
                 }}
-                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 whitespace-nowrap ${
                   activeLibraryTab === 'project'
                     ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
                     : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
@@ -302,7 +373,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
                   setActiveLibraryTab('ai-search');
                   setSelectedCollectionId(null);
                 }}
-                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 flex items-center gap-2 whitespace-nowrap ${
                   activeLibraryTab === 'ai-search'
                     ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
                     : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
@@ -316,7 +387,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
                   setActiveLibraryTab('ai-discovery');
                   setSelectedCollectionId(null);
                 }}
-                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 flex items-center gap-2 whitespace-nowrap ${
                   activeLibraryTab === 'ai-discovery'
                     ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
                     : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
@@ -327,43 +398,47 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
               </button>
             </div>
 
-            {/* If in project mode: project dropdown */}
-            {activeLibraryTab === 'project' && (
-              <div className="flex items-center gap-2.5">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Project:</span>
-                <HoverSelect
-                  value={selectedProjectId}
-                  onChange={(val) => setSelectedProjectId(val)}
-                  options={projects.map((p) => ({
-                    value: p.id,
-                    label: p.title,
-                  }))}
-                  buttonClassName="px-3.5 py-2 text-sm font-medium"
-                />
-              </div>
-            )}
+            {/* Right-aligned Context Controls: Project Selector & Search Input */}
+            <div className="flex items-center gap-3 justify-end flex-wrap sm:flex-nowrap min-h-[42px]">
+              {/* If in project mode: project dropdown */}
+              {activeLibraryTab === 'project' && (
+                <div className="flex items-center gap-2.5 shrink-0 animate-in fade-in duration-150">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Project:</span>
+                  <HoverSelect
+                    value={selectedProjectId}
+                    onChange={(val) => setSelectedProjectId(val)}
+                    options={projects.map((p) => ({
+                      value: p.id,
+                      label: p.title,
+                    }))}
+                    buttonClassName="px-3.5 py-2 text-sm font-medium"
+                    placement="bottom"
+                  />
+                </div>
+              )}
 
-            {/* Search Input (Standard library search) */}
-            {activeLibraryTab !== 'ai-search' && activeLibraryTab !== 'ai-discovery' && (
-              <div className="relative w-full lg:w-80">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search title, authors, venue..."
-                  className="w-full pl-10 pr-8 py-2 rounded-xl bg-surface-2/95 border border-white/15 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 transition-all"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded-full hover:bg-white/10"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            )}
+              {/* Search Input (Standard library search) */}
+              {activeLibraryTab !== 'ai-search' && activeLibraryTab !== 'ai-discovery' && (
+                <div className="relative w-full sm:w-72 lg:w-80 shrink-0">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search title, authors, venue..."
+                    className="w-full pl-10 pr-8 py-2 rounded-xl bg-surface-2/95 border border-white/15 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 transition-colors"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded-full hover:bg-white/10"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Secondary Filters: Reading Status & Year (Hidden in AI search/discovery) */}
@@ -386,6 +461,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
                   })),
                 ]}
                 buttonClassName="px-3 py-1.5 text-xs font-medium"
+                placement="bottom"
               />
 
               {/* Year Input */}
@@ -415,7 +491,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
           )}
         </div>
 
-        {/* Content Body: AI Discovery vs AI Semantic Search vs Standard Two-Pane Library */}
+        {/* Content Body: AI Discovery vs AI Semantic Search vs Standard Two-Pane Library — Lower z-10 stacking context */}
         {activeLibraryTab === 'ai-discovery' ? (
           <LiteratureDiscoveryView
             projects={projects}
@@ -427,7 +503,7 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
             onOpenPaper={handleOpenViewer}
           />
         ) : (
-          <div className="flex flex-col md:flex-row gap-6 items-start">
+          <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start">
             {/* Left Pane: Collection Sidebar */}
             <CollectionSidebar
               collections={collections}

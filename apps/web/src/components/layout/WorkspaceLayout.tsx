@@ -37,7 +37,7 @@ export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
 
         {/* Main Content Area — margin syncs with sidebar width */}
         <main
-          className={`flex-1 min-w-0 p-6 relative overflow-y-auto min-h-[calc(100vh-4rem)] transition-all duration-300 ease-in-out ${
+          className={`flex-1 min-w-0 p-6 relative overflow-y-auto [scrollbar-gutter:stable] min-h-[calc(100vh-4rem)] transition-all duration-300 ease-in-out ${
             isSidebarHovered ? 'pl-[calc(16rem+1.5rem)]' : 'pl-[calc(72px+1.5rem)]'
           }`}
         >

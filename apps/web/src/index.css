@@ -20,6 +20,10 @@
     --border-glow: rgba(168, 85, 247, 0.35);
   }
 
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     background-color: #07070C;
     color: #F8FAFC;
@@ -27,6 +31,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    scrollbar-gutter: stable;
   }
 
   /* High-Contrast Text Selection */
