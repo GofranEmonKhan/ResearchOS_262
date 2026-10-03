@@ -75,9 +75,9 @@ export const PaperMetadataModal: React.FC<PaperMetadataModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl bg-surface-1 border border-white/10 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-lg rounded-2xl bg-surface-1 border border-white/10 shadow-2xl overflow-visible">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] rounded-t-2xl">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
               <Edit3 className="w-4 h-4" />
@@ -100,7 +100,7 @@ export const PaperMetadataModal: React.FC<PaperMetadataModalProps> = ({
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 rounded-b-2xl">
           {errorMessage && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
@@ -118,7 +118,9 @@ export const PaperMetadataModal: React.FC<PaperMetadataModalProps> = ({
                 value: st,
                 label: st === 'DeeplyAnalysed' ? 'Deeply Analysed' : st,
               }))}
+              className="w-full"
               buttonClassName="w-full px-3 py-2 text-xs"
+              menuClassName="w-full min-w-[220px]"
             />
           </div>
 
