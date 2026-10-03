@@ -79,7 +79,7 @@ export const AnnotationList: React.FC<AnnotationListProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search highlights or notes..."
-            className="w-full pl-8 pr-2.5 py-1.5 rounded-lg bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+            className="w-full pl-8 pr-2.5 py-1.5 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 transition-colors"
           />
         </div>
       </div>
@@ -87,10 +87,10 @@ export const AnnotationList: React.FC<AnnotationListProps> = ({
       {/* Annotation Items List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
         {filtered.length === 0 ? (
-          <div className="py-12 text-center text-xs text-slate-500 space-y-1">
-            <BookOpen className="w-6 h-6 text-slate-600 mx-auto mb-2" />
-            <p>No annotations found.</p>
-            <p className="text-[11px] text-slate-600">Select text in the PDF to create a highlight.</p>
+          <div className="py-12 text-center text-xs text-slate-400 space-y-1">
+            <BookOpen className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+            <p className="font-semibold text-slate-300">No annotations found.</p>
+            <p className="text-[11px] text-slate-400">Select text in the PDF to create a highlight.</p>
           </div>
         ) : (
           filtered.map((ann) => {
@@ -101,31 +101,31 @@ export const AnnotationList: React.FC<AnnotationListProps> = ({
               <div
                 key={ann.id}
                 onClick={() => onJumpToPage(ann.page)}
-                className={`p-3 rounded-xl border transition-all cursor-pointer space-y-2 group ${
+                className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2.5 group ${
                   isCurrentPage
-                    ? 'bg-violet-600/15 border-violet-500/40 shadow-md'
-                    : 'bg-surface-2/70 hover:bg-surface-2 border-white/[0.06] hover:border-white/20'
+                    ? 'bg-violet-600/20 border-violet-500/50 shadow-lg shadow-violet-950/30'
+                    : 'bg-surface-2/80 hover:bg-surface-2 border-white/[0.08] hover:border-white/20'
                 }`}
               >
                 {/* Top Row: Page indicator & Author & Delete */}
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="font-mono font-medium px-2 py-0.5 rounded bg-white/[0.06] text-violet-300">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-mono font-semibold px-2 py-0.5 rounded-md bg-violet-500/15 border border-violet-500/30 text-violet-200">
                     Page {ann.page}
                   </span>
 
                   <div className="flex items-center gap-1.5">
                     {ann.user?.fullName && (
-                      <span className="text-slate-400 truncate max-w-[100px]" title={ann.user.fullName}>
+                      <span className="text-slate-300 font-medium truncate max-w-[120px]" title={ann.user.fullName}>
                         {ann.user.fullName}
                       </span>
                     )}
                     {isOwner && (
                       <button
                         onClick={(e) => handleDelete(ann.id, e)}
-                        className="p-1 rounded text-slate-500 opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                        className="p-1 rounded text-slate-400 opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all"
                         title="Delete annotation"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -133,7 +133,7 @@ export const AnnotationList: React.FC<AnnotationListProps> = ({
 
                 {/* Highlight text snippet */}
                 <p
-                  className="text-xs text-slate-200 italic line-clamp-3 leading-relaxed border-l-2 pl-2"
+                  className="text-xs sm:text-[13px] text-slate-100 italic line-clamp-3 leading-relaxed border-l-2 pl-2.5"
                   style={{
                     borderLeftColor: ann.positionData?.color || (ann.linkedSidebarField ? '#A855F7' : '#FACC15'),
                   }}
@@ -143,16 +143,16 @@ export const AnnotationList: React.FC<AnnotationListProps> = ({
 
                 {/* Sticky Note */}
                 {ann.stickyNote && (
-                  <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200 flex items-start gap-1.5">
-                    <StickyNote className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-xs text-amber-100 font-medium flex items-start gap-2">
+                    <StickyNote className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                     <span className="leading-snug">{ann.stickyNote}</span>
                   </div>
                 )}
 
                 {/* Linked Field Tag */}
                 {ann.linkedSidebarField && (
-                  <div className="flex items-center gap-1 text-[10px] text-violet-400 font-medium pt-1">
-                    <Sparkles className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5 text-xs text-violet-300 font-semibold pt-1">
+                    <Sparkles className="w-3.5 h-3.5 text-violet-400" />
                     <span>Linked to {ann.linkedSidebarField}</span>
                   </div>
                 )}

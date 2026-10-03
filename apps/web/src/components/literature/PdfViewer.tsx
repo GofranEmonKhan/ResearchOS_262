@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   RotateCw,
   StickyNote,
+  BookOpen,
 } from 'lucide-react';
 
 // Configure pdfjs worker from unpkg
@@ -207,9 +208,17 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             loading={
-              <div className="py-24 flex flex-col items-center justify-center text-slate-400 space-y-2">
-                <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
-                <span className="text-xs">Loading PDF document...</span>
+              <div className="py-24 flex flex-col items-center justify-center text-slate-300 space-y-3">
+                <div className="relative flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-violet-600/20 border border-violet-500/40 flex items-center justify-center text-violet-300 shadow-xl shadow-violet-950/40">
+                    <BookOpen className="w-6 h-6 text-violet-300 animate-pulse" />
+                  </div>
+                  <Loader2 className="w-16 h-16 text-violet-400/50 animate-spin absolute -inset-2" />
+                </div>
+                <div className="text-center space-y-1">
+                  <span className="text-sm font-bold text-white tracking-tight">Rendering Academic Canvas</span>
+                  <p className="text-xs text-slate-300">Streaming PDF vector layers & typography...</p>
+                </div>
               </div>
             }
           >

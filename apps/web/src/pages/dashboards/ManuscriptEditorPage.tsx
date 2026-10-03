@@ -38,6 +38,7 @@ import {
   X,
   ChevronDown,
 } from 'lucide-react';
+import { ContextualLoader } from '../../components/common/ContextualLoader.js';
 import { useAuth } from '../../context/AuthContext.js';
 import { api } from '../../lib/api.js';
 import {
@@ -747,10 +748,14 @@ export const ManuscriptEditorPage: React.FC<ManuscriptEditorPageProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#070A11] flex flex-col items-center justify-center text-slate-400">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-500 mb-3" />
-        <p className="text-xs font-mono">Loading Scholarly Manuscript Editor...</p>
-      </div>
+      <ContextualLoader
+        context="manuscript"
+        title="Opening Scholarly Manuscript"
+        subtitle="Retrieving LaTeX document tree, peer-review threads, and version milestones..."
+        itemTitle={manuscript?.title}
+        onCancel={() => onNavigate('/manuscripts')}
+        cancelLabel="Return to Manuscripts"
+      />
     );
   }
 

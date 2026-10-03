@@ -21,6 +21,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { HoverSelect } from '../common/HoverSelect.js';
+import { ContextualLoader } from '../common/ContextualLoader.js';
 import {
   AiUsageIndicator,
   AiSummarizePanel,
@@ -49,6 +50,9 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
   const [sidebarData, setSidebarData] = useState<PaperSidebarFields | null>(null);
   const [isLoadingSidebar, setIsLoadingSidebar] = useState(true);
   const [isSavingAnalysis, setIsSavingAnalysis] = useState(false);
+
+  // Active focused field for dynamic expand-on-focus
+  const [activeAnalysisField, setActiveAnalysisField] = useState<string | null>(null);
 
   // Editable analysis fields
   const [researchGap, setResearchGap] = useState('');
@@ -242,13 +246,13 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex items-center p-1.5 bg-surface-2/60 border-b border-white/[0.06] gap-1 text-[11px] font-medium">
+      <div className="flex items-center p-1.5 bg-surface-2/60 border-b border-white/[0.06] gap-1 text-xs font-semibold">
         <button
           onClick={() => setActiveTab('analysis')}
           className={`flex-1 py-1.5 rounded-lg transition-all ${
             activeTab === 'analysis'
-              ? 'bg-violet-600 text-white shadow'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
           }`}
         >
           Analysis
@@ -257,25 +261,25 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
           onClick={() => setActiveTab('ai')}
           className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
             activeTab === 'ai'
-              ? 'bg-violet-600 text-white shadow'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
           }`}
         >
-          <Sparkles className="w-3 h-3 text-violet-300" />
+          <Sparkles className="w-3.5 h-3.5 text-violet-300" />
           <span>AI Assist</span>
         </button>
         <button
           onClick={() => setActiveTab('notes')}
           className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
             activeTab === 'notes'
-              ? 'bg-violet-600 text-white shadow'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
           }`}
         >
           {isUploader && personalNotesVisible ? (
-            <Eye className="w-3 h-3 text-emerald-400" />
+            <Eye className="w-3.5 h-3.5 text-emerald-400" />
           ) : (
-            <Lock className="w-3 h-3 text-amber-400" />
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
           )}
           <span>Notes</span>
         </button>
@@ -283,8 +287,8 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
           onClick={() => setActiveTab('citations')}
           className={`flex-1 py-1.5 rounded-lg transition-all ${
             activeTab === 'citations'
-              ? 'bg-violet-600 text-white shadow'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
           }`}
         >
           Citations
@@ -294,8 +298,8 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
             onClick={() => setActiveTab('discussion')}
             className={`flex-1 py-1.5 rounded-lg transition-all ${
               activeTab === 'discussion'
-                ? 'bg-violet-600 text-white shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+                : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
             Discussion
@@ -306,17 +310,20 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
       {/* Body Area */}
       <div className="flex-1 overflow-y-auto p-4">
         {isLoadingSidebar ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-400 space-y-2">
-            <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
-            <span className="text-xs">Loading structured analysis...</span>
-          </div>
+          <ContextualLoader
+            fullScreen={false}
+            size="sm"
+            context="paper"
+            title="Loading Structured Analysis"
+            subtitle="Parsing research gap, methodology, and citations from database..."
+          />
         ) : (
           <>
             {/* TAB 1: STRUCTURED ANALYSIS */}
             {activeTab === 'analysis' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-1">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                     Structured Synthesis
                   </span>
                   <div className="flex items-center gap-1.5">
@@ -326,22 +333,22 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
                         setActiveTab('ai');
                         setAiSubTab('suggestions');
                       }}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 transition-all"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-violet-300 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 transition-all"
                       title="Review AI suggestions"
                     >
-                      <Sparkles className="w-3 h-3 text-violet-400" />
+                      <Sparkles className="w-3.5 h-3.5 text-violet-400" />
                       <span>AI Suggest</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleSaveAnalysis}
                       disabled={isSavingAnalysis}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all disabled:opacity-50"
+                      className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all disabled:opacity-50 shadow-md shadow-violet-950/40"
                     >
                       {isSavingAnalysis ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Check className="w-3 h-3" />
+                        <Check className="w-3.5 h-3.5" />
                       )}
                       <span>Save Analysis</span>
                     </button>
@@ -349,77 +356,159 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
                 </div>
 
                 {/* Field 1: Research Gap */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-violet-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-                    Research Gap Addressed
-                  </label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-violet-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                      Research Gap Addressed
+                    </label>
+                    {activeAnalysisField === 'researchGap' && (
+                      <span className="text-[10px] font-mono text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded-md border border-violet-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
                   <textarea
-                    rows={3}
                     value={researchGap}
                     onChange={(e) => setResearchGap(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('researchGap')}
+                    onBlur={() => setActiveAnalysisField(null)}
                     placeholder="What unresolved scholarly question does this paper tackle?"
-                    className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none leading-relaxed"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'researchGap'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-violet-500/80 ring-2 ring-violet-500/25 shadow-xl shadow-violet-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
                   />
                 </div>
 
                 {/* Field 2: Methodology */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Methodology & Approach</label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-200">
+                      Methodology & Approach
+                    </label>
+                    {activeAnalysisField === 'methodology' && (
+                      <span className="text-[10px] font-mono text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded-md border border-violet-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
                   <textarea
-                    rows={3}
                     value={methodology}
                     onChange={(e) => setMethodology(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('methodology')}
+                    onBlur={() => setActiveAnalysisField(null)}
                     placeholder="Architectures, mathematical formulations, or experiments..."
-                    className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none leading-relaxed"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'methodology'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-violet-500/80 ring-2 ring-violet-500/25 shadow-xl shadow-violet-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
                   />
                 </div>
 
                 {/* Field 3: Results */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-emerald-300">Key Results & Findings</label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-emerald-300">
+                      Key Results & Findings
+                    </label>
+                    {activeAnalysisField === 'results' && (
+                      <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
                   <textarea
-                    rows={3}
                     value={results}
                     onChange={(e) => setResults(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('results')}
+                    onBlur={() => setActiveAnalysisField(null)}
                     placeholder="Quantitative benchmarks, state-of-the-art metrics, speedups..."
-                    className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none leading-relaxed"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'results'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-emerald-500/80 ring-2 ring-emerald-500/25 shadow-xl shadow-emerald-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
                   />
                 </div>
 
                 {/* Field 4: Limitations */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-amber-300">Known Limitations</label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-amber-300">
+                      Known Limitations
+                    </label>
+                    {activeAnalysisField === 'limitation' && (
+                      <span className="text-[10px] font-mono text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
                   <textarea
-                    rows={2}
                     value={limitation}
                     onChange={(e) => setLimitation(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('limitation')}
+                    onBlur={() => setActiveAnalysisField(null)}
                     placeholder="Assumptions, compute requirements, dataset constraints..."
-                    className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none leading-relaxed"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'limitation'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-amber-500/80 ring-2 ring-amber-500/25 shadow-xl shadow-amber-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
                   />
                 </div>
 
                 {/* Field 5: Future Work */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-blue-300">Future Directions</label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-blue-300">
+                      Future Directions
+                    </label>
+                    {activeAnalysisField === 'futureWork' && (
+                      <span className="text-[10px] font-mono text-blue-300 bg-blue-500/15 px-2 py-0.5 rounded-md border border-blue-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
                   <textarea
-                    rows={2}
                     value={futureWork}
                     onChange={(e) => setFutureWork(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('futureWork')}
+                    onBlur={() => setActiveAnalysisField(null)}
                     placeholder="Potential extensions, theoretical generalizations..."
-                    className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none leading-relaxed"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'futureWork'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-blue-500/80 ring-2 ring-blue-500/25 shadow-xl shadow-blue-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
                   />
                 </div>
 
                 {/* Field 6: Dataset Used */}
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Datasets & Benchmarks</label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-indigo-300">
+                      Datasets & Benchmarks
+                    </label>
+                    {activeAnalysisField === 'datasetUsed' && (
+                      <span className="text-[10px] font-mono text-indigo-300 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
                   <textarea
-                    rows={2}
                     value={datasetUsed}
                     onChange={(e) => setDatasetUsed(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('datasetUsed')}
+                    onBlur={() => setActiveAnalysisField(null)}
                     placeholder="e.g. WMT 2014 English-to-German, GLUE, SQuAD..."
-                    className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none leading-relaxed"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'datasetUsed'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-indigo-500/80 ring-2 ring-indigo-500/25 shadow-xl shadow-indigo-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
                   />
                 </div>
               </div>
@@ -431,7 +520,7 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
                 {isUploader ? (
                   <>
                     {/* Privacy Visibility Controls */}
-                    <div className="p-3 rounded-xl bg-surface-2 border border-white/10 space-y-2">
+                    <div className="p-3.5 rounded-xl bg-surface-2 border border-white/10 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-white flex items-center gap-1.5">
                           {personalNotesVisible ? (
@@ -444,7 +533,7 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
                         <button
                           type="button"
                           onClick={() => handleToggleVisibility(!personalNotesVisible)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
                             personalNotesVisible
                               ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                               : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
@@ -453,7 +542,7 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
                           {personalNotesVisible ? 'Shared with Project' : 'Private to Me'}
                         </button>
                       </div>
-                      <p className="text-[11px] text-slate-400 leading-snug">
+                      <p className="text-xs text-slate-300 leading-snug">
                         {personalNotesVisible
                           ? 'All project members can read your personal notes.'
                           : 'Option A Dynamic Privacy: Masked to NULL for all other collaborators.'}
@@ -462,15 +551,27 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
 
                     {/* Editor */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-200">
-                        Personal Study Notes
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-200">
+                          Personal Study Notes
+                        </label>
+                        {activeAnalysisField === 'notes' && (
+                          <span className="text-[10px] font-mono text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded-md border border-violet-500/30">
+                            Expanded Editor
+                          </span>
+                        )}
+                      </div>
                       <textarea
-                        rows={10}
                         value={personalNotes}
                         onChange={(e) => setPersonalNotes(e.target.value)}
+                        onFocus={() => setActiveAnalysisField('notes')}
+                        onBlur={() => setActiveAnalysisField(null)}
                         placeholder="Private reflections, questions for supervisor, thesis citations..."
-                        className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none leading-relaxed"
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                          activeAnalysisField === 'notes'
+                            ? 'h-72 bg-surface-2/95 border-violet-500/80 ring-2 ring-violet-500/25 shadow-xl shadow-violet-950/40'
+                            : 'h-36 bg-surface-2 border-white/10 hover:border-white/20'
+                        }`}
                       />
                     </div>
 

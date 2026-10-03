@@ -24,7 +24,7 @@ export interface HoverSelectProps<T = string> {
   disabled?: boolean;
 }
 
-export function HoverSelect<T extends string = string>({
+export function HoverSelect<T extends string | number = string>({
   value,
   options = [],
   onChange,

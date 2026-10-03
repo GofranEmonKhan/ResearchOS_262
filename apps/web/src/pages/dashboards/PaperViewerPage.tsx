@@ -1,22 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext.js';
-import { Paper, PaperAnnotation, ReadingStatus, READING_STATUSES, Project } from '@researchos/shared-types';
+import { Paper, PaperAnnotation, ReadingStatus, Project } from '@researchos/shared-types';
 import { api } from '../../lib/api.js';
 import { PdfViewer } from '../../components/literature/PdfViewer.js';
 import { AnnotationList } from '../../components/literature/AnnotationList.js';
 import { SmartResearchSidebar } from '../../components/literature/SmartResearchSidebar.js';
 import { SharePaperModal } from '../../components/literature/SharePaperModal.js';
+import { ContextualLoader } from '../../components/common/ContextualLoader.js';
+import { HoverSelect } from '../../components/common/HoverSelect.js';
 import {
   ArrowLeft,
   Download,
   Share2,
   Bookmark,
-  ChevronDown,
-  Loader2,
   AlertTriangle,
   PanelLeft,
   PanelRight,
 } from 'lucide-react';
+
+const READING_STATUS_OPTIONS = [
+  { value: 'Unread', label: 'Unread', badge: '⚪' },
+  { value: 'Reading', label: 'Reading', badge: '🔵' },
+  { value: 'Completed', label: 'Completed', badge: '🟢' },
+  { value: 'DeeplyAnalysed', label: 'Deeply Analysed', badge: '🟣' },
+];
 
 interface PaperViewerPageProps {
   paperId: string;
@@ -38,7 +45,6 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
   const [isRightPanelOpen, setIsRightPanelOpen] = useState<boolean>(true);
 
   // Status & Sharing
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState<boolean>(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -88,7 +94,6 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
   // Change Reading Status
   const handleStatusChange = async (status: ReadingStatus) => {
     if (!paper) return;
-    setIsStatusDropdownOpen(false);
     try {
       const updated = await api.updatePaper(paper.id, { readingStatus: status });
       setPaper(updated);
@@ -105,10 +110,15 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#07070C] flex flex-col items-center justify-center text-slate-300 space-y-3">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
-        <p className="text-xs font-mono text-slate-500">Loading academic document & annotations...</p>
-      </div>
+      <ContextualLoader
+        context="paper"
+        title="Opening Academic Publication"
+        subtitle="Resolving verified PDF document stream, citation index, and collaborative annotations..."
+        itemTitle={paper?.title}
+        onCancel={() => onNavigate('/literature')}
+        cancelLabel="Return to Library"
+        onRetry={loadData}
+      />
     );
   }
 
@@ -147,17 +157,17 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => onNavigate('/literature')}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors shrink-0"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors shrink-0"
             title="Return to Library"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
 
           <div className="min-w-0">
-            <h1 className="text-xs font-bold text-white truncate max-w-md sm:max-w-xl">
+            <h1 className="text-sm sm:text-base font-bold text-white truncate max-w-md sm:max-w-xl tracking-tight">
               {paper.title}
             </h1>
-            <p className="text-[10px] text-slate-400 truncate">
+            <p className="text-xs text-slate-300 font-medium truncate">
               {(paper.authors || []).join(', ')} {paper.year ? `(${paper.year})` : ''}
             </p>
           </div>
@@ -166,36 +176,20 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
         {/* Center/Right: Reading Status, Badges & Action Controls */}
         <div className="flex items-center gap-2.5 shrink-0">
           {paper.isRequiredReading && (
-            <span className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-[10px] font-medium text-amber-300">
-              <Bookmark className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-xs font-semibold text-amber-300">
+              <Bookmark className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span>Required</span>
             </span>
           )}
 
-          {/* Reading Status Pill Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-surface-2 border border-white/10 hover:border-violet-500/40 text-slate-200 transition-all"
-            >
-              <span>{paper.readingStatus || 'Unread'}</span>
-              <ChevronDown className="w-3 h-3 text-slate-500" />
-            </button>
-
-            {isStatusDropdownOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-36 rounded-xl bg-surface-2 border border-white/10 shadow-2xl z-50 py-1 text-xs">
-                {(Object.keys(READING_STATUSES) as ReadingStatus[]).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => handleStatusChange(st)}
-                    className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.06] hover:text-white"
-                  >
-                    {st === 'DeeplyAnalysed' ? 'Deeply Analysed' : st}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Reading Status Selector via Interactive HoverSelect */}
+          <HoverSelect
+            value={paper.readingStatus || 'Unread'}
+            onChange={(val) => handleStatusChange(val as ReadingStatus)}
+            options={READING_STATUS_OPTIONS}
+            buttonClassName="px-2.5 py-1 text-xs font-semibold bg-surface-2 border border-white/10 hover:border-violet-500/40 text-slate-200"
+            align="right"
+          />
 
           {/* Share to project button */}
           {isUploader && !paper.projectId && (
