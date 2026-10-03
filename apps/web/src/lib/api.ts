@@ -235,7 +235,8 @@ export const api = {
 
   // Admin APIs (Spec 09)
   async getAdminOverview(): Promise<AdminPlatformOverview> {
-    return fetchApi<AdminPlatformOverview>('/admin/overview');
+    const res = await fetchApi<AdminPlatformOverview | { data: AdminPlatformOverview }>('/admin/overview');
+    return (res as any)?.data || res;
   },
 
   async getAdminUsers(params?: AdminUsersQueryParams): Promise<AdminUsersResponse> {

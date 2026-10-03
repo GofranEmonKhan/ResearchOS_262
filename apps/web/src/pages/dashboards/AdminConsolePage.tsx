@@ -43,8 +43,9 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
   const fetchOverview = async () => {
     setIsLoadingOverview(true);
     try {
-      const data = await api.getAdminOverview();
-      setOverview(data);
+      const res = await api.getAdminOverview();
+      const actualData = (res as any)?.data || res;
+      setOverview(actualData);
     } catch (err: any) {
       console.error('Failed to load admin overview:', err);
     } finally {
@@ -54,6 +55,16 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
 
   useEffect(() => {
     fetchOverview();
+    // Keep admin overview metrics synced with database every 20 seconds
+    const interval = setInterval(() => {
+      api.getAdminOverview()
+        .then((res) => {
+          const actualData = (res as any)?.data || res;
+          if (actualData) setOverview(actualData);
+        })
+        .catch(() => {});
+    }, 20000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleNotify = (type: 'success' | 'error', text: string) => {
