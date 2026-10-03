@@ -143,21 +143,21 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full min-w-0 flex items-center justify-center gap-1.5 xl:gap-2 px-2 xl:px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer select-none group ${
+                className={`w-full min-w-0 flex items-center justify-center gap-1.5 xl:gap-2 px-2 xl:px-3 py-2.5 rounded-xl text-xs sm:text-[13px] font-bold whitespace-nowrap transition-all duration-200 cursor-pointer select-none group ${
                   isActive
-                    ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-lg shadow-violet-600/35 border border-violet-400/50 ring-1 ring-white/20'
-                    : 'bg-gradient-to-b from-slate-800/60 via-slate-900/80 to-[#0c0d1e]/90 hover:from-slate-700/70 hover:via-indigo-950/40 hover:to-purple-950/30 text-slate-300 hover:text-white border border-slate-700/50 hover:border-violet-500/50 shadow-sm'
+                    ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-extrabold shadow-lg shadow-violet-600/35 border border-violet-400/50 ring-1 ring-white/25 drop-shadow-sm'
+                    : 'bg-gradient-to-b from-[#181a33]/90 via-[#101226]/90 to-[#0c0d1e]/95 hover:from-[#23274a]/90 hover:via-[#191d3d]/90 hover:to-[#13162e]/95 text-slate-100 hover:text-white border border-slate-700/60 hover:border-violet-400/60 shadow-sm'
                 }`}
               >
                 <span className={`shrink-0 transition-colors ${isActive ? 'text-white' : 'text-violet-400 group-hover:text-violet-300'}`}>
                   {tab.icon}
                 </span>
-                <span>{tab.label}</span>
+                <span className="tracking-tight">{tab.label}</span>
                 {typeof tab.badge === 'number' && tab.badge > 0 && (
-                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-extrabold shadow-sm ${
                     isActive
                       ? 'bg-white/25 text-white border border-white/30'
-                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                      : 'bg-rose-500/25 text-rose-200 border border-rose-500/40'
                   }`}>
                     {tab.badge}
                   </span>

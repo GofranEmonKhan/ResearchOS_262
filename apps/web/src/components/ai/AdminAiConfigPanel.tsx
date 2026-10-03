@@ -371,52 +371,52 @@ export const AdminAiConfigPanel: React.FC<AdminAiConfigPanelProps> = ({ onNotify
           <button
             type="button"
             onClick={() => setActiveTab('engine')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'engine'
-                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
-                : 'bg-gradient-to-b from-slate-800/40 to-slate-900/60 hover:from-slate-700/50 hover:to-slate-800/70 text-slate-300 hover:text-white border border-slate-700/40 hover:border-violet-500/30'
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-extrabold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
+                : 'bg-gradient-to-b from-slate-800/60 to-slate-900/80 hover:from-slate-700/70 hover:to-slate-800/90 text-slate-100 hover:text-white border border-slate-700/50 hover:border-violet-500/40'
             }`}
           >
-            <Cpu className="w-3.5 h-3.5" />
+            <Cpu className="w-3.5 h-3.5 text-violet-400" />
             <span>Provider & Engine</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('quotas')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'quotas'
-                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
-                : 'bg-gradient-to-b from-slate-800/40 to-slate-900/60 hover:from-slate-700/50 hover:to-slate-800/70 text-slate-300 hover:text-white border border-slate-700/40 hover:border-violet-500/30'
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-extrabold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
+                : 'bg-gradient-to-b from-slate-800/60 to-slate-900/80 hover:from-slate-700/70 hover:to-slate-800/90 text-slate-100 hover:text-white border border-slate-700/50 hover:border-violet-500/40'
             }`}
           >
-            <Sliders className="w-3.5 h-3.5" />
+            <Sliders className="w-3.5 h-3.5 text-violet-400" />
             <span>Role Quotas</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('policy')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'policy'
-                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
-                : 'bg-gradient-to-b from-slate-800/40 to-slate-900/60 hover:from-slate-700/50 hover:to-slate-800/70 text-slate-300 hover:text-white border border-slate-700/40 hover:border-violet-500/30'
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-extrabold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
+                : 'bg-gradient-to-b from-slate-800/60 to-slate-900/80 hover:from-slate-700/70 hover:to-slate-800/90 text-slate-100 hover:text-white border border-slate-700/50 hover:border-violet-500/40'
             }`}
           >
-            <ShieldAlert className="w-3.5 h-3.5" />
+            <ShieldAlert className="w-3.5 h-3.5 text-violet-400" />
             <span>Content Policies ({blockedRules.length})</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'analytics'
-                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
-                : 'bg-gradient-to-b from-slate-800/40 to-slate-900/60 hover:from-slate-700/50 hover:to-slate-800/70 text-slate-300 hover:text-white border border-slate-700/40 hover:border-violet-500/30'
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-extrabold shadow-md shadow-violet-600/30 border border-violet-400/40 ring-1 ring-white/20'
+                : 'bg-gradient-to-b from-slate-800/60 to-slate-900/80 hover:from-slate-700/70 hover:to-slate-800/90 text-slate-100 hover:text-white border border-slate-700/50 hover:border-violet-500/40'
             }`}
           >
-            <BarChart3 className="w-3.5 h-3.5" />
+            <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
             <span>Usage Analytics</span>
           </button>
         </div>
@@ -425,7 +425,7 @@ export const AdminAiConfigPanel: React.FC<AdminAiConfigPanelProps> = ({ onNotify
           type="button"
           onClick={() => loadData(true)}
           disabled={isRefreshing}
-          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-b from-slate-800/80 to-slate-900/90 hover:from-slate-700/90 hover:to-slate-800/90 border border-slate-700/60 hover:border-violet-500/40 text-slate-200 hover:text-white text-xs flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-b from-slate-800/80 to-slate-900/90 hover:from-slate-700/90 hover:to-slate-800/90 border border-slate-700/60 hover:border-violet-500/40 text-slate-100 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
           title="Refresh AI configuration and usage stats"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-violet-400' : ''}`} />
