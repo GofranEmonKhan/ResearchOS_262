@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticate, requireRole, requireStatus, mapDbProfileToProfile } from '../middleware/auth.js';
 import { supabaseAdmin } from '../supabase.js';
 import { createAuditLog } from '../services/audit.service.js';
+import { AdminService } from '../services/admin.service.js';
 import { 
   RejectSupervisorVerificationDto, 
   ChangeUserRoleDto, 
@@ -12,6 +13,8 @@ import {
   UpdateAiProviderConfigRequest,
   UpdateAiQuotaRequest,
   CreateBlockedPromptRuleRequest,
+  AdminUsersQueryParams,
+  AdminAuditLogQueryParams,
 } from '@researchos/shared-types';
 import {
   getAiProviderConfig,
@@ -32,10 +35,60 @@ router.use(requireStatus('Active'));
 router.use(requireRole('Admin'));
 
 /**
+ * GET /admin/overview
+ * Aggregate platform overview and high-level governance metrics
+ */
+router.get('/overview', async (_req: Request, res: Response) => {
+  try {
+    const overview = await AdminService.getPlatformOverview();
+    return res.json({ data: overview });
+  } catch (err: any) {
+    console.error('[Admin] Get platform overview error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to fetch platform overview' });
+  }
+});
+
+/**
+ * GET /admin/users
+ * Searchable, filterable, and paginated directory of all platform users
+ */
+router.get('/users', async (req: Request, res: Response) => {
+  try {
+    const query: AdminUsersQueryParams = {
+      search: req.query.search as string,
+      role: req.query.role as any,
+      status: req.query.status as any,
+      page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
+      limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 20,
+    };
+    const result = await AdminService.listUsers(query);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('[Admin] List users error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to list users' });
+  }
+});
+
+/**
+ * GET /admin/users/:id
+ * Content-safe operational detail for a single user
+ */
+router.get('/users/:id', async (req: Request<{ id: string }>, res: Response) => {
+  try {
+    const detail = await AdminService.getUserDetail(req.params.id);
+    return res.json(detail);
+  } catch (err: any) {
+    console.error('[Admin] Get user detail error:', err);
+    return res.status(404).json({ error: err.message || 'User not found' });
+  }
+});
+
+/**
  * GET /admin/supervisor-verifications
  * Queue of pending supervisor verification requests
  */
 router.get('/supervisor-verifications', async (req: Request, res: Response<SupervisorVerificationRequest[] | { error: string }>) => {
+
   try {
     const { data: requests, error } = await supabaseAdmin
       .from('supervisor_verification_requests')
@@ -693,6 +746,116 @@ router.get('/marketplace/ledger', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /admin/audit-logs
+ * Searchable, filterable audit log reader with actor metadata
+ */
+router.get('/audit-logs', async (req: Request, res: Response) => {
+  try {
+    const query: AdminAuditLogQueryParams = {
+      search: req.query.search as string,
+      actorId: req.query.actorId as string,
+      action: req.query.action as string,
+      targetType: req.query.targetType as string,
+      startDate: req.query.startDate as string,
+      endDate: req.query.endDate as string,
+      page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
+      limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 25,
+    };
+    const result = await AdminService.listAuditLogs(query);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('[Admin] List audit logs error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to list audit logs' });
+  }
+});
+
+/**
+ * GET /admin/storage
+ * Platform storage consumption metrics, breakdown, and recent assets
+ */
+router.get('/storage', async (_req: Request, res: Response) => {
+  try {
+    const metrics = await AdminService.getStorageMetrics();
+    return res.json(metrics);
+  } catch (err: any) {
+    console.error('[Admin] Get storage metrics error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to get storage metrics' });
+  }
+});
+
+/**
+ * GET /admin/errors
+ * Operational / system error logs feed
+ */
+router.get('/errors', async (_req: Request, res: Response) => {
+  try {
+    const errors = await AdminService.getSystemErrors();
+    return res.json(errors);
+  } catch (err: any) {
+    console.error('[Admin] Get error logs error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to get error logs' });
+  }
+});
+
+/**
+ * GET /admin/deletion-requests
+ * List formal deletion requests for admin decision
+ */
+router.get('/deletion-requests', async (req: Request, res: Response) => {
+  try {
+    const status = req.query.status as string;
+    const requests = await AdminService.listDeletionRequests(status);
+    return res.json(requests);
+  } catch (err: any) {
+    console.error('[Admin] List deletion requests error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to list deletion requests' });
+  }
+});
+
+/**
+ * POST /admin/deletion-requests/:id/approve
+ * Approve formal deletion of target entity (e.g. Project)
+ */
+router.post('/deletion-requests/:id/approve', async (req: Request<{ id: string }>, res: Response) => {
+  try {
+    const { decisionNotes } = req.body;
+    const adminId = req.user!.id;
+    const approved = await AdminService.approveDeletionRequest(
+      req.params.id,
+      adminId,
+      decisionNotes,
+      req.ip
+    );
+    return res.json(approved);
+  } catch (err: any) {
+    console.error('[Admin] Approve deletion request error:', err);
+    return res.status(400).json({ error: err.message || 'Failed to approve deletion request' });
+  }
+});
+
+/**
+ * POST /admin/deletion-requests/:id/reject
+ * Reject formal deletion request with explanation
+ */
+router.post('/deletion-requests/:id/reject', async (req: Request<{ id: string }>, res: Response) => {
+  try {
+    const { decisionNotes } = req.body;
+    const adminId = req.user!.id;
+    const rejected = await AdminService.rejectDeletionRequest(
+      req.params.id,
+      adminId,
+      decisionNotes,
+      req.ip
+    );
+    return res.json(rejected);
+  } catch (err: any) {
+    console.error('[Admin] Reject deletion request error:', err);
+    return res.status(400).json({ error: err.message || 'Failed to reject deletion request' });
+  }
+});
+
 export default router;
+
 
 

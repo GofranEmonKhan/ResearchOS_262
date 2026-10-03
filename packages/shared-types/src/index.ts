@@ -203,6 +203,8 @@ export interface SupervisorVerificationRequest {
 export interface AuditLog {
   id: string;
   actorId?: string | null;
+  actorName?: string | null;
+  actorRole?: UserRole | null;
   action: string;
   targetType: string;
   targetId?: string | null;
@@ -2364,5 +2366,155 @@ export interface MarketplaceLedgerStats {
   pendingListingsCount: number;
   openDisputesCount: number;
 }
+
+// ==========================================
+// 10. Admin Console, Analytics & Governance (Spec 09)
+// ==========================================
+
+export type DeletionTargetType = 'Project';
+
+export type DeletionRequestStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export const DELETION_REQUEST_STATUSES: Record<DeletionRequestStatus, DeletionRequestStatus> = {
+  Pending: 'Pending',
+  Approved: 'Approved',
+  Rejected: 'Rejected',
+};
+
+export interface DeletionRequest {
+  id: string;
+  targetType: DeletionTargetType;
+  targetId: string;
+  targetTitle?: string;
+  requestedBy: string;
+  requestedByName?: string;
+  requestedByEmail?: string;
+  reason: string;
+  status: DeletionRequestStatus;
+  decidedBy?: string | null;
+  decidedByName?: string | null;
+  decisionNotes?: string | null;
+  decidedAt?: string | null;
+  createdAt: string;
+}
+
+export interface CreateDeletionRequestDTO {
+  targetType: DeletionTargetType;
+  targetId: string;
+  reason: string;
+}
+
+export interface DecideDeletionRequestDTO {
+  decisionNotes?: string;
+}
+
+export interface AdminAuditLogQueryParams {
+  search?: string;
+  actorId?: string;
+  action?: string;
+  targetType?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminAuditLogsResponse {
+  logs: AuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AdminUserListItem {
+  id: string;
+  fullName: string;
+  email?: string;
+  role: UserRole;
+  status: UserStatus;
+  institution: string;
+  department: string;
+  photoUrl?: string | null;
+  reputationPoints: number;
+  projectsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserDetail extends AdminUserListItem {
+  orcidUrl?: string | null;
+  scholarUrl?: string | null;
+  researchFieldTags: string[];
+  skills: string[];
+  bio?: string | null;
+  tasksCount: number;
+  verificationHistory?: SupervisorVerificationRequest[];
+  recentAuditLogs?: AuditLog[];
+}
+
+export interface AdminUsersQueryParams {
+  search?: string;
+  role?: UserRole;
+  status?: UserStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUserListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AdminPlatformOverview {
+  users: {
+    admin: number;
+    supervisor: number;
+    researcher: number;
+    total: number;
+  };
+  pendingSupervisorVerifications: number;
+  activeProjects: number;
+  totalProjects: number;
+  storageBytes: number;
+  storageFilesCount: number;
+  pendingMarketplaceListings: number;
+  openDisputes: number;
+  pendingForumReports: number;
+  aiUsageThisMonth: {
+    tokens: number;
+    costUsd: number;
+    requestCount: number;
+  };
+}
+
+export interface AdminStorageMetrics {
+  totalBytes: number;
+  totalFiles: number;
+  byCategory: {
+    category: string;
+    bytes: number;
+    count: number;
+  }[];
+  recentAssets: {
+    id: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    storagePath: string;
+    uploadedAt: string;
+  }[];
+}
+
+export interface AdminSystemErrorLog {
+  id: string;
+  service: string;
+  message: string;
+  level: 'error' | 'warn' | 'info';
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
+
 
 
