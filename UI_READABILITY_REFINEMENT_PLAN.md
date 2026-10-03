@@ -180,7 +180,7 @@ flowchart TD
 - [x] **Phase 1**: Add centralized typography & contrast tokens in `index.css` & `tailwind.config.js`
 - [x] **Phase 2**: Refine Global Shell & Interactive Selectors (`AppSidebar.tsx`, `TopHeader.tsx`, `HoverSelect.tsx`, `NotificationBell.tsx`)
 - [x] **Phase 3**: Refine Shared UI Primitives (`NoticeModal.tsx`, `ConfirmDeleteDialog.tsx`, `UserAvatar.tsx`, `AiUsageIndicator.tsx`, `AiCoPilotModal.tsx`)
-- [ ] **Phase 4**: Refine Workspaces (`ResearcherWorkspacePage.tsx`, `SupervisorDashboardPage.tsx`, `AdminConsolePage.tsx`)
-- [ ] **Phase 5**: Refine Coding Experiment Playground & Pyodide VFS (`CodePlayground.tsx`, `FileTreeExplorer.tsx`, `EditorTabs.tsx`, `DatasetUploadModal.tsx`, `SaveRunAsExperimentModal.tsx`)
-- [ ] **Phase 6**: Refine Literature, Manuscripts & Community Pages (`LibraryPage.tsx`, `ExperimentTrackerPage.tsx`, `ManuscriptsPage.tsx`, `CommunityPage.tsx`, `ProfilePage.tsx`)
-- [ ] **Phase 7**: Perform Visual Contrast & Responsive Overflow Audit
+- [x] **Phase 4**: Refine Workspaces (`ResearcherWorkspacePage.tsx`, `SupervisorDashboardPage.tsx`, `AdminConsolePage.tsx`)
+- [x] **Phase 5**: Refine Coding Experiment Playground & Pyodide VFS (`CodePlayground.tsx`, `FileTreeExplorer.tsx`, `EditorTabs.tsx`, `DatasetUploadModal.tsx`, `SaveRunAsExperimentModal.tsx`)
+- [x] **Phase 6**: Refine Literature, Manuscripts & Community Pages (`LibraryPage.tsx`, `ExperimentTrackerPage.tsx`, `ManuscriptsPage.tsx`, `CommunityPage.tsx`, `ProfilePage.tsx`, `AdminMarketplaceGovernancePage.tsx`, `ProjectMembersModal.tsx`)
+- [x] **Phase 7**: Perform Visual Contrast & Responsive Overflow Audit (Zero sub-12px micro-text remaining, 100% interactive HoverSelect adoption, 94/94 tests passing)
