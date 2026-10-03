@@ -352,39 +352,45 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
     >
       <div className="max-w-7xl mx-auto w-full space-y-6">
         {/* Header Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-black/60 border border-indigo-500/20 rounded-3xl shadow-2xl relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-7 bg-gradient-to-r from-violet-950/40 via-surface-1 to-indigo-950/40 border border-violet-500/20 rounded-3xl shadow-2xl relative overflow-hidden backdrop-blur-md">
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-indigo-600/10 rounded-full blur-2xl pointer-events-none" />
+
           <div className="space-y-1.5 z-10">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-indigo-500/15 border border-indigo-500/30 rounded-xl text-indigo-400">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="p-2.5 bg-violet-600/15 border border-violet-500/30 rounded-xl text-violet-400 shadow-sm shadow-violet-950/40">
                 <Compass className="w-5 h-5" />
               </div>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Academic Community & Peer Forum
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                Spec 06
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/15 text-violet-300 border border-violet-500/30">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                Global Discourse
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-300/80 max-w-2xl">
+            <p className="text-xs sm:text-sm text-slate-300/90 font-normal max-w-2xl leading-relaxed">
               Engage in peer-reviewed scientific discourse, ask technical questions, read curated methodology blogs, earn academic reputation, and collaborate across institutions.
             </p>
           </div>
 
           {/* CTA Button */}
-          <div className="flex items-center gap-3 z-10">
+          <div className="flex items-center gap-3 z-10 shrink-0">
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white shadow-xl shadow-indigo-600/30 transition-all hover:scale-105 flex items-center gap-2 shrink-0"
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Ask Question / Post
+              <span>Ask Question / Post</span>
             </button>
           </div>
         </div>
 
-        {/* Navigation Tab Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        {/* Navigation Tab Bar & Search Controls */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 p-2 rounded-2xl bg-surface-1/90 border border-white/10 shadow-lg backdrop-blur-md">
+          {/* Segmented Tab Controls */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar p-1 rounded-xl bg-surface-2/80 border border-white/[0.06]">
             {[
               { id: 'all', label: 'All Discussions', icon: MessageSquare },
               { id: 'following', label: 'Following Tags', icon: BookmarkCheck },
@@ -403,16 +409,16 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                     setActiveTab(tab.id as any);
                     setSelectedTag(null);
                   }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap relative ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap relative ${
                     isActive
-                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-600/30'
-                      : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30 ring-1 ring-white/20'
+                      : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                   <span>{tab.label}</span>
                   {tab.id === 'dms' && unreadDmCount > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-500 text-white shadow-sm shadow-rose-500/50 animate-pulse">
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm shadow-rose-500/50 animate-pulse">
                       {unreadDmCount > 9 ? '9+' : unreadDmCount}
                     </span>
                   )}
@@ -423,19 +429,19 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
             {isAdmin && (
               <button
                 onClick={() => setIsAdminModerationOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all ml-2"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all ml-1"
               >
-                <ShieldCheck className="w-4 h-4" />
-                Moderation Queue
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Moderation Queue</span>
               </button>
             )}
           </div>
 
           {/* Search & Sort Filters (for feed and blogs tabs) */}
           {activeTab !== 'dms' && (
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="flex items-center gap-2.5 w-full lg:w-auto px-1">
               {/* Search Bar */}
-              <div className="relative flex-1 sm:w-64">
+              <div className="relative flex-1 lg:w-64">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
@@ -446,7 +452,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                       ? 'Search research blogs...'
                       : 'Search scientific posts...'
                   }
-                  className="w-full pl-9 pr-8 py-2 bg-black/40 border border-white/10 hover:border-white/20 focus:border-indigo-500 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-9 pr-8 py-2 bg-surface-2 border border-white/10 hover:border-white/20 focus:border-violet-500 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all"
                 />
                 {searchTerm && (
                   <button
@@ -467,7 +473,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                     {
                       value: 'newest',
                       label: 'Newest First',
-                      icon: <Clock className="w-3.5 h-3.5 text-indigo-400" />,
+                      icon: <Clock className="w-3.5 h-3.5 text-violet-400" />,
                     },
                     {
                       value: 'top-voted',
@@ -481,9 +487,9 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                     },
                   ]}
                   onChange={(val) => setSelectedSort(val as any)}
-                  icon={<ArrowUpDown className="w-3.5 h-3.5 text-indigo-400" />}
+                  icon={<ArrowUpDown className="w-3.5 h-3.5 text-violet-400" />}
                   align="right"
-                  buttonClassName="py-2 px-3 text-xs bg-[#0F0E20]/90 border-white/10 hover:border-indigo-500/40 rounded-xl"
+                  buttonClassName="py-2 px-3 text-xs bg-surface-2 border-white/10 hover:border-violet-500/40 rounded-xl"
                   menuClassName="w-44"
                 />
               )}
@@ -638,9 +644,9 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
             {/* Sidebar Widgets (1 Col) */}
             <div className="space-y-5">
               {/* Popular Tags Widget */}
-              <div className="p-5 bg-[#0C0B1B]/80 border border-white/10 rounded-2xl space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <TrendingUp className="w-4 h-4 text-indigo-400" />
+              <div className="p-5 bg-surface-1/90 border border-white/10 rounded-2xl shadow-lg space-y-3.5 backdrop-blur-sm">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
+                  <TrendingUp className="w-4 h-4 text-violet-400" />
                   Popular Research Fields
                 </div>
 
@@ -652,12 +658,12 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                         onClick={() => setSelectedTag(tag)}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
                           selectedTag === tag
-                            ? 'bg-indigo-600 text-white font-bold'
-                            : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white'
+                            ? 'bg-violet-600 text-white font-bold shadow-md shadow-violet-600/30'
+                            : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/[0.06]'
                         }`}
                       >
                         <span>#{tag}</span>
-                        <span className="text-[10px] text-slate-500">({count})</span>
+                        <span className="text-[10px] text-slate-400 font-mono">({count})</span>
                       </button>
                     );
                   })}
@@ -665,33 +671,33 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
               </div>
 
               {/* Reputation Protocol Explainer */}
-              <div className="p-5 bg-gradient-to-br from-indigo-950/30 to-purple-950/20 border border-indigo-500/20 rounded-2xl space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-300">
+              <div className="p-5 bg-gradient-to-br from-violet-950/30 via-surface-1/90 to-surface-1 border border-violet-500/20 rounded-2xl shadow-lg space-y-3.5 backdrop-blur-sm">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-300">
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   Scholar Reputation Ledger
                 </div>
 
                 <div className="space-y-2 text-xs text-slate-300">
-                  <div className="flex items-center justify-between">
-                    <span>Peer Upvote / React</span>
-                    <strong className="text-emerald-400">+10 Rep</strong>
+                  <div className="flex items-center justify-between py-1 border-b border-white/[0.04]">
+                    <span className="font-medium">Peer Upvote / React</span>
+                    <strong className="text-emerald-400 font-mono">+10 Rep</strong>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span>Accepted Solution</span>
-                    <strong className="text-emerald-400">+15 Rep</strong>
+                  <div className="flex items-center justify-between py-1 border-b border-white/[0.04]">
+                    <span className="font-medium">Accepted Solution</span>
+                    <strong className="text-emerald-400 font-mono">+15 Rep</strong>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span>Faculty Expert Seal</span>
-                    <strong className="text-violet-400">+20 Rep</strong>
+                  <div className="flex items-center justify-between py-1 border-b border-white/[0.04]">
+                    <span className="font-medium">Faculty Expert Seal</span>
+                    <strong className="text-violet-300 font-mono">+20 Rep</strong>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span>Downvote Received</span>
-                    <strong className="text-rose-400">-2 Rep</strong>
+                  <div className="flex items-center justify-between py-1">
+                    <span className="font-medium">Downvote Received</span>
+                    <strong className="text-rose-400 font-mono">-2 Rep</strong>
                   </div>
                 </div>
 
                 <div className="pt-2 border-t border-white/10 text-[11px] text-slate-400 leading-relaxed">
-                  Earn points to unlock faculty peer review endorsement badges and community moderation privileges.
+                  Earn reputation points to unlock faculty peer review endorsement badges and community governance privileges.
                 </div>
               </div>
             </div>
