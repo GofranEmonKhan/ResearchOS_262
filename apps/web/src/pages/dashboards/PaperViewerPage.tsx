@@ -37,7 +37,9 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<PaperAnnotation[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState<boolean>(true);
+  const [isPdfLoading, setIsPdfLoading] = useState<boolean>(true);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Panel Visibilities
@@ -48,32 +50,48 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   const [projects, setProjects] = useState<Project[]>([]);
 
-  // Load paper, signed URL, and annotations
+  // Progressive load: Paper metadata renders immediately, then stream PDF & annotations
   const loadData = useCallback(async () => {
-    setIsLoading(true);
+    setIsLoadingMetadata(true);
+    setIsPdfLoading(true);
     setError(null);
+    setPdfError(null);
+
+    // Concurrently trigger all promises
+    const paperPromise = api.getPaper(paperId);
+    const projectsPromise = api.getProjects().catch(() => []);
+    const annotationsPromise = api.getAnnotations(paperId).catch(() => []);
+    const downloadUrlPromise = api.getPaperDownloadUrl(paperId);
+
+    // 1. Resolve Paper metadata first to render header & sidebars immediately
     try {
-      const [paperData, signedUrlData, annotationsData, projectsData] = await Promise.all([
-        api.getPaper(paperId),
-        api.getPaperDownloadUrl(paperId),
-        api.getAnnotations(paperId),
-        api.getProjects().catch(() => []),
-      ]);
-
-      const resolvedPdfUrl = signedUrlData?.signedUrl || (signedUrlData as any)?.url;
-      if (!resolvedPdfUrl) {
-        throw new Error('Could not resolve signed download URL for PDF document.');
-      }
-
+      const paperData = await paperPromise;
       setPaper(paperData);
-      setPdfUrl(resolvedPdfUrl);
-      setAnnotations(annotationsData);
-      setProjects(projectsData);
+      setIsLoadingMetadata(false);
+
+      // Concurrently populate annotations and projects
+      annotationsPromise.then((anns) => setAnnotations(anns));
+      projectsPromise.then((projs) => setProjects(projs));
+
+      // 2. Resolve signed PDF stream for the viewport
+      try {
+        const signedUrlData = await downloadUrlPromise;
+        const resolvedPdfUrl = signedUrlData?.signedUrl || (signedUrlData as any)?.url;
+        if (!resolvedPdfUrl) {
+          throw new Error('Could not resolve signed download URL for PDF document.');
+        }
+        setPdfUrl(resolvedPdfUrl);
+      } catch (dlErr: any) {
+        console.error('Failed to load PDF download URL:', dlErr);
+        setPdfError(dlErr.message || 'Failed to resolve PDF document stream');
+      } finally {
+        setIsPdfLoading(false);
+      }
     } catch (err: any) {
-      console.error('Failed to load paper viewer:', err);
+      console.error('Failed to load paper details:', err);
       setError(err.message || 'Failed to load paper details');
-    } finally {
-      setIsLoading(false);
+      setIsLoadingMetadata(false);
+      setIsPdfLoading(false);
     }
   }, [paperId]);
 
@@ -108,12 +126,13 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
     window.open(pdfUrl, '_blank');
   };
 
-  if (isLoading) {
+  // Full-screen loader only for initial metadata resolution
+  if (isLoadingMetadata) {
     return (
       <ContextualLoader
         context="paper"
         title="Opening Academic Publication"
-        subtitle="Resolving verified PDF document stream, citation index, and collaborative annotations..."
+        subtitle="Resolving verified paper record and collaborative annotations..."
         itemTitle={paper?.title}
         onCancel={() => onNavigate('/literature')}
         cancelLabel="Return to Library"
@@ -122,21 +141,15 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
     );
   }
 
-  if (error || !paper || !pdfUrl) {
-    let errorMessage = error;
-    if (!errorMessage) {
-      if (!paper) errorMessage = 'Paper not found or access denied.';
-      else if (!pdfUrl) errorMessage = 'PDF document could not be loaded.';
-      else errorMessage = 'Failed to load publication details.';
-    }
-
+  // Critical Error: Paper record not found or inaccessible
+  if (error || !paper) {
     return (
       <div className="min-h-screen bg-[#07070C] flex flex-col items-center justify-center p-6 text-center space-y-4">
         <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
           <AlertTriangle className="w-6 h-6" />
         </div>
         <h2 className="text-base font-bold text-white">Unable to Open Publication</h2>
-        <p className="text-xs text-slate-400 max-w-sm">{errorMessage}</p>
+        <p className="text-xs text-slate-400 max-w-sm">{error || 'Paper not found or access denied.'}</p>
         <button
           onClick={() => onNavigate('/literature')}
           className="px-4 py-2 rounded-xl bg-surface-2 hover:bg-surface-3 border border-white/10 text-xs font-semibold text-slate-200 hover:text-white transition-colors"
@@ -255,15 +268,42 @@ export const PaperViewerPage: React.FC<PaperViewerPageProps> = ({ paperId, onNav
           />
         )}
 
-        {/* Center: PDF Viewer Canvas */}
-        <PdfViewer
-          paper={paper}
-          pdfUrl={pdfUrl}
-          annotations={annotations}
-          currentPage={currentPage}
-          onPageChange={(p) => setCurrentPage(p)}
-          onAnnotationCreated={refreshAnnotations}
-        />
+        {/* Center: PDF Viewer Canvas with Progressive Loader */}
+        {isPdfLoading || !pdfUrl ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#07070C] text-slate-300">
+            {pdfError ? (
+              <div className="text-center space-y-3 p-6 rounded-2xl bg-surface-2 border border-red-500/20 max-w-md shadow-2xl">
+                <AlertTriangle className="w-8 h-8 text-rose-400 mx-auto" />
+                <h3 className="text-sm font-bold text-white">PDF Document Unavailable</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">{pdfError}</p>
+                <button
+                  type="button"
+                  onClick={loadData}
+                  className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white transition-all shadow-md active:scale-95"
+                >
+                  Retry Stream
+                </button>
+              </div>
+            ) : (
+              <ContextualLoader
+                fullScreen={false}
+                size="md"
+                context="paper"
+                title="Rendering Academic Document"
+                subtitle="Resolving secure PDF stream and initializing local PDF.js WebAssembly worker..."
+              />
+            )}
+          </div>
+        ) : (
+          <PdfViewer
+            paper={paper}
+            pdfUrl={pdfUrl}
+            annotations={annotations}
+            currentPage={currentPage}
+            onPageChange={(p) => setCurrentPage(p)}
+            onAnnotationCreated={refreshAnnotations}
+          />
+        )}
 
         {/* Right Panel: Smart Research Sidebar */}
         {isRightPanelOpen && (
