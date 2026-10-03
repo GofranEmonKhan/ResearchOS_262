@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext.js';
 import { WorkspaceLayout } from '../../components/layout/WorkspaceLayout.js';
 import { useAdminMarketplaceGovernance } from '../../hooks/useMarketplace.js';
 import { Dispute, DisputeResolutionAction } from '@researchos/shared-types';
+import { HoverSelect } from '../../components/common/HoverSelect.js';
 
 interface AdminMarketplaceGovernancePageProps {
   onNavigate: (route: string) => void;
@@ -411,15 +412,16 @@ export const AdminMarketplaceGovernancePage: React.FC<AdminMarketplaceGovernance
               <h3 className="text-base font-semibold text-slate-100">Adjudicate Dispute</h3>
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-300 block">Ruling Action</label>
-                <select
+                <HoverSelect
                   value={action}
-                  onChange={(e) => setAction(e.target.value as DisputeResolutionAction)}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-900/80 border border-slate-800 text-slate-100 focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="RefundRequester">Refund Requester (Full Escrow Refund)</option>
-                  <option value="ReleaseToProvider">Release to Provider (Escrow Payout)</option>
-                  <option value="DismissDispute">Dismiss Dispute</option>
-                </select>
+                  onChange={(val) => setAction(val as DisputeResolutionAction)}
+                  options={[
+                    { value: 'RefundRequester', label: 'Refund Requester (Full Escrow Refund)' },
+                    { value: 'ReleaseToProvider', label: 'Release to Provider (Escrow Payout)' },
+                    { value: 'DismissDispute', label: 'Dismiss Dispute' },
+                  ]}
+                  buttonClassName="w-full px-3 py-2 text-xs"
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-300 block">Arbitration Notes</label>

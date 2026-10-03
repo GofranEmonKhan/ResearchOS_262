@@ -28,6 +28,7 @@ import {
   Compass,
 } from 'lucide-react';
 import { SemanticSearchPanel, LiteratureDiscoveryView } from '../../components/ai/index.js';
+import { HoverSelect } from '../../components/common/HoverSelect.js';
 
 
 interface LibraryPageProps {
@@ -330,17 +331,15 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
             {activeLibraryTab === 'project' && (
               <div className="flex items-center gap-2.5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Project:</span>
-                <select
+                <HoverSelect
                   value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="px-3.5 py-2 rounded-xl bg-surface-2 border border-white/15 text-sm font-medium text-white focus:outline-none focus:border-violet-500"
-                >
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedProjectId(val)}
+                  options={projects.map((p) => ({
+                    value: p.id,
+                    label: p.title,
+                  }))}
+                  buttonClassName="px-3.5 py-2 text-sm font-medium"
+                />
               </div>
             )}
 
@@ -376,18 +375,18 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ onNavigate }) => {
               </span>
 
               {/* Reading Status Pill Selector */}
-              <select
+              <HoverSelect
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as ReadingStatus | '')}
-                className="px-3 py-1.5 rounded-xl bg-surface-2 border border-white/15 text-xs font-medium text-slate-200 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30"
-              >
-                <option value="">All Reading Statuses</option>
-                {(Object.keys(READING_STATUSES) as ReadingStatus[]).map((st) => (
-                  <option key={st} value={st}>
-                    {st === 'DeeplyAnalysed' ? 'Deeply Analysed' : st}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setStatusFilter(val as ReadingStatus | '')}
+                options={[
+                  { value: '', label: 'All Reading Statuses' },
+                  ...(Object.keys(READING_STATUSES) as ReadingStatus[]).map((st) => ({
+                    value: st,
+                    label: st === 'DeeplyAnalysed' ? 'Deeply Analysed' : st,
+                  })),
+                ]}
+                buttonClassName="px-3 py-1.5 text-xs font-medium"
+              />
 
               {/* Year Input */}
               <input

@@ -5,6 +5,7 @@ import {
   Database,
   Plus,
 } from 'lucide-react';
+import { HoverSelect } from '../common/HoverSelect.js';
 import {
   ListingType,
   CreateListingDTO,
@@ -193,7 +194,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
           {type === 'Hardware' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-900/50 border border-slate-800/80">
               <div>
-                <label className="text-[11px] text-slate-400">GPU / CPU Model</label>
+                <label className="text-xs font-semibold text-slate-300">GPU / CPU Model</label>
                 <input
                   type="text"
                   value={gpuCpuModel}
@@ -203,7 +204,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400">VRAM</label>
+                <label className="text-xs font-semibold text-slate-300">VRAM</label>
                 <input
                   type="text"
                   value={vram}
@@ -213,7 +214,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400">System RAM</label>
+                <label className="text-xs font-semibold text-slate-300">System RAM</label>
                 <input
                   type="text"
                   value={ram}
@@ -223,7 +224,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400">Storage</label>
+                <label className="text-xs font-semibold text-slate-300">Storage</label>
                 <input
                   type="text"
                   value={storage}
@@ -233,7 +234,7 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400">OS</label>
+                <label className="text-xs font-semibold text-slate-300">OS</label>
                 <input
                   type="text"
                   value={os}
@@ -243,18 +244,19 @@ export const CreateListingModal: React.FC<CreateListingModalProps> = ({
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400">Access Method</label>
-                <select
+                <label className="text-xs font-semibold text-slate-300">Access Method</label>
+                <HoverSelect
                   value={accessMethod}
-                  onChange={(e) => setAccessMethod(e.target.value as HardwareAccessMethod)}
-                  className="mt-1 w-full px-2.5 py-1.5 rounded-md bg-slate-900 border border-slate-800 text-xs text-slate-200"
-                >
-                  <option value="SSH">SSH Terminal</option>
-                  <option value="RemoteDesktop">Remote Desktop / VNC</option>
-                </select>
+                  onChange={(val) => setAccessMethod(val as HardwareAccessMethod)}
+                  options={[
+                    { value: 'SSH', label: 'SSH Terminal' },
+                    { value: 'RemoteDesktop', label: 'Remote Desktop / VNC' },
+                  ]}
+                  buttonClassName="mt-1 w-full px-2.5 py-1.5 text-xs"
+                />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-[11px] text-slate-400">Location / Datacenter Node</label>
+                <label className="text-xs font-semibold text-slate-300">Location / Datacenter Node</label>
                 <input
                   type="text"
                   value={location}

@@ -20,6 +20,7 @@ import {
   X,
   Eye,
 } from 'lucide-react';
+import { HoverSelect } from '../common/HoverSelect.js';
 import {
   AiUsageIndicator,
   AiSummarizePanel,
@@ -554,29 +555,27 @@ export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
                       </button>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-slate-400">Purpose Type</label>
-                      <select
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Purpose Type</label>
+                      <HoverSelect
                         value={newCitationPurpose}
-                        onChange={(e) => setNewCitationPurpose(e.target.value as CitationPurposeType)}
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-surface-1 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500"
-                      >
-                        {(Object.keys(CITATION_PURPOSE_TYPES) as CitationPurposeType[]).map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(val) => setNewCitationPurpose(val as CitationPurposeType)}
+                        options={(Object.keys(CITATION_PURPOSE_TYPES) as CitationPurposeType[]).map((p) => ({
+                          value: p,
+                          label: p,
+                        }))}
+                        buttonClassName="w-full px-2.5 py-1.5 text-xs"
+                      />
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-slate-400">Context / Note</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Context / Note</label>
                       <input
                         type="text"
                         value={newCitationNote}
                         onChange={(e) => setNewCitationNote(e.target.value)}
                         placeholder="e.g. Baseline model in Table 2"
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-surface-1 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-surface-1 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-violet-500"
                       />
                     </div>
 

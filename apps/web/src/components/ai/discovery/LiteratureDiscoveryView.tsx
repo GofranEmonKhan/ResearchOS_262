@@ -25,6 +25,7 @@ import type {
   Project,
 } from '@researchos/shared-types';
 import { AiUsageIndicator } from '../AiUsageIndicator.js';
+import { HoverSelect } from '../../common/HoverSelect.js';
 
 interface LiteratureDiscoveryViewProps {
   projects: Project[];
@@ -227,15 +228,16 @@ export const LiteratureDiscoveryView: React.FC<LiteratureDiscoveryViewProps> = (
 
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Literature limit:</span>
-              <select
+              <HoverSelect
                 value={limit}
-                onChange={(e) => setLimit(Number(e.target.value))}
-                className="px-3 py-1 rounded-lg bg-surface-2 border border-white/15 text-xs font-medium text-slate-200 focus:outline-none focus:border-violet-500"
-              >
-                <option value={5}>Top 5 papers</option>
-                <option value={10}>Top 10 papers</option>
-                <option value={15}>Top 15 papers</option>
-              </select>
+                onChange={(val) => setLimit(Number(val))}
+                options={[
+                  { value: 5, label: 'Top 5 papers' },
+                  { value: 10, label: 'Top 10 papers' },
+                  { value: 15, label: 'Top 15 papers' },
+                ]}
+                buttonClassName="px-3 py-1 text-xs font-medium"
+              />
             </div>
           </div>
         </form>

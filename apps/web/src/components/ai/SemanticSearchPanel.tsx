@@ -12,6 +12,7 @@ import {
 import { api } from '../../lib/api.js';
 import type { SemanticSearchResult, Project } from '@researchos/shared-types';
 import { AiUsageIndicator } from './AiUsageIndicator.js';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 interface SemanticSearchPanelProps {
   projects?: Project[];
@@ -151,31 +152,32 @@ export const SemanticSearchPanel: React.FC<SemanticSearchPanelProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Project Scope:</span>
-              <select
+              <HoverSelect
                 value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-surface-2 border border-white/15 text-xs font-medium text-slate-200 focus:outline-none focus:border-violet-500"
-              >
-                <option value="all">All Authorized Papers</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedProjectId(val)}
+                options={[
+                  { value: 'all', label: 'All Authorized Papers' },
+                  ...projects.map((p) => ({
+                    value: p.id,
+                    label: p.title,
+                  })),
+                ]}
+                buttonClassName="px-3 py-1.5 text-xs font-medium"
+              />
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Results limit:</span>
-              <select
+              <HoverSelect
                 value={topK}
-                onChange={(e) => setTopK(Number(e.target.value))}
-                className="px-3 py-1.5 rounded-xl bg-surface-2 border border-white/15 text-xs font-medium text-slate-200 focus:outline-none focus:border-violet-500"
-              >
-                <option value={5}>Top 5 matches</option>
-                <option value={10}>Top 10 matches</option>
-                <option value={20}>Top 20 matches</option>
-              </select>
+                onChange={(val) => setTopK(Number(val))}
+                options={[
+                  { value: 5, label: 'Top 5 matches' },
+                  { value: 10, label: 'Top 10 matches' },
+                  { value: 20, label: 'Top 20 matches' },
+                ]}
+                buttonClassName="px-3 py-1.5 text-xs font-medium"
+              />
             </div>
           </div>
         </form>

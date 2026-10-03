@@ -9,6 +9,7 @@ import {
   AlertCircle,
   ExternalLink,
 } from 'lucide-react';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 interface PaperMetadataModalProps {
   paper: Paper | null;
@@ -108,24 +109,22 @@ export const PaperMetadataModal: React.FC<PaperMetadataModalProps> = ({
           )}
 
           {/* Reading Status Selector */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-slate-300">Reading Status</label>
-            <select
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">Reading Status</label>
+            <HoverSelect
               value={readingStatus}
-              onChange={(e) => setReadingStatus(e.target.value as ReadingStatus)}
-              className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500"
-            >
-              {(Object.keys(READING_STATUSES) as ReadingStatus[]).map((st) => (
-                <option key={st} value={st}>
-                  {st === 'DeeplyAnalysed' ? 'Deeply Analysed' : st}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setReadingStatus(val as ReadingStatus)}
+              options={(Object.keys(READING_STATUSES) as ReadingStatus[]).map((st) => ({
+                value: st,
+                label: st === 'DeeplyAnalysed' ? 'Deeply Analysed' : st,
+              }))}
+              buttonClassName="w-full px-3 py-2 text-xs"
+            />
           </div>
 
           {/* Title */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-slate-300">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">
               Paper Title {!isUploader && '(View only)'}
             </label>
             <input
@@ -138,8 +137,8 @@ export const PaperMetadataModal: React.FC<PaperMetadataModalProps> = ({
           </div>
 
           {/* Authors */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-slate-300">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">
               Authors {!isUploader && '(View only)'}
             </label>
             <input
@@ -154,18 +153,18 @@ export const PaperMetadataModal: React.FC<PaperMetadataModalProps> = ({
 
           {/* Year & Venue */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-300">Year</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">Year</label>
               <input
                 type="number"
                 disabled={!isUploader}
                 value={year || ''}
                 onChange={(e) => setYear(e.target.value ? parseInt(e.target.value) : undefined)}
-                className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-violet-500"
+                className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white disabled:opacity-60 focus:outline-none focus:border-violet-500 font-mono"
               />
             </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-300">Venue</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">Venue</label>
               <input
                 type="text"
                 disabled={!isUploader}
@@ -177,8 +176,8 @@ export const PaperMetadataModal: React.FC<PaperMetadataModalProps> = ({
           </div>
 
           {/* DOI */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-slate-300">DOI</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">DOI</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -203,7 +202,7 @@ export const PaperMetadataModal: React.FC<PaperMetadataModalProps> = ({
 
           {/* Provenance Footer */}
           {paper.metadataSource && (
-            <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between text-[11px] text-slate-400">
+            <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-violet-400" />
                 Source: <span className="font-mono text-slate-300">{paper.metadataSource}</span>
