@@ -388,15 +388,14 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
         </div>
 
         {/* Navigation Tab Bar & Search Controls */}
-        <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3.5 p-2.5 rounded-2xl bg-[#090A16]/95 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
+        <div className="relative z-30 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3.5 p-2.5 rounded-2xl bg-[#090A16]/95 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
           {/* Segmented Tab Controls */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar p-1.5 rounded-xl bg-slate-900/90 border border-slate-800 shrink-0">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar p-1.5 rounded-xl bg-slate-900/90 border border-slate-800 shrink-0">
             {[
               { id: 'all', label: 'All Discussions', icon: MessageSquare },
               { id: 'following', label: 'Following Tags', icon: BookmarkCheck },
               { id: 'unanswered', label: 'Unanswered', icon: HelpCircle },
               { id: 'blogs', label: 'Scientific Blogs & Insights', icon: BookOpen },
-              { id: 'dms', label: 'Direct Messages', icon: Mail, unreadCount: unreadDmCount },
               { id: 'my-posts', label: 'My Activity', icon: User },
             ].map((tab) => {
               const Icon = tab.icon;
@@ -409,19 +408,14 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                     setActiveTab(tab.id as any);
                     setSelectedTag(null);
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap cursor-pointer select-none ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-150 whitespace-nowrap cursor-pointer select-none ${
                     isActive
-                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/30 ring-1 ring-white/20'
-                      : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold shadow-md shadow-violet-600/35 border border-violet-400/40 ring-1 ring-white/20'
+                      : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white border border-white/[0.08] hover:border-violet-500/30'
                   }`}
                 >
                   <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-violet-400'}`} />
                   <span>{tab.label}</span>
-                  {tab.id === 'dms' && unreadDmCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm shadow-rose-500/50 animate-pulse">
-                      {unreadDmCount > 9 ? '9+' : unreadDmCount}
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -429,7 +423,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
             {isAdmin && (
               <button
                 onClick={() => setIsAdminModerationOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all ml-1 cursor-pointer whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all ml-1 cursor-pointer whitespace-nowrap"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Moderation Queue</span>
@@ -490,7 +484,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                   icon={<ArrowUpDown className="w-3.5 h-3.5 text-violet-400" />}
                   align="right"
                   buttonClassName="py-2 px-3.5 text-xs bg-slate-900/90 border-slate-800 hover:border-violet-500/40 rounded-xl text-slate-200"
-                  menuClassName="w-44"
+                  menuClassName="w-48"
                 />
               )}
             </div>
