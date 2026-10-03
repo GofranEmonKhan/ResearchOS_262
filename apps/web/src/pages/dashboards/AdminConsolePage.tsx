@@ -113,7 +113,7 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-8 pt-24 sm:pt-28 pb-16 space-y-6">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16 space-y-6">
         {/* Status Notification Banner */}
         {statusMessage && (
           <div className={`p-4 rounded-xl border text-xs flex items-center justify-between animate-in fade-in duration-150 ${
@@ -135,7 +135,7 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
         )}
 
         {/* Command Center Tabs Navigation Bar */}
-        <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2 p-2 rounded-2xl bg-gradient-to-b from-[#0d0e21]/95 to-[#060712]/98 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
+        <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-1.5 xl:gap-2 p-2 rounded-2xl bg-gradient-to-b from-[#0d0e21]/95 to-[#060712]/98 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
           {navTabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -143,18 +143,18 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer select-none group ${
+                className={`w-full min-w-0 flex items-center justify-center gap-1.5 xl:gap-2 px-2 xl:px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer select-none group ${
                   isActive
                     ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-bold shadow-lg shadow-violet-600/35 border border-violet-400/50 ring-1 ring-white/20'
                     : 'bg-gradient-to-b from-slate-800/60 via-slate-900/80 to-[#0c0d1e]/90 hover:from-slate-700/70 hover:via-indigo-950/40 hover:to-purple-950/30 text-slate-300 hover:text-white border border-slate-700/50 hover:border-violet-500/50 shadow-sm'
                 }`}
               >
-                <span className={`transition-colors ${isActive ? 'text-white' : 'text-violet-400 group-hover:text-violet-300'}`}>
+                <span className={`shrink-0 transition-colors ${isActive ? 'text-white' : 'text-violet-400 group-hover:text-violet-300'}`}>
                   {tab.icon}
                 </span>
                 <span>{tab.label}</span>
                 {typeof tab.badge === 'number' && tab.badge > 0 && (
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
                     isActive
                       ? 'bg-white/25 text-white border border-white/30'
                       : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
