@@ -58,6 +58,15 @@
   }
 }
 
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Glassmorphism Classes */
 .nav-pill-bar {
   background: rgba(13, 12, 24, 0.78);

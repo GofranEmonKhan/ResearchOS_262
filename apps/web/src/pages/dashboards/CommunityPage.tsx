@@ -388,9 +388,9 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
         </div>
 
         {/* Navigation Tab Bar & Search Controls */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 p-2 rounded-2xl bg-surface-1/90 border border-white/10 shadow-lg backdrop-blur-md">
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3.5 p-2.5 rounded-2xl bg-[#090A16]/95 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
           {/* Segmented Tab Controls */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar p-1 rounded-xl bg-surface-2/80 border border-white/[0.06]">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar p-1.5 rounded-xl bg-slate-900/90 border border-slate-800 shrink-0">
             {[
               { id: 'all', label: 'All Discussions', icon: MessageSquare },
               { id: 'following', label: 'Following Tags', icon: BookmarkCheck },
@@ -409,16 +409,16 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                     setActiveTab(tab.id as any);
                     setSelectedTag(null);
                   }}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap relative ${
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap cursor-pointer select-none ${
                     isActive
-                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30 ring-1 ring-white/20'
-                      : 'text-slate-300 hover:text-white hover:bg-white/[0.08]'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/30 ring-1 ring-white/20'
+                      : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-violet-400'}`} />
                   <span>{tab.label}</span>
                   {tab.id === 'dms' && unreadDmCount > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm shadow-rose-500/50 animate-pulse">
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm shadow-rose-500/50 animate-pulse">
                       {unreadDmCount > 9 ? '9+' : unreadDmCount}
                     </span>
                   )}
@@ -429,7 +429,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
             {isAdmin && (
               <button
                 onClick={() => setIsAdminModerationOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all ml-1"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all ml-1 cursor-pointer whitespace-nowrap"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Moderation Queue</span>
@@ -439,10 +439,10 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
 
           {/* Search & Sort Filters (for feed and blogs tabs) */}
           {activeTab !== 'dms' && (
-            <div className="flex items-center gap-2.5 w-full lg:w-auto px-1">
+            <div className="flex items-center gap-2.5 w-full xl:w-auto">
               {/* Search Bar */}
-              <div className="relative flex-1 lg:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <div className="relative flex-1 xl:w-64">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-violet-400 pointer-events-none" />
                 <input
                   type="text"
                   value={searchTerm}
@@ -452,13 +452,13 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                       ? 'Search research blogs...'
                       : 'Search scientific posts...'
                   }
-                  className="w-full pl-9 pr-8 py-2 bg-surface-2 border border-white/10 hover:border-white/20 focus:border-violet-500 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all"
+                  className="w-full pl-9 pr-8 py-2 bg-slate-900/90 border border-slate-800 hover:border-slate-700 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none transition-all"
                 />
                 {searchTerm && (
                   <button
                     type="button"
                     onClick={() => setSearchTerm('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded-md hover:bg-white/10 transition-colors cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -489,7 +489,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
                   onChange={(val) => setSelectedSort(val as any)}
                   icon={<ArrowUpDown className="w-3.5 h-3.5 text-violet-400" />}
                   align="right"
-                  buttonClassName="py-2 px-3 text-xs bg-surface-2 border-white/10 hover:border-violet-500/40 rounded-xl"
+                  buttonClassName="py-2 px-3.5 text-xs bg-slate-900/90 border-slate-800 hover:border-violet-500/40 rounded-xl text-slate-200"
                   menuClassName="w-44"
                 />
               )}
