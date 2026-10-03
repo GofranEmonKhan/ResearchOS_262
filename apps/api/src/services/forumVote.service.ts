@@ -309,6 +309,58 @@ export async function getReactorsList(targetType: ForumTargetType, targetId: str
 }
 
 /**
+ * Computes aggregated reaction breakdown for a batch of targets in a single query.
+ */
+export async function getBatchReactionCounts(
+  targetType: ForumTargetType,
+  targetIds: string[]
+): Promise<Map<string, ReactionCounts>> {
+  const map = new Map<string, ReactionCounts>();
+  if (!targetIds || targetIds.length === 0) return map;
+
+  for (const id of targetIds) {
+    map.set(id, {
+      like: 0,
+      love: 0,
+      insightful: 0,
+      celebrate: 0,
+      curious: 0,
+      support: 0,
+      up: 0,
+      down: 0,
+      totalReactions: 0,
+    });
+  }
+
+  const { data: votes } = await supabaseAdmin
+    .from('forum_votes')
+    .select('target_id, value')
+    .eq('target_type', targetType)
+    .in('target_id', targetIds);
+
+  if (!votes) return map;
+
+  for (const v of votes) {
+    const counts = map.get(v.target_id);
+    if (counts) {
+      counts.totalReactions++;
+      switch (v.value) {
+        case 'Like': counts.like++; break;
+        case 'Love': counts.love++; break;
+        case 'Insightful': counts.insightful++; break;
+        case 'Celebrate': counts.celebrate++; break;
+        case 'Curious': counts.curious++; break;
+        case 'Support': counts.support++; break;
+        case 'Up': counts.up++; break;
+        case 'Down': counts.down++; break;
+      }
+    }
+  }
+
+  return map;
+}
+
+/**
  * Adjusts user reputation points directly with zero floor clamp
  */
 export async function adjustReputation(userId: string, delta: number): Promise<number> {
@@ -333,6 +385,7 @@ export class ForumVoteService {
   static castVote = castVote;
   static retractVote = retractVote;
   static getReactionCounts = getReactionCounts;
+  static getBatchReactionCounts = getBatchReactionCounts;
   static getReactorsList = getReactorsList;
   static adjustReputation = adjustReputation;
 }

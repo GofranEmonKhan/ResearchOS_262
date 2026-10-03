@@ -30,6 +30,7 @@ import { DirectMessagesPanel } from '../../components/community/DirectMessagesPa
 import { MessengerPopupChat } from '../../components/community/MessengerPopupChat.js';
 import { CommunityProfileModal } from '../../components/community/CommunityProfileModal.js';
 import { AdminModerationModal } from '../../components/community/AdminModerationModal.js';
+import { ContextualLoader } from '../../components/common/ContextualLoader.js';
 import { ForumPost, ForumVoteValue } from '@researchos/shared-types';
 import { api, getAuthToken } from '../../lib/api.js';
 import { supabase } from '../../supabase.js';
@@ -44,6 +45,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
   const [activeTab, setActiveTab] = useState<'all' | 'following' | 'unanswered' | 'blogs' | 'dms' | 'my-posts' | 'moderation'>(initialTab || 'all');
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedSort, setSelectedSort] = useState<'newest' | 'top-voted' | 'most-active'>('newest');
   const [popularTags, setPopularTags] = useState<{ tag: string; count: number }[]>([]);
@@ -139,6 +141,14 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
     }
   }, []);
 
+  // Debounce search term to prevent rapid sequential network requests
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const fetchPosts = async () => {
     if (activeTab === 'dms' || activeTab === 'moderation') return;
 
@@ -147,7 +157,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
       const token = await getAuthToken();
       const params = new URLSearchParams();
       if (selectedTag) params.append('tag', selectedTag);
-      if (searchTerm) params.append('search', searchTerm);
+      if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
       if (selectedSort) params.append('sort', selectedSort);
       params.append('tab', activeTab);
 
@@ -193,7 +203,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
 
   useEffect(() => {
     fetchPosts();
-  }, [activeTab, selectedTag, selectedSort, searchTerm]);
+  }, [activeTab, selectedTag, selectedSort, debouncedSearchTerm]);
 
   const handleToggleFollowTag = async (tag: string) => {
     const isFollowed = followedTags.includes(tag);
@@ -554,9 +564,13 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({ onNavigate, initia
               )}
 
               {isLoading ? (
-                <div className="flex items-center justify-center py-24">
-                  <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                </div>
+                <ContextualLoader
+                  context="community"
+                  fullScreen={false}
+                  size="sm"
+                  title="Loading Discussions & Insights"
+                  subtitle="Streaming peer questions, answers, and research discussions..."
+                />
               ) : (activeTab === 'blogs' ? posts.filter((p) => p.tags?.includes('scientific-blog') || p.tags?.includes('blog')) : posts).length === 0 ? (
                 <div className="p-12 text-center bg-[#0C0B1B]/80 border border-white/10 rounded-2xl space-y-3">
                   {activeTab === 'blogs' ? (
