@@ -135,7 +135,7 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
         )}
 
         {/* Command Center Tabs Navigation Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-800 scrollbar-thin">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar p-2.5 rounded-2xl bg-[#090A16]/95 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
           {navTabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -143,17 +143,21 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer select-none ${
                   isActive
-                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25 border border-violet-500'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold shadow-lg shadow-violet-600/35 border border-violet-400/40 ring-1 ring-white/20'
+                    : 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white border border-white/[0.08] hover:border-violet-500/30 shadow-sm'
                 }`}
               >
-                {tab.icon}
+                <span className={isActive ? 'text-white' : 'text-violet-400'}>
+                  {tab.icon}
+                </span>
                 <span>{tab.label}</span>
                 {typeof tab.badge === 'number' && tab.badge > 0 && (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-violet-300 border border-violet-500/30'
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm ${
+                    isActive
+                      ? 'bg-white/25 text-white border border-white/30'
+                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                   }`}>
                     {tab.badge}
                   </span>
