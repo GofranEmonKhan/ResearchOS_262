@@ -294,3 +294,24 @@ Copy-Item "..\ResearchOS_backup\.env" ".env" -ErrorAction SilentlyContinue
 ---
 
 > **💡 TIP:** If a classmate also works on this repo while you're away, always `git pull` before doing anything. Merge conflicts are much easier to handle on clean files than on corrupted ones.
+
+---
+
+## ✅ Automated Pre-Departure Actions Completed (Ready to Switch)
+
+Before switching to your new project, all protective maintenance and safety checks were executed:
+
+1. **Configured Line Endings & Encoding Protection**:
+   - Created [`.gitattributes`](file:///c:/Users/Abdul%20Gofran%20Emon/ResearchOS/.gitattributes) to enforce `eol=lf` and explicit binary handling across all source and asset files.
+   - Created [`.editorconfig`](file:///c:/Users/Abdul%20Gofran%20Emon/ResearchOS/.editorconfig) to enforce UTF-8 charset and LF line endings across VS Code and other editors.
+   - Normalized Git index line endings to match the new `.gitattributes` rules.
+2. **Cleaned Build Artifacts**:
+   - Removed compiled `apps/api/dist` and `apps/web/dist` folders to eliminate stale or locked cache files.
+3. **Checked Background Services**:
+   - Verified that no background development servers (`pnpm dev`, nodemon, Vite) are running.
+4. **Verified Git & Remote Status**:
+   - Verified a 100% clean working tree (`git status` reports clean).
+   - Ensured all commits are pushed to remote branch `feature/research-journey-milestones-roadmap` on GitHub (`https://github.com/GofranEmonKhan/ResearchOS_262.git`).
+
+> **Status:** **SAFE TO CLOSE AND SWITCH.** You can now safely close this workspace and open your other project.
+
