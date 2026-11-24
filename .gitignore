@@ -14,6 +14,27 @@ node_modules/
 .antigravity/
 skills-lock.json
 
+# Internal Development Plans & Notes (Kept locally, excluded from GitHub)
+/ACCOUNT_TRANSITION_AND_PROJECT_HANDOVER.md
+/AGENTS.md
+/CLEANUP_GUIDE_FOR_TEACHER_SUBMISSION.md
+/Calendar.md
+/Gofran's Part.md
+/Lecturer_Prep.md
+/PROJECT_ARCHITECTURE_EXPLANATION.md
+/PROJECT_STRUCTURE.md
+/PROJECT_SWITCHING_GUIDE.md
+/UI_READABILITY_REFINEMENT_PLAN.md
+/Update_02.md
+/WORKLOG.md
+/SPRINGBOOT_CONVERSION_PLAN.md
+/design-system/
+/docs/build-plan.md
+/docs/data-model.md
+/docs/feature-plan.md
+/docs/plans/
+/docs/specs/
+
 # Build outputs
 dist/
 build/
