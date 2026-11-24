@@ -210,10 +210,10 @@ export function HoverSelect<T extends string | number = string>({
         />
       </button>
 
-      {/* Popover Options Menu: Elevated Cosmic Surface with Neon Border & Sweep Animation */}
+      {/* Popover Options Menu: Elevated Cosmic Surface with Solid High-Contrast Backdrop */}
       <div
         role="listbox"
-        className={`absolute z-50 min-w-full rounded-2xl popover-neon-surface p-1.5 transition-all duration-200 ease-out transform ${
+        className={`absolute z-[100] min-w-full rounded-2xl bg-[#0F0D22] border border-violet-500/40 shadow-2xl shadow-black/95 p-1.5 transition-all duration-200 ease-out transform ${
           isTop ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
         } ${
           align === 'right' ? 'right-0' : 'left-0'
@@ -235,7 +235,7 @@ export function HoverSelect<T extends string | number = string>({
         {/* Invisible bridge to prevent cursor gap drop */}
         <div className={`absolute left-0 right-0 h-2 bg-transparent ${isTop ? '-bottom-2' : '-top-2'}`} />
 
-        <div className="max-h-60 overflow-y-auto space-y-0.5 custom-scrollbar">
+        <div className="max-h-60 overflow-y-auto space-y-1 custom-scrollbar">
           {options.length === 0 ? (
             <div className="px-3 py-2 text-center text-xs text-slate-400 italic">
               No options available
@@ -256,19 +256,19 @@ export function HoverSelect<T extends string | number = string>({
                     e.stopPropagation();
                     handleSelect(option);
                   }}
-                  className={`w-full text-left px-3 py-2 text-xs sm:text-sm rounded-xl flex items-center justify-between gap-2.5 transition-all duration-150 ${
+                  className={`w-full text-left px-3.5 py-2.5 text-xs sm:text-sm rounded-xl flex items-center justify-between gap-2.5 transition-all duration-150 cursor-pointer ${
                     option.disabled
                       ? 'opacity-40 cursor-not-allowed text-slate-500'
                       : isSelected
-                      ? 'bg-gradient-to-r from-violet-600/35 via-indigo-600/25 to-transparent text-white font-semibold border-l-2 border-violet-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]'
+                      ? 'bg-gradient-to-r from-violet-600/40 via-indigo-600/30 to-violet-600/10 text-white font-bold border-l-2 border-violet-400 shadow-sm'
                       : isFocused
                       ? 'bg-white/10 text-white translate-x-0.5'
-                      : 'text-slate-200 hover:bg-white/[0.08] hover:text-white hover:translate-x-0.5'
+                      : 'text-slate-100 hover:bg-violet-600/20 hover:text-white hover:translate-x-0.5'
                   }`}
                 >
-                  <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
-                    {option.icon && <span className="shrink-0">{option.icon}</span>}
-                    <span className="truncate">{option.label}</span>
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1 truncate">
+                    {option.icon && <span className="shrink-0 text-violet-400">{option.icon}</span>}
+                    <span className="truncate font-semibold text-slate-100">{option.label}</span>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
@@ -278,7 +278,7 @@ export function HoverSelect<T extends string | number = string>({
                       </span>
                     )}
                     {isSelected && (
-                      <Check className="w-3.5 h-3.5 text-violet-300 shrink-0 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]" />
+                      <Check className="w-4 h-4 text-violet-300 shrink-0 drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]" />
                     )}
                   </div>
                 </button>

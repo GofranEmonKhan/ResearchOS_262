@@ -162,36 +162,6 @@ flowchart TD
   3. Verify sidebar collapse/expand transitions remain smooth without text popping or horizontal overflow.
   4. Run contrast checks across dark cards and modals to ensure all text clears 4.5:1.
 
-### Phase 8: Research Journey Roadmap Visual Replacement (Milestone & Calendar Page)
-* **Goal**: Replace the generic vertically stacked milestone cards in `MilestoneTimeline.tsx` with a premium, horizontal sequential **Research Journey** roadmap while strictly preserving the finalized Calendar (`WorkspaceCalendar.tsx`) as read-only.
-* **Component Architecture**:
-  - `MilestoneTimeline.tsx` (or modular `ResearchJourney.tsx`, `ResearchPhaseCard.tsx`, `PhaseConnector.tsx`)
-* **Key Design Specifications**:
-  1. **Journey Header**:
-     - Left: Compass icon badge, prominent title `"Research Journey"`, and subtitle `"From data to publication — key milestones, dependencies and progress."`
-     - Right: Dynamic `"Overall Progress"` bar displaying actual project completion (`project.progressPct%`) with zero hardcoded values.
-     - Action CTA: `"Add Milestone"` (Supervisor) or `"Propose Milestone"` (Researcher).
-  2. **Interconnected Phase Cards**:
-     - Desktop: Horizontal journey flow `[ Phase 1 ] ──→ [ Phase 2 ] ──→ [ Phase 3 ] ──→ [ Phase 4 ]` with thin, elegant connector lines and directional arrowheads.
-     - Tablet/Mobile: Responsive vertical flow `① ↓ ② ↓ ③ ↓ ④` with vertical timeline pipes.
-     - Card Anatomy:
-       - Phase numbering badge (`1`, `2`, `3`, `4`) with contextual icon (e.g. database, CPU, network, manuscript).
-       - Status badge (`✓ Completed`, `● In Progress`, `○ Pending`, `✨ Proposed`, `🔒 Locked`).
-       - Prominent phase title (`text-base sm:text-lg font-bold text-white`).
-       - Contribution weight (`Contribution: X%`).
-       - Smooth progress bar + percentage (`X%`) derived from approved tasks (`approvedTasks.length / totalTasks.length`).
-       - Target date badge (`🗓 MMM DD, YYYY`).
-       - Domain tags/keywords pills (`[Preprocessing]`, `[Tokenizer]`, etc.).
-       - Interactive action controls (Supervisor lock/unlock toggle, supervisor proposal approval).
-  3. **Visual Status Hierarchy**:
-     - **Completed**: Emerald border (`border-emerald-500/30`), emerald glow, checkmark icon, emerald progress bar.
-     - **In Progress**: Glowing violet border (`border-violet-500/60 ring-1 ring-violet-500/30`), violet glow beacon, active progress indicator.
-     - **Pending**: Subtle cosmic obsidian card (`border-white/10 text-slate-300`).
-     - **Proposed**: Dashed amber border (`border-dashed border-amber-500/40 bg-amber-950/10`) with `Approve` button for supervisor.
-     - **Locked**: Subtle amber lock badge (`border-amber-500/20`) with `Unlock` toggle for supervisor.
-  4. **Calendar Isolation**:
-     - `WorkspaceCalendar.tsx` is completely read-only: untouched, unchanged, and preserved.
-
 ---
 
 ## 5. Non-Negotiable Guardrails & Defensive Constraints
@@ -202,7 +172,6 @@ flowchart TD
 4. **Preserve Interactive Selectors**: Hover states, dropdown popovers, debounce closing bridges, and selection callbacks MUST remain fully functional and responsive.
 5. **No Container Height Inflexibility**: If a component has a fixed height (e.g. `h-10` or `h-24`) that clips enlarged text, replace with `min-h-[...]` or adjust flexbox alignment to prevent text clipping.
 6. **No Layout Bloat**: Refinement means *crisp readability*, not blowing up spacing to make everything oversized. Keep card padding and densities balanced.
-7. **Calendar Read-Only Invariance**: `WorkspaceCalendar.tsx` MUST NOT be refactored, restyled, or modified.
 
 ---
 
@@ -215,4 +184,3 @@ flowchart TD
 - [x] **Phase 5**: Refine Coding Experiment Playground & Pyodide VFS (`CodePlayground.tsx`, `FileTreeExplorer.tsx`, `EditorTabs.tsx`, `DatasetUploadModal.tsx`, `SaveRunAsExperimentModal.tsx`)
 - [x] **Phase 6**: Refine Literature, Manuscripts & Community Pages (`LibraryPage.tsx`, `ExperimentTrackerPage.tsx`, `ManuscriptsPage.tsx`, `CommunityPage.tsx`, `ProfilePage.tsx`, `AdminMarketplaceGovernancePage.tsx`, `ProjectMembersModal.tsx`)
 - [x] **Phase 7**: Perform Visual Contrast & Responsive Overflow Audit (Zero sub-12px micro-text remaining, 100% interactive HoverSelect adoption, 94/94 tests passing)
-- [ ] **Phase 8**: Implement Horizontal Research Journey Roadmap in `MilestoneTimeline.tsx` (Preserve `WorkspaceCalendar.tsx` as read-only)

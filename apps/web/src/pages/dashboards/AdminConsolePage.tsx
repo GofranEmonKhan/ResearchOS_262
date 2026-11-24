@@ -43,8 +43,9 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
   const fetchOverview = async () => {
     setIsLoadingOverview(true);
     try {
-      const data = await api.getAdminOverview();
-      setOverview(data);
+      const res = await api.getAdminOverview();
+      const actualData = (res as any)?.data || res;
+      setOverview(actualData);
     } catch (err: any) {
       console.error('Failed to load admin overview:', err);
     } finally {
@@ -54,6 +55,16 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
 
   useEffect(() => {
     fetchOverview();
+    // Keep admin overview metrics synced with database every 20 seconds
+    const interval = setInterval(() => {
+      api.getAdminOverview()
+        .then((res) => {
+          const actualData = (res as any)?.data || res;
+          if (actualData) setOverview(actualData);
+        })
+        .catch(() => {});
+    }, 20000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleNotify = (type: 'success' | 'error', text: string) => {
@@ -113,7 +124,7 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-8 pt-24 sm:pt-28 pb-16 space-y-6">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16 space-y-6">
         {/* Status Notification Banner */}
         {statusMessage && (
           <div className={`p-4 rounded-xl border text-xs flex items-center justify-between animate-in fade-in duration-150 ${
@@ -135,7 +146,7 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
         )}
 
         {/* Command Center Tabs Navigation Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-800 scrollbar-thin">
+        <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-1.5 xl:gap-2 p-2 rounded-2xl bg-gradient-to-b from-[#0d0e21]/95 to-[#060712]/98 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
           {navTabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -143,17 +154,21 @@ export const AdminConsolePage: React.FC<AdminConsolePageProps> = ({ onNavigate }
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`w-full min-w-0 flex items-center justify-center gap-1.5 xl:gap-2 px-2 xl:px-3 py-2.5 rounded-xl text-xs sm:text-[13px] font-bold whitespace-nowrap transition-all duration-200 cursor-pointer select-none group ${
                   isActive
-                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/25 border border-violet-500'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'
+                    ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-extrabold shadow-lg shadow-violet-600/35 border border-violet-400/50 ring-1 ring-white/25 drop-shadow-sm'
+                    : 'bg-gradient-to-b from-[#181a33]/90 via-[#101226]/90 to-[#0c0d1e]/95 hover:from-[#23274a]/90 hover:via-[#191d3d]/90 hover:to-[#13162e]/95 text-slate-100 hover:text-white border border-slate-700/60 hover:border-violet-400/60 shadow-sm'
                 }`}
               >
-                {tab.icon}
-                <span>{tab.label}</span>
+                <span className={`shrink-0 transition-colors ${isActive ? 'text-white' : 'text-violet-400 group-hover:text-violet-300'}`}>
+                  {tab.icon}
+                </span>
+                <span className="tracking-tight">{tab.label}</span>
                 {typeof tab.badge === 'number' && tab.badge > 0 && (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-violet-300 border border-violet-500/30'
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-extrabold shadow-sm ${
+                    isActive
+                      ? 'bg-white/25 text-white border border-white/30'
+                      : 'bg-rose-500/25 text-rose-200 border border-rose-500/40'
                   }`}>
                     {tab.badge}
                   </span>

@@ -43,9 +43,11 @@ export const AdminGovernanceTab: React.FC<AdminGovernanceTabProps> = ({
       const res = await api.getAdminDeletionRequests({
         status: statusFilter !== 'ALL' ? statusFilter : undefined,
       });
-      setRequests(res.requests);
+      const data = Array.isArray(res) ? res : Array.isArray((res as any)?.requests) ? (res as any).requests : [];
+      setRequests(data);
     } catch (err: any) {
       onNotify('error', err.message || 'Failed to fetch deletion requests.');
+      setRequests([]);
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +93,8 @@ export const AdminGovernanceTab: React.FC<AdminGovernanceTabProps> = ({
     }
   };
 
-  const pendingCount = requests.filter((r) => r.status === 'Pending').length;
+  const safeRequests = Array.isArray(requests) ? requests : [];
+  const pendingCount = safeRequests.filter((r) => r.status === 'Pending').length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-150">
@@ -203,7 +206,7 @@ export const AdminGovernanceTab: React.FC<AdminGovernanceTabProps> = ({
               <Loader2 className="w-6 h-6 animate-spin text-rose-400" />
               <span>Fetching deletion queue...</span>
             </div>
-          ) : requests.length === 0 ? (
+          ) : safeRequests.length === 0 ? (
             <div className="py-16 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
               <CheckCircle2 className="w-8 h-8 text-slate-600 mb-1" />
               <p>No project deletion requests found in this view.</p>
@@ -222,12 +225,12 @@ export const AdminGovernanceTab: React.FC<AdminGovernanceTabProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {requests.map((req) => (
+                  {safeRequests.map((req) => (
                     <tr key={req.id} className="hover:bg-[#141824]/60 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-100 flex items-center gap-1.5">
                           <FolderKanban className="w-3.5 h-3.5 text-rose-400" />
-                          <span>{req.targetType}: {req.targetId.slice(0, 8)}...</span>
+                          <span>{req.targetType || 'Entity'}: {req.targetId ? req.targetId.slice(0, 8) : 'unknown'}...</span>
                         </div>
                         <div className="text-[11px] text-slate-500 font-mono mt-0.5">
                           {req.targetId}
@@ -236,7 +239,7 @@ export const AdminGovernanceTab: React.FC<AdminGovernanceTabProps> = ({
 
                       <td className="py-3.5 px-3">
                         <div className="font-mono text-slate-300 text-xs">
-                          {req.requestedBy.slice(0, 8)}...
+                          {req.requestedBy ? req.requestedBy.slice(0, 8) : 'unknown'}...
                         </div>
                       </td>
 

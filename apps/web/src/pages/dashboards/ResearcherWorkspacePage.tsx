@@ -706,56 +706,66 @@ export const ResearcherWorkspacePage: React.FC<ResearcherWorkspacePageProps> = (
   const renderProjectWorkspace = () => (
     <div className="space-y-6">
       {/* Back to Dashboard + Sub-tabs */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center justify-between gap-3.5 p-2.5 rounded-2xl bg-[#090A16]/95 border border-slate-800/90 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Back to Dashboard */}
           <button
             onClick={() => handleTabChange('dashboard')}
-            className="px-3 py-1.5 rounded-xl text-xs font-medium flex items-center space-x-1.5 text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-slate-300 hover:text-white bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer shadow-sm"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft className="w-3.5 h-3.5 text-violet-400" />
             <span>Dashboard</span>
           </button>
 
-          <div className="h-5 w-px bg-white/10" />
+          <div className="h-5 w-px bg-slate-800 hidden sm:block" />
 
-          <button
-            onClick={() => setActiveTab('kanban')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all ${
-              activeTab === 'kanban'
-                ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <FolderKanban className="w-3.5 h-3.5" />
-            <span>Kanban Board</span>
-          </button>
+          {/* Segmented Workspace View Tabs */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800">
+            <button
+              onClick={() => setActiveTab('kanban')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'kanban'
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/30 border border-violet-400/30 font-bold'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <FolderKanban className={`w-3.5 h-3.5 ${activeTab === 'kanban' ? 'text-white' : 'text-violet-400'}`} />
+              <span>Kanban Board</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('calendar')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all ${
-              activeTab === 'calendar'
-                ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Roadmap & Calendar</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'calendar'
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/30 border border-violet-400/30 font-bold'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <Calendar className={`w-3.5 h-3.5 ${activeTab === 'calendar' ? 'text-white' : 'text-violet-400'}`} />
+              <span>Roadmap & Calendar</span>
+            </button>
+          </div>
 
+          {/* Add Milestone Quick Button */}
           <button
             onClick={() => setIsNewMilestoneModalOpen(true)}
-            className="px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/10 text-slate-300 text-xs font-medium transition-all"
+            className="px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-violet-500/40 text-violet-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
           >
-            <span>+ Milestone</span>
+            <Plus className="w-3.5 h-3.5 text-violet-400" />
+            <span>Milestone</span>
           </button>
         </div>
 
-        <div className="flex items-center space-x-3 text-xs text-slate-400">
+        {/* Team Members Trigger Capsule */}
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMembersModalOpen(true)}
-            className="hover:text-violet-300 transition-colors"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-violet-500/40 text-xs text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm group"
           >
-            Team: <strong className="text-white">{members.length} members</strong>
+            <Users className="w-3.5 h-3.5 text-violet-400 group-hover:text-violet-300 transition-colors" />
+            <span>Team:</span>
+            <strong className="text-white font-mono">{members.length} {members.length === 1 ? 'member' : 'members'}</strong>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" title="Active Collaboration" />
           </button>
         </div>
       </div>

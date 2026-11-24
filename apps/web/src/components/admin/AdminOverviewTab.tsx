@@ -36,15 +36,16 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const users = overview?.users || { total: 0, admin: 0, supervisor: 0, researcher: 0 };
-  const activeProjects = overview?.activeProjects || 0;
-  const totalProjects = overview?.totalProjects || 0;
-  const storageBytes = overview?.storageBytes || 0;
-  const storageFilesCount = overview?.storageFilesCount || 0;
-  const ai = overview?.aiUsageThisMonth || { tokens: 0, costUsd: 0, requestCount: 0 };
-  const pendingVerifications = overview?.pendingSupervisorVerifications || 0;
-  const pendingMarketplace = (overview?.pendingMarketplaceListings || 0) + (overview?.openDisputes || 0);
-  const pendingForumReports = overview?.pendingForumReports || 0;
+  const rawOverview = (overview as any)?.data || overview;
+  const users = rawOverview?.users || { total: 0, admin: 0, supervisor: 0, researcher: 0 };
+  const activeProjects = rawOverview?.activeProjects || 0;
+  const totalProjects = rawOverview?.totalProjects || 0;
+  const storageBytes = rawOverview?.storageBytes || 0;
+  const storageFilesCount = rawOverview?.storageFilesCount || 0;
+  const ai = rawOverview?.aiUsageThisMonth || { tokens: 0, costUsd: 0, requestCount: 0 };
+  const pendingVerifications = rawOverview?.pendingSupervisorVerifications || 0;
+  const pendingMarketplace = (rawOverview?.pendingMarketplaceListings || 0) + (rawOverview?.openDisputes || 0);
+  const pendingForumReports = rawOverview?.pendingForumReports || 0;
 
   const totalQueuedItems = pendingVerifications + pendingMarketplace + pendingForumReports;
 
