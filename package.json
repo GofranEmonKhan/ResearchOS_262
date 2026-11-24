@@ -5,6 +5,8 @@
   "description": "Collaborative Research & Publishing Operating System",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
+    "dev:api": "pnpm --filter @researchos/api dev",
+    "dev:web": "pnpm --filter @researchos/web dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
@@ -12,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GofranEmonKhan/ResearchOS_262.git"
+    "url": "git+https://github.com/GofranEmonKhan/ResearchOS.git"
   },
   "keywords": [],
   "author": "Abdul Gofran Emon <gofrankhan.edu@gmail.com>",

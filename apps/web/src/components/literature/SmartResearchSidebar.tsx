@@ -1,0 +1,853 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Paper,
+  PaperSidebarFields,
+  CitationPurpose,
+  CitationPurposeType,
+  CITATION_PURPOSE_TYPES,
+  PaperComment,
+} from '@researchos/shared-types';
+import { api } from '../../lib/api.js';
+import {
+  Sparkles,
+  Lock,
+  MessageSquare,
+  Check,
+  Send,
+  Loader2,
+  Trash2,
+  Plus,
+  X,
+  Eye,
+} from 'lucide-react';
+import { HoverSelect } from '../common/HoverSelect.js';
+import { ContextualLoader } from '../common/ContextualLoader.js';
+import {
+  AiUsageIndicator,
+  AiSummarizePanel,
+  AiSuggestionsPanel,
+} from '../ai/index.js';
+
+interface SmartResearchSidebarProps {
+  paper: Paper;
+  currentUserId?: string;
+  onClose?: () => void;
+}
+
+type SidebarTab = 'analysis' | 'ai' | 'notes' | 'citations' | 'discussion';
+type AiSubTab = 'synthesis' | 'suggestions';
+
+export const SmartResearchSidebar: React.FC<SmartResearchSidebarProps> = ({
+  paper,
+  currentUserId,
+  onClose,
+}) => {
+  const [activeTab, setActiveTab] = useState<SidebarTab>('analysis');
+  const [aiSubTab, setAiSubTab] = useState<AiSubTab>('synthesis');
+  const [aiRefreshTrigger, setAiRefreshTrigger] = useState(0);
+
+  // Sidebar Fields State
+  const [sidebarData, setSidebarData] = useState<PaperSidebarFields | null>(null);
+  const [isLoadingSidebar, setIsLoadingSidebar] = useState(true);
+  const [isSavingAnalysis, setIsSavingAnalysis] = useState(false);
+
+  // Active focused field for dynamic expand-on-focus
+  const [activeAnalysisField, setActiveAnalysisField] = useState<string | null>(null);
+
+  // Editable analysis fields
+  const [researchGap, setResearchGap] = useState('');
+  const [methodology, setMethodology] = useState('');
+  const [results, setResults] = useState('');
+  const [limitation, setLimitation] = useState('');
+  const [futureWork, setFutureWork] = useState('');
+  const [datasetUsed, setDatasetUsed] = useState('');
+
+  // Personal Notes State
+  const [personalNotes, setPersonalNotes] = useState('');
+  const [personalNotesVisible, setPersonalNotesVisible] = useState(false);
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+
+  // Citations State
+  const [citations, setCitations] = useState<CitationPurpose[]>([]);
+  const [isAddingCitation, setIsAddingCitation] = useState(false);
+  const [newCitationPurpose, setNewCitationPurpose] = useState<CitationPurposeType>('Motivation');
+  const [newCitationNote, setNewCitationNote] = useState('');
+  const [isSubmittingCitation, setIsSubmittingCitation] = useState(false);
+
+  // Comments State
+  const [comments, setComments] = useState<PaperComment[]>([]);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [isPostingComment, setIsPostingComment] = useState(false);
+
+  const isUploader = paper.uploaderId === currentUserId;
+
+  // Load sidebar data
+  const loadSidebar = async () => {
+    setIsLoadingSidebar(true);
+    try {
+      const data = await api.getSidebar(paper.id);
+      setSidebarData(data);
+      setResearchGap(data.researchGap || '');
+      setMethodology(data.methodology || '');
+      setResults(data.results || '');
+      setLimitation(data.limitation || '');
+      setFutureWork(data.futureWork || '');
+      setDatasetUsed(data.datasetUsed || '');
+      setPersonalNotes(data.personalNotes || '');
+      setPersonalNotesVisible(data.personalNotesVisible);
+    } catch (err: any) {
+      console.error('Failed to load sidebar fields:', err);
+    } finally {
+      setIsLoadingSidebar(false);
+    }
+  };
+
+  // Load citations
+  const loadCitations = async () => {
+    try {
+      const list = await api.getCitations(paper.id);
+      setCitations(list);
+    } catch (err: any) {
+      console.error('Failed to load citations:', err);
+    }
+  };
+
+  // Load comments (if shared)
+  const loadComments = async () => {
+    if (!paper.projectId) return;
+    try {
+      const list = await api.getComments(paper.id);
+      setComments(list);
+    } catch (err: any) {
+      console.error('Failed to load comments:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadSidebar();
+    loadCitations();
+    loadComments();
+  }, [paper.id]);
+
+  // Save Structured Analysis
+  const handleSaveAnalysis = async () => {
+    setIsSavingAnalysis(true);
+    try {
+      const updated = await api.updateSidebar(paper.id, {
+        researchGap: researchGap.trim() || null,
+        methodology: methodology.trim() || null,
+        results: results.trim() || null,
+        limitation: limitation.trim() || null,
+        futureWork: futureWork.trim() || null,
+        datasetUsed: datasetUsed.trim() || null,
+      });
+      setSidebarData(updated);
+    } catch (err: any) {
+      alert(err.message || 'Failed to save analysis');
+    } finally {
+      setIsSavingAnalysis(false);
+    }
+  };
+
+  // Save Personal Notes (Uploader Only)
+  const handleSaveNotes = async () => {
+    if (!isUploader) return;
+    setIsSavingNotes(true);
+    try {
+      const updated = await api.updateSidebar(paper.id, {
+        personalNotes: personalNotes.trim() || null,
+        personalNotesVisible,
+      });
+      setSidebarData(updated);
+    } catch (err: any) {
+      alert(err.message || 'Failed to save personal notes');
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
+  // Toggle Personal Notes Visibility (Uploader Only)
+  const handleToggleVisibility = async (newVal: boolean) => {
+    if (!isUploader) return;
+    setPersonalNotesVisible(newVal);
+    try {
+      await api.updateSidebar(paper.id, {
+        personalNotesVisible: newVal,
+      });
+    } catch (err: any) {
+      setPersonalNotesVisible(!newVal);
+      alert(err.message || 'Failed to toggle visibility');
+    }
+  };
+
+  // Add Citation Purpose
+  const handleAddCitation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingCitation(true);
+    try {
+      await api.addCitation(paper.id, {
+        paperId: paper.id,
+        purpose: newCitationPurpose,
+        note: newCitationNote.trim() || undefined,
+      });
+      setNewCitationNote('');
+      setIsAddingCitation(false);
+      loadCitations();
+    } catch (err: any) {
+      alert(err.message || 'Failed to add citation purpose');
+    } finally {
+      setIsSubmittingCitation(false);
+    }
+  };
+
+  const handleDeleteCitation = async (citationId: string) => {
+    try {
+      await api.deleteCitation(citationId);
+      loadCitations();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete citation');
+    }
+  };
+
+  // Add Comment
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCommentText.trim()) return;
+    setIsPostingComment(true);
+    try {
+      await api.addComment(paper.id, { body: newCommentText.trim() });
+      setNewCommentText('');
+      loadComments();
+    } catch (err: any) {
+      alert(err.message || 'Failed to post comment');
+    } finally {
+      setIsPostingComment(false);
+    }
+  };
+
+  return (
+    <aside className="w-96 shrink-0 h-full flex flex-col bg-surface-1 border-l border-white/[0.08] select-none">
+      {/* Top Header */}
+      <div className="p-4 border-b border-white/[0.08] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-violet-400" />
+          <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
+            Smart Research Sidebar
+          </h3>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Tabs Bar */}
+      <div className="flex items-center p-1.5 bg-surface-2/60 border-b border-white/[0.06] gap-1 text-xs font-semibold">
+        <button
+          onClick={() => setActiveTab('analysis')}
+          className={`flex-1 py-1.5 rounded-lg transition-all ${
+            activeTab === 'analysis'
+              ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+          }`}
+        >
+          Analysis
+        </button>
+        <button
+          onClick={() => setActiveTab('ai')}
+          className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
+            activeTab === 'ai'
+              ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-violet-300" />
+          <span>AI Assist</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('notes')}
+          className={`flex-1 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
+            activeTab === 'notes'
+              ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+          }`}
+        >
+          {isUploader && personalNotesVisible ? (
+            <Eye className="w-3.5 h-3.5 text-emerald-400" />
+          ) : (
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+          )}
+          <span>Notes</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('citations')}
+          className={`flex-1 py-1.5 rounded-lg transition-all ${
+            activeTab === 'citations'
+              ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+          }`}
+        >
+          Citations
+        </button>
+        {paper.projectId && (
+          <button
+            onClick={() => setActiveTab('discussion')}
+            className={`flex-1 py-1.5 rounded-lg transition-all ${
+              activeTab === 'discussion'
+                ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
+                : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            Discussion
+          </button>
+        )}
+      </div>
+
+      {/* Body Area */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {isLoadingSidebar ? (
+          <ContextualLoader
+            fullScreen={false}
+            size="sm"
+            context="paper"
+            title="Loading Structured Analysis"
+            subtitle="Parsing research gap, methodology, and citations from database..."
+          />
+        ) : (
+          <>
+            {/* TAB 1: STRUCTURED ANALYSIS */}
+            {activeTab === 'analysis' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-1">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    Structured Synthesis
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('ai');
+                        setAiSubTab('suggestions');
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-violet-300 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 transition-all"
+                      title="Review AI suggestions"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                      <span>AI Suggest</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveAnalysis}
+                      disabled={isSavingAnalysis}
+                      className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all disabled:opacity-50 shadow-md shadow-violet-950/40"
+                    >
+                      {isSavingAnalysis ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
+                      <span>Save Analysis</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Field 1: Research Gap */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-violet-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                      Research Gap Addressed
+                    </label>
+                    {activeAnalysisField === 'researchGap' && (
+                      <span className="text-[10px] font-mono text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded-md border border-violet-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
+                  <textarea
+                    value={researchGap}
+                    onChange={(e) => setResearchGap(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('researchGap')}
+                    onBlur={() => setActiveAnalysisField(null)}
+                    placeholder="What unresolved scholarly question does this paper tackle?"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'researchGap'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-violet-500/80 ring-2 ring-violet-500/25 shadow-xl shadow-violet-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
+                  />
+                </div>
+
+                {/* Field 2: Methodology */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-200">
+                      Methodology & Approach
+                    </label>
+                    {activeAnalysisField === 'methodology' && (
+                      <span className="text-[10px] font-mono text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded-md border border-violet-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
+                  <textarea
+                    value={methodology}
+                    onChange={(e) => setMethodology(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('methodology')}
+                    onBlur={() => setActiveAnalysisField(null)}
+                    placeholder="Architectures, mathematical formulations, or experiments..."
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'methodology'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-violet-500/80 ring-2 ring-violet-500/25 shadow-xl shadow-violet-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
+                  />
+                </div>
+
+                {/* Field 3: Results */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-emerald-300">
+                      Key Results & Findings
+                    </label>
+                    {activeAnalysisField === 'results' && (
+                      <span className="text-[10px] font-mono text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
+                  <textarea
+                    value={results}
+                    onChange={(e) => setResults(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('results')}
+                    onBlur={() => setActiveAnalysisField(null)}
+                    placeholder="Quantitative benchmarks, state-of-the-art metrics, speedups..."
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'results'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-emerald-500/80 ring-2 ring-emerald-500/25 shadow-xl shadow-emerald-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
+                  />
+                </div>
+
+                {/* Field 4: Limitations */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-amber-300">
+                      Known Limitations
+                    </label>
+                    {activeAnalysisField === 'limitation' && (
+                      <span className="text-[10px] font-mono text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
+                  <textarea
+                    value={limitation}
+                    onChange={(e) => setLimitation(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('limitation')}
+                    onBlur={() => setActiveAnalysisField(null)}
+                    placeholder="Assumptions, compute requirements, dataset constraints..."
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'limitation'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-amber-500/80 ring-2 ring-amber-500/25 shadow-xl shadow-amber-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
+                  />
+                </div>
+
+                {/* Field 5: Future Work */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-blue-300">
+                      Future Directions
+                    </label>
+                    {activeAnalysisField === 'futureWork' && (
+                      <span className="text-[10px] font-mono text-blue-300 bg-blue-500/15 px-2 py-0.5 rounded-md border border-blue-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
+                  <textarea
+                    value={futureWork}
+                    onChange={(e) => setFutureWork(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('futureWork')}
+                    onBlur={() => setActiveAnalysisField(null)}
+                    placeholder="Potential extensions, theoretical generalizations..."
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'futureWork'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-blue-500/80 ring-2 ring-blue-500/25 shadow-xl shadow-blue-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
+                  />
+                </div>
+
+                {/* Field 6: Dataset Used */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-indigo-300">
+                      Datasets & Benchmarks
+                    </label>
+                    {activeAnalysisField === 'datasetUsed' && (
+                      <span className="text-[10px] font-mono text-indigo-300 bg-indigo-500/15 px-2 py-0.5 rounded-md border border-indigo-500/30">
+                        Expanded Editor
+                      </span>
+                    )}
+                  </div>
+                  <textarea
+                    value={datasetUsed}
+                    onChange={(e) => setDatasetUsed(e.target.value)}
+                    onFocus={() => setActiveAnalysisField('datasetUsed')}
+                    onBlur={() => setActiveAnalysisField(null)}
+                    placeholder="e.g. WMT 2014 English-to-German, GLUE, SQuAD..."
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                      activeAnalysisField === 'datasetUsed'
+                        ? 'h-52 sm:h-60 bg-surface-2/95 border-indigo-500/80 ring-2 ring-indigo-500/25 shadow-xl shadow-indigo-950/40'
+                        : 'h-20 sm:h-24 bg-surface-2 border-white/10 hover:border-white/20'
+                    }`}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: PERSONAL NOTES (OPTION A PRIVACY MASKING) */}
+            {activeTab === 'notes' && (
+              <div className="space-y-4">
+                {isUploader ? (
+                  <>
+                    {/* Privacy Visibility Controls */}
+                    <div className="p-3.5 rounded-xl bg-surface-2 border border-white/10 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-white flex items-center gap-1.5">
+                          {personalNotesVisible ? (
+                            <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Lock className="w-3.5 h-3.5 text-amber-400" />
+                          )}
+                          Visibility to Collaborators
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleVisibility(!personalNotesVisible)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                            personalNotesVisible
+                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                              : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                          }`}
+                        >
+                          {personalNotesVisible ? 'Shared with Project' : 'Private to Me'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-snug">
+                        {personalNotesVisible
+                          ? 'All project members can read your personal notes.'
+                          : 'Option A Dynamic Privacy: Masked to NULL for all other collaborators.'}
+                      </p>
+                    </div>
+
+                    {/* Editor */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-200">
+                          Personal Study Notes
+                        </label>
+                        {activeAnalysisField === 'notes' && (
+                          <span className="text-[10px] font-mono text-violet-300 bg-violet-500/15 px-2 py-0.5 rounded-md border border-violet-500/30">
+                            Expanded Editor
+                          </span>
+                        )}
+                      </div>
+                      <textarea
+                        value={personalNotes}
+                        onChange={(e) => setPersonalNotes(e.target.value)}
+                        onFocus={() => setActiveAnalysisField('notes')}
+                        onBlur={() => setActiveAnalysisField(null)}
+                        placeholder="Private reflections, questions for supervisor, thesis citations..."
+                        className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-white placeholder-slate-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ease-in-out ${
+                          activeAnalysisField === 'notes'
+                            ? 'h-72 bg-surface-2/95 border-violet-500/80 ring-2 ring-violet-500/25 shadow-xl shadow-violet-950/40'
+                            : 'h-36 bg-surface-2 border-white/10 hover:border-white/20'
+                        }`}
+                      />
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSaveNotes}
+                        disabled={isSavingNotes}
+                        className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-all disabled:opacity-50"
+                      >
+                        {isSavingNotes ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
+                        <span>Save Notes</span>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  /* Non-Uploader Viewer View */
+                  <>
+                    {sidebarData?.personalNotes !== null && sidebarData?.personalNotes !== undefined ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-300 font-medium">
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Uploader Notes (Shared)</span>
+                        </div>
+                        <div className="p-4 rounded-xl bg-surface-2 border border-white/10 text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">
+                          {sidebarData.personalNotes}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center rounded-2xl bg-surface-2/40 border border-white/[0.06] space-y-3">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mx-auto">
+                          <Lock className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="text-xs font-semibold text-slate-200">Notes Private</h4>
+                          <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                            The uploader has restricted personal reflections. Only structured analysis
+                            is collaborative.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: CITATION PURPOSES */}
+            {activeTab === 'citations' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-1">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Citation Roles ({citations.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingCitation(true)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface-2 hover:bg-surface-3 border border-white/10 text-slate-200 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Role</span>
+                  </button>
+                </div>
+
+                {isAddingCitation && (
+                  <form
+                    onSubmit={handleAddCitation}
+                    className="p-3 rounded-xl bg-surface-2 border border-violet-500/30 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-white">Add Citation Role</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingCitation(false)}
+                        className="text-slate-400 hover:text-white"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Purpose Type</label>
+                      <HoverSelect
+                        value={newCitationPurpose}
+                        onChange={(val) => setNewCitationPurpose(val as CitationPurposeType)}
+                        options={(Object.keys(CITATION_PURPOSE_TYPES) as CitationPurposeType[]).map((p) => ({
+                          value: p,
+                          label: p,
+                        }))}
+                        buttonClassName="w-full px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-300">Context / Note</label>
+                      <input
+                        type="text"
+                        value={newCitationNote}
+                        onChange={(e) => setNewCitationNote(e.target.value)}
+                        placeholder="e.g. Baseline model in Table 2"
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-surface-1 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-violet-500"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingCitation(false)}
+                        className="px-2.5 py-1 rounded-lg text-xs text-slate-400"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingCitation}
+                        className="px-3 py-1 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                <div className="space-y-2">
+                  {citations.length === 0 && !isAddingCitation ? (
+                    <div className="py-8 text-center text-xs text-slate-500">
+                      No citation purposes categorized yet.
+                    </div>
+                  ) : (
+                    citations.map((cp) => (
+                      <div
+                        key={cp.id}
+                        className="p-3 rounded-xl bg-surface-2/70 border border-white/[0.06] space-y-1.5 group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-violet-500/20 text-violet-300 font-semibold">
+                            {cp.purpose}
+                          </span>
+                          <button
+                            onClick={() => handleDeleteCitation(cp.id)}
+                            className="text-slate-500 opacity-0 group-hover:opacity-100 hover:text-red-400 p-0.5 transition-all"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                        {cp.note && <p className="text-xs text-slate-300 leading-snug">{cp.note}</p>}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: DISCUSSION THREAD */}
+            {activeTab === 'discussion' && (
+              <div className="flex flex-col h-full space-y-4">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Project Discussion ({comments.length})
+                </span>
+
+                {/* Comments List */}
+                <div className="space-y-3 flex-1 overflow-y-auto pr-1 max-h-96">
+                  {comments.length === 0 ? (
+                    <div className="py-12 text-center text-xs text-slate-500 space-y-1">
+                      <MessageSquare className="w-6 h-6 text-slate-600 mx-auto mb-2" />
+                      <p>No discussion comments yet.</p>
+                      <p className="text-[11px] text-slate-600">
+                        Start a discussion with project co-authors.
+                      </p>
+                    </div>
+                  ) : (
+                    comments.map((comm) => (
+                      <div
+                        key={comm.id}
+                        className="p-3 rounded-xl bg-surface-2/70 border border-white/[0.06] space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-semibold text-slate-200">
+                            {comm.author?.fullName || 'Collaborator'}
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            {new Date(comm.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">{comm.body}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Comment Input */}
+                <form onSubmit={handlePostComment} className="pt-2 border-t border-white/[0.08] flex gap-2">
+                  <input
+                    type="text"
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    placeholder="Write a comment..."
+                    className="flex-1 px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isPostingComment || !newCommentText.trim()}
+                    className="px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50 flex items-center justify-center transition-colors"
+                  >
+                    {isPostingComment ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* TAB 5: AI RESEARCH ASSISTANT */}
+            {activeTab === 'ai' && (
+              <div className="space-y-4">
+                {/* AI Quota Meter */}
+                <AiUsageIndicator
+                  variant="compact"
+                  refreshTrigger={aiRefreshTrigger}
+                />
+
+                {/* AI Sub-Tab Selector */}
+                <div className="flex items-center p-1 bg-surface-2/80 rounded-xl border border-white/[0.06] gap-1 text-[11px] font-medium">
+                  <button
+                    onClick={() => setAiSubTab('synthesis')}
+                    className={`flex-1 py-1.5 rounded-lg transition-all ${
+                      aiSubTab === 'synthesis'
+                        ? 'bg-violet-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Synthesis
+                  </button>
+                  <button
+                    onClick={() => setAiSubTab('suggestions')}
+                    className={`flex-1 py-1.5 rounded-lg transition-all ${
+                      aiSubTab === 'suggestions'
+                        ? 'bg-violet-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Field Suggestions
+                  </button>
+                </div>
+
+                {/* Sub-tab 1: Paper Summarization */}
+                {aiSubTab === 'synthesis' && (
+                  <AiSummarizePanel
+                    paperId={paper.id}
+                    onSummaryGenerated={() => setAiRefreshTrigger((prev) => prev + 1)}
+                  />
+                )}
+
+                {/* Sub-tab 2: Sidebar Field Suggestions */}
+                {aiSubTab === 'suggestions' && (
+                  <AiSuggestionsPanel
+                    paperId={paper.id}
+                    currentSidebarFields={sidebarData}
+                    onFieldUpdated={() => {
+                      loadSidebar();
+                      setAiRefreshTrigger((prev) => prev + 1);
+                    }}
+                    isReadOnly={!isUploader}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </aside>
+  );
+};
