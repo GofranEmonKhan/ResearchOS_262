@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../supabase.js';
 import { UserAvatar } from '../common/UserAvatar.js';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 export interface ProjectMembersModalProps {
   project?: Project | null;
@@ -447,15 +448,16 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                         ) : isOwner ? (
                           /* Role Switcher for Project Owner */
                           <div className="flex items-center space-x-2">
-                            <select
+                            <HoverSelect
                               value={m.projectRole}
                               disabled={updatingRoleId === m.userId}
-                              onChange={(e) => handleRoleChange(m.userId, e.target.value as ProjectRole)}
-                              className="bg-black/60 border border-white/10 rounded-xl px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-violet-500 font-medium"
-                            >
-                              <option value="Member">Researcher Member</option>
-                              <option value="CoSupervisor">Co-Supervisor / Reviewer</option>
-                            </select>
+                              onChange={(val) => handleRoleChange(m.userId, val as ProjectRole)}
+                              options={[
+                                { value: 'Member', label: 'Researcher Member' },
+                                { value: 'CoSupervisor', label: 'Co-Supervisor / Reviewer' },
+                              ]}
+                              buttonClassName="px-2.5 py-1 text-xs font-medium"
+                            />
 
                             <button
                               onClick={() => handleRemoveMember(m.userId, m.user?.fullName)}
@@ -702,46 +704,49 @@ export const ProjectMembersModal: React.FC<ProjectMembersModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* Role */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">Join Role</label>
-                    <select
+                    <label className="text-xs font-semibold text-slate-300">Join Role</label>
+                    <HoverSelect
                       value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value as ProjectRole)}
-                      className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500"
-                    >
-                      <option value="Member">Researcher (Member)</option>
-                      <option value="CoSupervisor">Co-Supervisor / Reviewer</option>
-                    </select>
+                      onChange={(val) => setInviteRole(val as ProjectRole)}
+                      options={[
+                        { value: 'Member', label: 'Researcher (Member)' },
+                        { value: 'CoSupervisor', label: 'Co-Supervisor / Reviewer' },
+                      ]}
+                      buttonClassName="w-full px-3 py-2 text-xs"
+                    />
                   </div>
 
                   {/* Usage Limit */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">Max Uses</label>
-                    <select
+                    <label className="text-xs font-semibold text-slate-300">Max Uses</label>
+                    <HoverSelect
                       value={maxUses}
-                      onChange={(e) => setMaxUses(Number(e.target.value))}
-                      className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500"
-                    >
-                      <option value={1}>Single-use (1 member)</option>
-                      <option value={5}>Small Group (5 members)</option>
-                      <option value={10}>Standard (10 members)</option>
-                      <option value={50}>Lab Cohort (50 members)</option>
-                      <option value={-1}>Unlimited</option>
-                    </select>
+                      onChange={(val) => setMaxUses(Number(val))}
+                      options={[
+                        { value: 1, label: 'Single-use (1 member)' },
+                        { value: 5, label: 'Small Group (5 members)' },
+                        { value: 10, label: 'Standard (10 members)' },
+                        { value: 50, label: 'Lab Cohort (50 members)' },
+                        { value: -1, label: 'Unlimited' },
+                      ]}
+                      buttonClassName="w-full px-3 py-2 text-xs"
+                    />
                   </div>
 
                   {/* Expiration */}
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-slate-400">Expiration</label>
-                    <select
+                    <label className="text-xs font-semibold text-slate-300">Expiration</label>
+                    <HoverSelect
                       value={expiresInDays}
-                      onChange={(e) => setExpiresInDays(Number(e.target.value))}
-                      className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-violet-500"
-                    >
-                      <option value={1}>24 Hours</option>
-                      <option value={7}>7 Days (Default)</option>
-                      <option value={30}>30 Days</option>
-                      <option value={-1}>Never Expire</option>
-                    </select>
+                      onChange={(val) => setExpiresInDays(Number(val))}
+                      options={[
+                        { value: 1, label: '24 Hours' },
+                        { value: 7, label: '7 Days (Default)' },
+                        { value: 30, label: '30 Days' },
+                        { value: -1, label: 'Never Expire' },
+                      ]}
+                      buttonClassName="w-full px-3 py-2 text-xs"
+                    />
                   </div>
                 </div>
 

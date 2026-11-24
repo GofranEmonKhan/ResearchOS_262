@@ -87,6 +87,31 @@ import type {
   ImportDiscoveredPaperResponse,
   DirectMessage,
   DirectMessageThread,
+  AdminPlatformOverview,
+  AdminUserDetail,
+  AdminUsersQueryParams,
+  AdminUsersResponse,
+  AdminAuditLogQueryParams,
+  AdminAuditLogsResponse,
+  AdminStorageMetrics,
+  AdminSystemErrorLog,
+  DeletionRequest,
+} from '@researchos/shared-types';
+
+export type {
+  AdminPlatformOverview,
+  AdminUserListItem,
+  AdminUserDetail,
+  AdminUsersQueryParams,
+  AdminUsersResponse,
+  AdminAuditLogQueryParams,
+  AdminAuditLogsResponse,
+  AuditLog,
+  AdminStorageMetrics,
+  AdminSystemErrorLog,
+  DeletionRequest,
+  CreateDeletionRequestDTO,
+  DecideDeletionRequestDTO,
 } from '@researchos/shared-types';
 
 export type {
@@ -208,7 +233,78 @@ export const api = {
     });
   },
 
-  // Admin APIs
+  // Admin APIs (Spec 09)
+  async getAdminOverview(): Promise<AdminPlatformOverview> {
+    return fetchApi<AdminPlatformOverview>('/admin/overview');
+  },
+
+  async getAdminUsers(params?: AdminUsersQueryParams): Promise<AdminUsersResponse> {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.role) query.set('role', params.role);
+    if (params?.status) query.set('status', params.status);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return fetchApi<AdminUsersResponse>(`/admin/users${qs ? `?${qs}` : ''}`);
+  },
+
+  async getAdminUserDetail(userId: string): Promise<AdminUserDetail> {
+    return fetchApi<AdminUserDetail>(`/admin/users/${userId}`);
+  },
+
+  async getAdminAuditLogs(params?: AdminAuditLogQueryParams): Promise<AdminAuditLogsResponse> {
+    const query = new URLSearchParams();
+    if (params?.action) query.set('action', params.action);
+    if (params?.actorId) query.set('actorId', params.actorId);
+    if (params?.targetType) query.set('targetType', params.targetType);
+    if (params?.search) query.set('search', params.search);
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return fetchApi<AdminAuditLogsResponse>(`/admin/audit-logs${qs ? `?${qs}` : ''}`);
+  },
+
+  async getAdminStorageMetrics(): Promise<AdminStorageMetrics> {
+    return fetchApi<AdminStorageMetrics>('/admin/storage');
+  },
+
+  async getAdminSystemErrors(): Promise<AdminSystemErrorLog[]> {
+    return fetchApi<AdminSystemErrorLog[]>('/admin/errors');
+  },
+
+  async getAdminDeletionRequests(params?: { status?: string; page?: number; limit?: number }): Promise<{ requests: DeletionRequest[]; total: number; page: number; limit: number }> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return fetchApi<{ requests: DeletionRequest[]; total: number; page: number; limit: number }>(`/admin/deletion-requests${qs ? `?${qs}` : ''}`);
+  },
+
+  async approveDeletionRequest(id: string, reason?: string): Promise<{ success: boolean; message: string }> {
+    return fetchApi<{ success: boolean; message: string }>(`/admin/deletion-requests/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  async rejectDeletionRequest(id: string, reason: string): Promise<{ success: boolean; message: string }> {
+    return fetchApi<{ success: boolean; message: string }>(`/admin/deletion-requests/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  async requestProjectDeletion(projectId: string, reason: string): Promise<DeletionRequest> {
+    return fetchApi<DeletionRequest>(`/projects/${projectId}/deletion-request`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
   async getAdminSupervisorVerifications(): Promise<SupervisorVerificationRequest[]> {
     return fetchApi<SupervisorVerificationRequest[]>('/admin/supervisor-verifications');
   },

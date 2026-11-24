@@ -67,22 +67,28 @@ sequenceDiagram
     actor User as Researcher
     participant Web as React Web Client
     participant API as Express API (/ai/discover)
+    participant AI as Gemini AI Adapter
     participant OpenAlex as OpenAlex Works API (250M+ Works)
-    participant AI as Gemini Synthesis Adapter
     participant Storage as Supabase Storage (papers bucket)
     participant DB as Postgres (papers, file_assets, embeddings)
     participant Queue as Background Embed Pipeline
 
-    User->>Web: Enters research topic (e.g. "Edge AI energy efficiency")
+    User->>Web: Enters research topic / conversational inquiry
     Web->>API: POST /ai/discover { topic, limit, yearRange }
     API->>API: Authenticate JWT, checkQuota(), checkPrompt()
-    API->>OpenAlex: Query works?search=... & reconstruct inverted abstracts
+    API->>AI: Phase 2A: Query Planner (extracts canonical topic, academic domain, 2-3 keyword queries)
+    AI-->>API: Returns { normalizedTopic, academicDomain, searchQueries }
+    API->>OpenAlex: Phase 2B: Execute parallel multi-query search & reconstruct abstracts
     OpenAlex-->>API: Returns candidate papers (DOIs, authors, citations, OA URLs)
-    API->>AI: Synthesize literature review brief with inline citations [1] [2]
+    opt When external APIs return 0 results
+        API->>AI: Phase 2C: Grounded Scholarly Knowledge Retrieval (real seminal papers)
+        AI-->>API: Returns verified seminal publications for niche topic
+    end
+    API->>AI: Phase 3: Synthesize literature review brief with inline citations [1] [2]
     AI-->>API: Returns structured synthesis (Consensus, Methods, Gaps, TL;DRs)
     API->>DB: Log token usage to ai_usage_logs
-    API-->>Web: Returns LiteratureDiscoveryResponse
-    Web-->>User: Renders Perplexity synthesis card + interactive paper cards
+    API-->>Web: Returns LiteratureDiscoveryResponse (includes queryPlan + synthesis + papers)
+    Web-->>User: Renders Perplexity search strategy + synthesis card + interactive papers
 
     User->>Web: Clicks "Add to Project" (selects Project X)
     Web->>API: POST /ai/discover/import { projectId, title, authors, doi, pdfUrl... }
@@ -128,8 +134,16 @@ export interface LiteratureDiscoveryRequest {
   };
 }
 
+export interface LiteratureDiscoveryQueryPlan {
+  originalQuery: string;
+  normalizedTopic: string;
+  academicDomain: string;
+  searchQueries: string[];
+}
+
 export interface LiteratureDiscoveryResponse {
   topic: string;
+  queryPlan?: LiteratureDiscoveryQueryPlan;
   synthesis: {
     summary: string;
     consensus: string;
@@ -166,59 +180,62 @@ export interface ImportDiscoveredPaperResponse {
 
 | Phase | Component | Key Deliverable |
 | :--- | :--- | :--- |
-| **Phase 1** | Shared Contracts | Add DTOs in `packages/shared-types` |
-| **Phase 2** | OpenAlex Search | Extend OpenAlex client with abstract reconstruction & citation extraction |
-| **Phase 3** | Gemini Synthesis | Build literature review synthesis prompt with structured JSON output |
+| **Phase 1** | Shared Contracts | Add DTOs + `LiteratureDiscoveryQueryPlan` in `packages/shared-types` |
+| **Phase 2A** | AI Query Planner | Gemini query planner & natural language prompt decomposer into academic keyword queries |
+| **Phase 2B** | OpenAlex Multi-Query Search | Execute parallel searches across generated keywords, reconstruct abstracts, deduplicate by DOI/title |
+| **Phase 2C** | Grounded Scholarly Fallback | Retrieve verified seminal literature from grounded index if external APIs return 0 results |
+| **Phase 3** | Perplexity Synthesis | Build literature review synthesis prompt with inline citations [1], [2], consensus, themes, and gaps |
 | **Phase 4** | Express Routes | Create `POST /ai/discover` and `POST /ai/discover/import` |
 | **Phase 5** | PDF Ingestion & Vectors | Stream open-access PDFs / briefs, call `createPaper`, trigger embedding |
 | **Phase 6** | Frontend API Client | Add `api.discoverLiterature()` & `api.importDiscoveredPaper()` |
-| **Phase 7** | Frontend UI Components | Build `LiteratureDiscoveryView`, `DiscoverySynthesisCard`, `DiscoveredPaperCard` |
+| **Phase 7** | Frontend UI Components | Build `LiteratureDiscoveryView` with Perplexity query plan chip sequence + synthesis card |
 | **Phase 8** | Integration & UX | Add "AI Literature Discovery" tab in `LibraryPage.tsx` & Co-Pilot shortcut |
-| **Phase 9** | Testing & Polish | Verify automated tests, end-to-end import flow, and quota tracking |
+| **Phase 9** | Testing & Polish | Verify automated tests for conversational questions, end-to-end import flow, and quota tracking |
 
 ---
 
 ## 6. Phase 1: Shared Contracts & Type Definitions
 
 - File: `packages/shared-types/src/index.ts`
-- Export `DiscoveredPaper`, `LiteratureDiscoveryRequest`, `LiteratureDiscoveryResponse`, `ImportDiscoveredPaperDto`, `ImportDiscoveredPaperResponse`.
+- Export `DiscoveredPaper`, `LiteratureDiscoveryRequest`, `LiteratureDiscoveryQueryPlan`, `LiteratureDiscoveryResponse`, `ImportDiscoveredPaperDto`, `ImportDiscoveredPaperResponse`.
 - Build package to ensure types are accessible across `@researchos/api` and `@researchos/web`.
 
 ---
 
-## 7. Phase 2: Backend — OpenAlex Literature Query & Abstract Reconstruction
+## 7. Phase 2: AI Query Planning & Resilient Literature Retrieval
 
+### Phase 2A: Gemini AI Query Planner & Decomposer
+- Takes any conversational user input (e.g. *"Could you please give me some related paper of shared smartphone uses in HCI domain research?"*).
+- Uses Gemini with strict JSON output:
+  - `normalizedTopic`: Canonical scholarly topic title (e.g., *"Shared Smartphone Practices and Multi-User Device Interaction"*).
+  - `academicDomain`: Subject discipline (e.g., *"Human-Computer Interaction (HCI)"*).
+  - `searchQueries`: Array of 2–3 targeted academic keyword vectors optimized for scholarly bibliographic search (e.g., `["shared smartphone use HCI", "shared phone practices mobile privacy", "multi-user smartphone sharing"]`).
+
+### Phase 2B: Parallel Multi-Query OpenAlex Search & Abstract Reconstruction
 - File: `apps/api/src/services/metadata/openalex.provider.ts`
 - OpenAlex stores abstracts as an inverted index (`abstract_inverted_index: { "word": [indices] }`).
-- Implement `reconstructAbstract()`:
-  ```typescript
-  export function reconstructAbstract(invertedIndex: Record<string, number[]> | null | undefined): string | null {
-    if (!invertedIndex || typeof invertedIndex !== 'object') return null;
-    const words: string[] = [];
-    for (const [word, positions] of Object.entries(invertedIndex)) {
-      for (const pos of positions) {
-        words[pos] = word;
-      }
-    }
-    return words.filter(Boolean).join(' ').trim() || null;
-  }
-  ```
-- Add `searchDiscoveredWorks(query: string, limit: number, yearRange?: { from?: number; to?: number })`:
-  - Fetches candidates with abstracts, citation counts (`cited_by_count`), open-access links (`open_access.oa_url`), primary location venue, and DOIs.
+- Implement `reconstructAbstract()` to turn inverted index into clean academic prose.
+- Executes `searchDiscoveredWorks` across all decomposed query variations concurrently via `Promise.allSettled`.
+- Merges results, deduplicates by DOI and normalized title, and sorts by citation count (`cited_by_count: desc`).
+
+### Phase 2C: Grounded Scholarly Knowledge Fallback
+- If OpenAlex returns 0 records (due to rate limits, network outages, or hyper-niche novel terminology):
+  - Calls Gemini with an academic knowledge retrieval prompt to return verified, real-world peer-reviewed publications from reputable venues (e.g., ACM CHI, CSCW, UbiComp, IEEE Pervasive Computing, etc.).
+  - Guarantees the researcher always receives rigorous, evidence-grounded papers instead of a dead-end error message.
 
 ---
 
 ## 8. Phase 3: Backend — Perplexity-Style Gemini Synthesis Engine
 
 - File: `apps/api/src/services/ai/literatureDiscovery.service.ts`
-- Formulate prompt instructing Gemini to act as a senior scholarly researcher:
-  - Input: User research topic + array of candidate papers with titles, authors, years, and abstracts.
+- Formulates prompt instructing Gemini to act as an authoritative principal scholarly investigator:
+  - Input: User research topic + transparent search plan + array of candidate papers with titles, authors, years, and abstracts.
   - Output: Strict JSON format containing:
-    1. `summary`: 2–3 paragraph executive summary of the state of the art.
-    2. `consensus`: Clear 1–2 sentence statement of what the literature agrees upon.
+    1. `summary`: 2–3 paragraph executive summary of the state of the art with inline numeric bracket citations `[1]`, `[2]`, `[3]`.
+    2. `consensus`: Clear 1–2 sentence statement of where the scientific literature agrees.
     3. `keyThemes`: 3–4 dominant methodological or thematic trends, each referencing specific paper numbers `[1]`, `[2]`.
     4. `researchGaps`: 3–4 critical unanswered questions or limitations in current literature.
-    5. `tldrs`: Mapping of 1-sentence TL;DR takeaways for each paper.
+    5. `tldrs`: Mapping of 1-sentence TL;DR key takeaways for each paper.
 
 ---
 

@@ -238,6 +238,8 @@ Generate from supervised project data including:
 | POST | `/ai/search` | Researcher/Supervisor | Semantic search within allowed scope |
 | POST | `/ai/manuscripts/:id/writing-assist` | Authorized manuscript author/Supervisor | Writing assistance |
 | POST | `/ai/experiments/:id/insight` | Experiment owner/Supervisor | Experiment insight |
+| POST | `/ai/discover` | Researcher/Supervisor | Autonomous Perplexity-style scholarly discovery & synthesis |
+| POST | `/ai/discover/import` | Researcher/Supervisor | 1-click import into project library & queue embedding |
 | POST | `/ai/projects/:projectId/progress-report` | Project Supervisor | Student/project progress summary |
 | GET | `/ai/suggestions` | Owner | List own suggestions |
 | POST | `/ai/suggestions/:id/accept` | Suggestion owner | Apply suggestion to target field |

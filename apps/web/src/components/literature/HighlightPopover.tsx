@@ -9,6 +9,7 @@ import {
   Check,
   Sparkles,
 } from 'lucide-react';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 export const HIGHLIGHT_COLORS = [
   { id: 'yellow', hex: '#FACC15', label: 'Yellow (Key Point / General)' },
@@ -140,9 +141,9 @@ export const HighlightPopover: React.FC<HighlightPopoverProps> = ({
 
       {/* Note Input Toggle / Editor */}
       {showNoteInput ? (
-        <div className="space-y-1 py-1">
-          <label className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
-            <StickyNote className="w-3 h-3 text-amber-400" />
+        <div className="space-y-1.5 py-1">
+          <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+            <StickyNote className="w-3.5 h-3.5 text-amber-400" />
             Sticky Note
           </label>
           <textarea
@@ -151,38 +152,39 @@ export const HighlightPopover: React.FC<HighlightPopoverProps> = ({
             value={stickyNote}
             onChange={(e) => setStickyNote(e.target.value)}
             placeholder="Add a personal critique or reflection..."
-            className="w-full px-2.5 py-1.5 rounded-lg bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 resize-none"
+            className="w-full px-2.5 py-1.5 rounded-lg bg-surface-2 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-violet-500 resize-none"
           />
         </div>
       ) : (
         <button
           type="button"
           onClick={() => setShowNoteInput(true)}
-          className="w-full py-1.5 px-2 rounded-lg text-left text-[11px] text-slate-400 hover:text-white hover:bg-white/[0.04] flex items-center gap-1.5 transition-colors"
+          className="w-full py-1.5 px-2 rounded-lg text-left text-xs text-slate-300 hover:text-white hover:bg-white/[0.06] flex items-center gap-1.5 transition-colors"
         >
-          <StickyNote className="w-3 h-3 text-amber-400" />
+          <StickyNote className="w-3.5 h-3.5 text-amber-400" />
           <span>+ Add Sticky Note</span>
         </button>
       )}
 
       {/* Link to Sidebar Field */}
-      <div className="space-y-1 py-1">
-        <label className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-violet-400" />
+      <div className="space-y-1.5 py-1">
+        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-violet-400" />
           Link to Research Gap or Analysis
         </label>
-        <select
+        <HoverSelect
           value={selectedField}
-          onChange={(e) => handleFieldChange(e.target.value as SidebarFieldType | '')}
-          className="w-full px-2.5 py-1 rounded-lg bg-surface-2 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500"
-        >
-          <option value="">No link (General highlight)</option>
-          {(Object.keys(SIDEBAR_FIELD_TYPES) as SidebarFieldType[]).map((field) => (
-            <option key={field} value={field}>
-              {field}
-            </option>
-          ))}
-        </select>
+          onChange={(val) => handleFieldChange(val as SidebarFieldType | '')}
+          options={[
+            { value: '', label: 'No link (General highlight)' },
+            ...(Object.keys(SIDEBAR_FIELD_TYPES) as SidebarFieldType[]).map((field) => ({
+              value: field,
+              label: field,
+            })),
+          ]}
+          buttonClassName="w-full px-2.5 py-1 text-xs"
+          placement="top"
+        />
       </div>
 
       {/* Action Footer */}

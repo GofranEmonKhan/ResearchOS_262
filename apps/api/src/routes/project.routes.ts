@@ -322,4 +322,32 @@ router.delete(
   }
 );
 
+/**
+ * POST /projects/:projectId/deletion-request
+ * Submit a formal deletion request for a project.
+ * Project Owner only.
+ */
+router.post(
+  '/:projectId/deletion-request',
+  authenticate,
+  async (req: Request<{ projectId: string }, {}, { reason: string }>, res: Response) => {
+    try {
+      const { reason } = req.body;
+      const { AdminService } = await import('../services/admin.service.js');
+      const request = await AdminService.createDeletionRequest(
+        req.user!.id,
+        'Project',
+        req.params.projectId,
+        reason,
+        req.ip
+      );
+      return res.status(201).json(request);
+    } catch (err: any) {
+      console.error('Error submitting project deletion request:', err);
+      return res.status(400).json({ error: err.message || 'Failed to submit deletion request' });
+    }
+  }
+);
+
 export default router;
+

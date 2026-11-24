@@ -47,32 +47,42 @@ describe('Spec 03 — Literature Review & Paper Manager Test Suite', () => {
       });
     });
 
+    async function loginWithRetry(email: string) {
+      let res = await supabaseClient.auth.signInWithPassword({
+        email,
+        password: 'Password123!',
+      });
+      if (!res.data?.session) {
+        const { data: users } = await supabaseAdmin.auth.admin.listUsers();
+        const found = users?.users?.find((u) => u.email === email);
+        if (found) {
+          await supabaseAdmin.auth.admin.updateUserById(found.id, { password: 'Password123!', email_confirm: true });
+          res = await supabaseClient.auth.signInWithPassword({
+            email,
+            password: 'Password123!',
+          });
+        }
+      }
+      return res;
+    }
+
     // 1. Admin login
-    const { data: adminLogin } = await supabaseClient.auth.signInWithPassword({
-      email: 'admin@researchos.edu',
-      password: 'Password123!',
-    });
-    assert.ok(adminLogin?.session, 'Admin login should succeed');
-    adminToken = adminLogin.session.access_token;
-    adminUserId = adminLogin.user.id;
+    const adminLogin = await loginWithRetry('admin@researchos.edu');
+    assert.ok(adminLogin?.data?.session, 'Admin login should succeed');
+    adminToken = adminLogin.data.session.access_token;
+    adminUserId = adminLogin.data.user.id;
 
     // 2. Supervisor login
-    const { data: supLogin } = await supabaseClient.auth.signInWithPassword({
-      email: 'supervisor@stanford.edu',
-      password: 'Password123!',
-    });
-    assert.ok(supLogin?.session, 'Supervisor login should succeed');
-    supervisorToken = supLogin.session.access_token;
-    supervisorUserId = supLogin.user.id;
+    const supLogin = await loginWithRetry('supervisor@stanford.edu');
+    assert.ok(supLogin?.data?.session, 'Supervisor login should succeed');
+    supervisorToken = supLogin.data.session.access_token;
+    supervisorUserId = supLogin.data.user.id;
 
     // 3. Researcher login
-    const { data: resLogin } = await supabaseClient.auth.signInWithPassword({
-      email: 'researcher@mit.edu',
-      password: 'Password123!',
-    });
-    assert.ok(resLogin?.session, 'Researcher login should succeed');
-    researcherToken = resLogin.session.access_token;
-    researcherUserId = resLogin.user.id;
+    const resLogin = await loginWithRetry('researcher@mit.edu');
+    assert.ok(resLogin?.data?.session, 'Researcher login should succeed');
+    researcherToken = resLogin.data.session.access_token;
+    researcherUserId = resLogin.data.user.id;
 
     // Ensure profiles are active
     await supabaseAdmin.from('profiles').update({ status: 'Active', role: 'Admin' }).eq('id', adminUserId);

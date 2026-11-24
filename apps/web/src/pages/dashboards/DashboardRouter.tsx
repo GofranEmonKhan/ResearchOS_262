@@ -4,7 +4,8 @@ import { ResearcherWorkspacePage } from './ResearcherWorkspacePage.js';
 import { SupervisorDashboardPage } from './SupervisorDashboardPage.js';
 import { AdminConsolePage } from './AdminConsolePage.js';
 import { CompleteProfilePage } from '../auth/CompleteProfilePage.js';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { ContextualLoader } from '../../components/common/ContextualLoader.js';
+import { ShieldAlert } from 'lucide-react';
 
 interface DashboardRouterProps {
   onNavigate: (route: string) => void;
@@ -35,10 +36,11 @@ export const DashboardRouter: React.FC<DashboardRouterProps> = ({ onNavigate, cu
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#08090C] flex flex-col items-center justify-center text-slate-300">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-400 mb-3" />
-        <p className="text-xs text-slate-500 font-mono">Loading live academic session & role profile...</p>
-      </div>
+      <ContextualLoader
+        context="workspace"
+        title="Synchronizing Academic Session"
+        subtitle="Verifying institutional credentials, role profile, and collaborative workspace..."
+      />
     );
   }
 

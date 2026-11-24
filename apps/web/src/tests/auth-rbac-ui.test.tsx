@@ -111,11 +111,10 @@ describe('Spec 01 — Frontend Auth, RBAC & Role Dashboards UI Test Suite', () =
       </AuthProvider>
     );
 
-    assert.ok(html.includes('Platform Governance Console') || html.includes('Admin Active'), 'Must render admin console badge');
-    assert.ok(html.includes('Supervisor Verification Queue') || html.includes('Verifications'), 'Must render verification queue title');
-    assert.ok(html.includes('Target User Governance') || html.includes('RBAC'), 'Must render role controls title');
-    assert.ok(html.includes('Suspend Account') || html.includes('Account'), 'Must render suspend account button');
-    assert.ok(html.includes('Change Role') || html.includes('Role'), 'Must render change role button');
+    assert.ok(html.includes('Platform Governance Command Center') || html.includes('Administrator Active'), 'Must render admin console badge');
+    assert.ok(html.includes('Supervisor Queue') || html.includes('Verification'), 'Must render verification queue tab');
+    assert.ok(html.includes('User Directory &amp; RBAC') || html.includes('User Directory & RBAC'), 'Must render role controls tab');
+    assert.ok(html.includes('Governance &amp; Deletions') || html.includes('Governance & Deletions'), 'Must render governance tab');
   });
 
   it('8. ProfilePage renders user identity, reputation points, and academic editor', () => {

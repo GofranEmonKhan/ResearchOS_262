@@ -158,10 +158,23 @@ export class ForumPostService {
       });
     }
 
-    // Fetch aggregated reactions for each post
-    const postsWithReactions = await Promise.all(
-      rawPosts.map(async p => {
-        const reactions = await ForumVoteService.getReactionCounts('Post', p.id);
+    // Fetch aggregated reactions for all posts in a single fast batch query
+    const batchReactionsMap = await ForumVoteService.getBatchReactionCounts('Post', postIds);
+
+    const defaultReactions = {
+      like: 0,
+      love: 0,
+      insightful: 0,
+      celebrate: 0,
+      curious: 0,
+      support: 0,
+      up: 0,
+      down: 0,
+      totalReactions: 0,
+    };
+
+    const postsWithReactions = rawPosts.map(p => {
+      const reactions = batchReactionsMap.get(p.id) || defaultReactions;
         const authorProfile: any = p.profiles;
         const projectInfo: any = p.projects;
 
@@ -213,8 +226,7 @@ export class ForumPostService {
         };
 
         return post;
-      })
-    );
+      });
 
     // If tab is 'unanswered', filter out posts that have accepted answers or answerCount > 0
     let filteredPosts = postsWithReactions;

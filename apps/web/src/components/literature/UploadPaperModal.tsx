@@ -18,6 +18,7 @@ import {
   BookOpen,
   ArrowRight,
 } from 'lucide-react';
+import { HoverSelect } from '../common/HoverSelect.js';
 
 interface UploadPaperModalProps {
   isOpen: boolean;
@@ -242,9 +243,9 @@ export const UploadPaperModal: React.FC<UploadPaperModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl rounded-2xl bg-surface-1 border border-white/10 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-xl rounded-2xl bg-surface-1 border border-white/10 shadow-2xl overflow-visible">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] rounded-t-2xl">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
               <BookOpen className="w-4 h-4" />
@@ -472,8 +473,8 @@ export const UploadPaperModal: React.FC<UploadPaperModalProps> = ({
               </div>
 
               {/* DOI */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-slate-300">Digital Object Identifier (DOI)</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-300">Digital Object Identifier (DOI)</label>
                 <input
                   type="text"
                   value={doi}
@@ -485,36 +486,42 @@ export const UploadPaperModal: React.FC<UploadPaperModalProps> = ({
 
               {/* Optional Collection and Project Assignments */}
               <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">Add to Collection</label>
-                  <select
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Add to Collection</label>
+                  <HoverSelect
                     value={selectedCollectionId}
-                    onChange={(e) => setSelectedCollectionId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500"
-                  >
-                    <option value="">None (General Library)</option>
-                    {collections.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedCollectionId(val)}
+                    options={[
+                      { value: '', label: 'None (General Library)' },
+                      ...collections.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                      })),
+                    ]}
+                    className="w-full"
+                    buttonClassName="w-full px-3 py-2 text-xs"
+                    menuClassName="w-full min-w-[220px]"
+                    placement="top"
+                  />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">Share with Project</label>
-                  <select
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-300">Share with Project</label>
+                  <HoverSelect
                     value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-surface-2 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-500"
-                  >
-                    <option value="">Personal Only</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedProjectId(val)}
+                    options={[
+                      { value: '', label: 'Personal Only' },
+                      ...projects.map((p) => ({
+                        value: p.id,
+                        label: p.title,
+                      })),
+                    ]}
+                    className="w-full"
+                    buttonClassName="w-full px-3 py-2 text-xs"
+                    menuClassName="w-full min-w-[220px]"
+                    placement="top"
+                  />
                 </div>
               </div>
 
